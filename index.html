@@ -134,26 +134,7 @@
                             <label for="industry" id="industryLabel" class="form-label">產業別 <span class="text-danger">*</span></label>
                             <select class="form-select" id="industry">
                                 <option value="" selected disabled id="industryPlaceholder">請選擇產業</option>
-                                <option value="information technology & services">資訊科技與服務</option>
-                                <option value="construction">建築業</option>
-                                <option value="marketing & advertising">行銷與廣告</option>
-                                <option value="real estate">房地產</option>
-                                <option value="health, wellness & fitness">健康、養生與健身</option>
-                                <option value="management consulting">管理顧問</option>
-                                <option value="computer software">電腦軟體</option>
-                                <option value="internet">網際網路</option>
-                                <option value="retail">零售業</option>
-                                <option value="financial services">金融服務</option>
-                                <option value="consumer services">消費者服務</option>
-                                <option value="hospital & health care">醫療與健康照護</option>
-                                <option value="automotive">汽車產業</option>
-                                <option value="restaurants">餐飲業</option>
-                                <option value="education management">教育管理</option>
-                                <option value="food & beverages">食品與飲料</option>
-                                <option value="design">設計</option>
-                                <option value="hospitality">旅宿與款待業</option>
-                                <option value="accounting">會計</option>
-                                <option value="events services">活動服務</option>
+                                <!-- Options will be populated by JavaScript -->
                             </select>
                         </div>
                         
@@ -226,9 +207,61 @@
             const submitBtn = document.getElementById('submitBtn');
             const loadingIndicator = submitBtn.querySelector('.loading');
             const langToggle = document.getElementById('langToggle');
+            const industrySelect = document.getElementById('industry');
             
             // Track current language
             let currentLang = 'zh'; // Default is Chinese
+            
+            // Industry data with parallel arrays for bilingual support
+            const industries = [
+                { value: "information technology & services", zh: "資訊科技與服務", en: "Information Technology & Services" },
+                { value: "construction", zh: "建築業", en: "Construction" },
+                { value: "marketing & advertising", zh: "行銷與廣告", en: "Marketing & Advertising" },
+                { value: "real estate", zh: "房地產", en: "Real Estate" },
+                { value: "health, wellness & fitness", zh: "健康、養生與健身", en: "Health, Wellness & Fitness" },
+                { value: "management consulting", zh: "管理顧問", en: "Management Consulting" },
+                { value: "computer software", zh: "電腦軟體", en: "Computer Software" },
+                { value: "internet", zh: "網際網路", en: "Internet" },
+                { value: "retail", zh: "零售業", en: "Retail" },
+                { value: "financial services", zh: "金融服務", en: "Financial Services" },
+                { value: "consumer services", zh: "消費者服務", en: "Consumer Services" },
+                { value: "hospital & health care", zh: "醫療與健康照護", en: "Hospital & Health Care" },
+                { value: "automotive", zh: "汽車產業", en: "Automotive" },
+                { value: "restaurants", zh: "餐飲業", en: "Restaurants" },
+                { value: "education management", zh: "教育管理", en: "Education Management" },
+                { value: "food & beverages", zh: "食品與飲料", en: "Food & Beverages" },
+                { value: "design", zh: "設計", en: "Design" },
+                { value: "hospitality", zh: "旅宿與款待業", en: "Hospitality" },
+                { value: "accounting", zh: "會計", en: "Accounting" },
+                { value: "events services", zh: "活動服務", en: "Events Services" }
+            ];
+            
+            // Initial population of industry dropdown
+            populateIndustryDropdown();
+            
+            // Function to populate industry dropdown based on current language
+            function populateIndustryDropdown() {
+                // Store currently selected value if any
+                const currentValue = industrySelect.value;
+                
+                // Clear existing options except the placeholder
+                while (industrySelect.options.length > 1) {
+                    industrySelect.remove(1);
+                }
+                
+                // Add industry options in current language
+                industries.forEach(industry => {
+                    const option = document.createElement('option');
+                    option.value = industry.value;
+                    option.textContent = industry[currentLang];
+                    industrySelect.appendChild(option);
+                });
+                
+                // Restore selected value if it existed
+                if (currentValue) {
+                    industrySelect.value = currentValue;
+                }
+            }
             
             // Toggle advanced search visibility
             advancedBtn.addEventListener('click', function() {
@@ -240,7 +273,7 @@
                 }
             });
             
-            // Add filter tags
+            // Add filter tags without validation
             addFiltersBtn.addEventListener('click', function() {
                 const jobTitle = document.getElementById('jobTitle').value.trim();
                 const industry = document.getElementById('industry');
@@ -248,18 +281,7 @@
                 const companySize = document.getElementById('companySize');
                 const keywords = document.getElementById('keywords').value.trim();
                 
-                // Validate required fields
-                if (!jobTitle) {
-                    alert(currentLang === 'zh' ? '職稱為必填欄位！' : 'Job title is required!');
-                    return;
-                }
-                
-                if (!industry.value) {
-                    alert(currentLang === 'zh' ? '產業別為必填欄位！' : 'Industry is required!');
-                    return;
-                }
-                
-                // Add tags for each non-empty field
+                // Add tags for each non-empty field (no validation required)
                 if (jobTitle) {
                     addTag('jobTitle', jobTitle, currentLang === 'zh' ? '職稱' : 'Job Title');
                 }
@@ -306,17 +328,40 @@
                 tagsContainer.appendChild(tag);
             }
             
-            // Form submission
+            // Form submission with validation
             prospectForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+                
+                // Get main query value
+                const mainQuery = document.getElementById('mainQuery').value.trim();
+                const tags = Array.from(tagsContainer.querySelectorAll('.tag'));
+                
+                // Check if advanced search is visible and main query is empty
+                if (advancedSearch.classList.contains('show') && !mainQuery) {
+                    // Check if required fields are filled
+                    const jobTitle = document.getElementById('jobTitle').value.trim();
+                    const industry = document.getElementById('industry').value;
+                    
+                    // Check if any tags contain jobTitle or industry
+                    const hasJobTitleTag = tags.some(tag => tag.getAttribute('data-type') === 'jobTitle');
+                    const hasIndustryTag = tags.some(tag => tag.getAttribute('data-type') === 'industry');
+                    
+                    if (!jobTitle && !hasJobTitleTag) {
+                        alert(currentLang === 'zh' ? '職稱為必填欄位！' : 'Job title is required!');
+                        return;
+                    }
+                    
+                    if (!industry && !hasIndustryTag) {
+                        alert(currentLang === 'zh' ? '產業別為必填欄位！' : 'Industry is required!');
+                        return;
+                    }
+                }
+                
+                // If we get here, validation passed or is not needed
                 
                 // Show loading indicator
                 submitBtn.disabled = true;
                 loadingIndicator.classList.remove('d-none');
-                
-                // Collect data from main query and tags
-                const mainQuery = document.getElementById('mainQuery').value.trim();
-                const tags = Array.from(tagsContainer.querySelectorAll('.tag'));
                 
                 // Build data object
                 const formData = {
@@ -378,6 +423,8 @@
             langToggle.addEventListener('click', function() {
                 currentLang = currentLang === 'zh' ? 'en' : 'zh';
                 updateLanguage();
+                // Also update industry dropdown when language changes
+                populateIndustryDropdown();
             });
             
             // Update UI language
