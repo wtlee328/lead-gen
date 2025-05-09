@@ -374,11 +374,23 @@
                     filters: {}
                 };
                 
-                // Add all the tag data
+                // Group tags by type - collect keywords into array
+                const keywordTags = tags.filter(tag => tag.getAttribute('data-type') === 'keywords')
+                                      .map(tag => tag.getAttribute('data-value'));
+                
+                // Add keywords as array if there are any
+                if (keywordTags.length > 0) {
+                    formData.filters.keywords = keywordTags;
+                }
+                
+                // Add all other tag data (except keywords which we already handled)
                 tags.forEach(tag => {
                     const type = tag.getAttribute('data-type');
                     const value = tag.getAttribute('data-value');
-                    formData.filters[type] = value;
+                    // Skip keywords as they're handled separately above
+                    if (type !== 'keywords') {
+                        formData.filters[type] = value;
+                    }
                 });
                 
                 try {
