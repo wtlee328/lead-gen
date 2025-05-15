@@ -10,6 +10,8 @@
     "paths": {
       "@/*": ["./src/*"] // Defines @/* to point to your src directory
     },
+    "jsx": "preserve", // Ensure this is effectively set for Vue
+    "declaration": false, 
     // --- END ALIAS RESOLUTION ---
 
     /* Ensure JSX is correct for Vue if you use TSX files */
