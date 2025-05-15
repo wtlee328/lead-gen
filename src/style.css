@@ -1,0 +1,964 @@
+:root {
+  /* --- Light Mode Defaults & Initial Theme --- */
+  color-scheme: light;
+
+  --primary-color: #0d6efd; /* Standard Bootstrap blue for primary */
+  --primary-dark: #0a58ca;
+  --primary-light: #6ea8fe;
+
+  /* --- NEW: True Light Mode Sidebar Colors --- */
+  --sidebar-bg-true-light: #f8f9fa;
+  --sidebar-text-color-true-light: #495057;
+  --sidebar-text-hover-color-true-light: #000000;
+  --sidebar-active-bg-true-light: rgb(167, 206, 242);
+  --sidebar-logo-title-color-true-light: #212529;
+
+  --content-bg-light: #f3f4f6;
+  --card-bg-light: white;
+  --border-color-light: #e5e7eb;
+
+  --text-color-base-light: #111827;
+  --text-muted-light: #6b7280;
+
+  --button-bg-light-mode: #f9fafb;
+  --button-text-light-mode: var(--text-color-base-light);
+  --table-header-bg-light: #f9fafb;
+  --table-row-hover-bg-light: #f0f9ff;
+  --table-row-hover-text-light: var(--text-color-base-light);
+
+  /* Sort Indicator Colors - Light Mode */
+  --sort-indicator-active-color-light: #0d6efd;
+  --sort-indicator-inactive-color-light: var(--text-muted-light);
+  --sort-indicator-inactive-opacity-light: 0.65;
+
+  /* Table Action Button Colors - Light Mode */
+  --table-action-btn-success-color-light: #16a34a;
+  --table-action-btn-success-hover-bg-light: #15803d;
+  --table-action-btn-warning-color-light: #d97706;
+  --table-action-btn-warning-hover-bg-light: #b45309;
+  --table-action-btn-secondary-color-light: var(--text-muted-light);
+  --table-action-btn-secondary-hover-bg-light: rgb(102, 145, 210);
+  --table-action-btn-text-hover-light: white;
+
+
+  /* --- DEFAULT TO LIGHT THEME (Current Variables) --- */
+  --primary-color-current: rgb(102, 145, 210);
+  --primary-dark-current: var(--primary-dark);
+  --primary-light-current: var(--primary-light);
+
+  --sidebar-bg-current: var(--sidebar-bg-true-light);
+  --sidebar-text-color-current: var(--sidebar-text-color-true-light);
+  --sidebar-text-hover-color-current: var(--sidebar-text-hover-color-true-light);
+  --sidebar-active-bg-current: var(--sidebar-active-bg-true-light);
+
+  --content-bg-current: var(--content-bg-light);
+  --card-bg-current: var(--card-bg-light);
+  --border-color-current: var(--border-color-light);
+
+  --text-color-base-current: var(--text-color-base-light);
+  --text-muted-current: var(--text-muted-light);
+
+  --button-bg-current: var(--button-bg-light-mode);
+  --button-text-current: var(--button-text-light-mode);
+
+  --table-header-bg-current: var(--table-header-bg-light);
+  --table-row-hover-bg-current: var(--table-row-hover-bg-light);
+  --table-row-hover-text-current: var(--table-row-hover-text-light);
+
+  --sort-indicator-active-color-current: var(--sort-indicator-active-color-light);
+  --sort-indicator-inactive-color-current: var(--sort-indicator-inactive-color-light);
+  --sort-indicator-inactive-opacity-current: var(--sort-indicator-inactive-opacity-light);
+
+  --table-action-btn-success-color-current: var(--table-action-btn-success-color-light);
+  --table-action-btn-success-hover-bg-current: var(--table-action-btn-success-hover-bg-light);
+  --table-action-btn-warning-color-current: var(--table-action-btn-warning-color-light);
+  --table-action-btn-warning-hover-bg-current: var(--table-action-btn-warning-hover-bg-light);
+  --table-action-btn-secondary-color-current: var(--table-action-btn-secondary-color-light);
+  --table-action-btn-secondary-hover-bg-current: var(--table-action-btn-secondary-hover-bg-light);
+  --table-action-btn-text-hover-current: var(--table-action-btn-text-hover-light);
+
+
+  /* ---- Bootstrap Core Color Variable Overrides ---- */
+  --bs-body-color: var(--text-color-base-current);
+  --bs-body-bg: var(--content-bg-current);
+  --bs-border-color: var(--border-color-current);
+  --bs-link-color: var(--primary-color-current);
+  --bs-link-hover-color: var(--primary-dark-current);
+
+  --bs-primary: var(--primary-color);
+  --bs-secondary: var(--text-muted-light);
+  --bs-light: var(--card-bg-light);
+  --bs-dark: #111827;
+
+
+  --bs-success: var(--table-action-btn-success-color-light);
+  --bs-warning: var(--table-action-btn-warning-color-light);
+
+  /* --- NON-COLOR RELATED VARS --- */
+  --app-nav-sidebar-width-expanded: 260px;
+  --app-nav-sidebar-width-collapsed: 80px;
+  --sidebar-transition-duration: 0.3s;
+  --sidebar-text-transition-delay: calc(var(--sidebar-transition-duration) * 0.4);
+  --sidebar-icon-position-left: 14px;
+  --sidebar-icon-width: 20px;
+  --sidebar-icon-right-margin: 12px;
+}
+
+
+/* --- Dark Theme applied via data-bs-theme attribute --- */
+html[data-bs-theme="dark"] {
+  color-scheme: dark;
+
+  /* --- DARK THEME OVERRIDES for --*-current variables --- */
+  --primary-color-current: #60a5fa;
+  --primary-dark-current: #3b82f6;
+  --primary-light-current: #1e3a8a;
+
+  --sidebar-bg-current: #111827;
+  --sidebar-text-color-current: #9ca3af;
+  --sidebar-text-hover-color-current: white;
+  --sidebar-active-bg-current: var(--primary-color-current);
+
+  --content-bg-current: #0f172a;
+  --card-bg-current: #1e293b;
+  --border-color-current: #334155;
+
+  --text-color-base-current: rgba(255, 255, 255, 0.87);
+  --text-muted-current: #9ca3af;
+
+  --button-bg-current: #334155;
+  --button-text-current: var(--text-color-base-current);
+
+  --table-header-bg-current: #334155;
+  --table-row-hover-bg-current: #334155;
+  --table-row-hover-text-current: var(--text-color-base-current);
+
+  --sort-indicator-active-color-current: var(--primary-color-current);
+  --sort-indicator-inactive-color-current: var(--text-muted-current);
+  --sort-indicator-inactive-opacity-current: 0.7;
+
+  --table-action-btn-success-color-current: #22c55e;
+  --table-action-btn-success-hover-bg-current: #16a34a;
+  --table-action-btn-warning-color-current: #f59e0b;
+  --table-action-btn-warning-hover-bg-current: #d97706;
+  --table-action-btn-secondary-color-current: var(--text-muted-current);
+  --table-action-btn-secondary-hover-bg-current: var(--border-color-current);
+  --table-action-btn-text-hover-current: var(--text-color-base-current);
+
+  /* ---- Bootstrap Core Color Variable Overrides for Dark Theme ---- */
+  --bs-body-color: var(--text-color-base-current);
+  --bs-body-bg: var(--content-bg-current);
+  --bs-border-color: var(--border-color-current);
+  --bs-link-color: var(--primary-color-current);
+  --bs-link-hover-color: var(--primary-dark-current);
+}
+
+/* Apply base text and background colors to html, body */
+html, body {
+  color: var(--text-color-base-current);
+  background-color: var(--content-bg-current);
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Global overflow hidden, individual areas manage their scroll */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Styles for the main Vue app root element (typically #app) */
+#app {
+  height: 100%; /* Ensure #app takes full viewport height */
+  width: 100%;  /* Ensure #app takes full viewport width */
+  display: flex; /* This is important if App.vue's root is directly #app */
+}
+
+/* NEW: Styles for the App.vue layout wrapper */
+.app-layout-wrapper {
+  display: flex;
+  height: 100%; /* Takes full height of its parent (#app) */
+  width: 100%;  /* Takes full width of its parent (#app) */
+  overflow: hidden; /* Prevents double scrollbars if content overflows */
+}
+
+.app-main-content-area {
+  flex-grow: 1; /* Takes up remaining space */
+  height: 100%;   /* Full height of the viewport */
+  overflow-y: auto; /* Allows content within this area to scroll */
+  background-color: var(--content-bg-current); /* Moved from .app-main-view */
+}
+
+.app-main-content-area.full-width {
+  /* No specific styles needed here if flex-grow handles width correctly */
+}
+/* END NEW App.vue layout wrapper styles */
+
+
+a { font-weight: 500; color: var(--primary-color-current); text-decoration: inherit; }
+a:hover { color: var(--primary-dark-current); }
+
+button {
+  border-radius: 8px; border: 1px solid transparent; padding: 0.6em 1.2em;
+  font-size: 1em; font-weight: 500; font-family: inherit;
+  background-color: var(--button-bg-current); color: var(--button-text-current);
+  cursor: pointer; transition: border-color 0.25s, background-color 0.25s, color 0.25s;
+}
+button:hover {
+  border-color: color-mix(in srgb, var(--primary-color-current) 80%, black 20%);
+}
+button:focus, button:focus-visible { outline: 4px auto -webkit-focus-ring-color; }
+
+
+/* ---- Bootstrap Button Theming ---- */
+.btn {
+  --bs-btn-font-family: inherit;
+  --bs-btn-font-size: 1em;
+  --bs-btn-font-weight: 500;
+  --bs-btn-padding-y: 0.45em;
+  --bs-btn-padding-x: 1em;
+  --bs-btn-border-radius: 8px;
+  --bs-btn-transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+.btn-sm, .btn-group-sm > .btn {
+  --bs-btn-padding-y: 0.3rem;
+  --bs-btn-padding-x: 0.75rem;
+  --bs-btn-font-size: 0.875em;
+  --bs-btn-border-radius: 6px;
+}
+.btn-lg, .btn-group-lg > .btn {
+  --bs-btn-padding-y: 0.6rem;
+  --bs-btn-padding-x: 1.2rem;
+  --bs-btn-font-size: 1.125em;
+  --bs-btn-border-radius: 10px;
+}
+
+.btn-primary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--primary-color-current);
+  --bs-btn-border-color: var(--primary-color-current);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--primary-dark-current);
+  --bs-btn-hover-border-color: var(--primary-dark-current);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--primary-dark-current);
+  --bs-btn-active-border-color: var(--primary-dark-current);
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: var(--primary-color-current);
+  --bs-btn-disabled-border-color: var(--primary-color-current);
+}
+
+.btn-light {
+  --bs-btn-color: var(--button-text-current);
+  --bs-btn-bg: var(--button-bg-current);
+  --bs-btn-border-color: var(--border-color-current);
+  --bs-btn-hover-color: var(--button-text-current);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--button-bg-current) 90%, var(--text-color-base-current) 10%);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--border-color-current) 80%, var(--text-color-base-current) 20%);
+  --bs-btn-active-color: var(--button-text-current);
+  --bs-btn-active-bg: color-mix(in srgb, var(--button-bg-current) 80%, var(--text-color-base-current) 20%);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--border-color-current) 70%, var(--text-color-base-current) 30%);
+  --bs-btn-disabled-color: var(--button-text-current);
+  --bs-btn-disabled-bg: var(--button-bg-current);
+  --bs-btn-disabled-border-color: var(--border-color-current);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--primary-color-current);
+  --bs-btn-border-color: var(--primary-color-current);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--primary-color-current);
+  --bs-btn-hover-border-color: var(--primary-color-current);
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--text-muted-current);
+  --bs-btn-border-color: var(--text-muted-current);
+  --bs-btn-hover-color: var(--table-action-btn-text-hover-current);
+  --bs-btn-hover-bg: var(--text-muted-current);
+  --bs-btn-hover-border-color: var(--text-muted-current);
+}
+
+.btn-danger {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--table-action-btn-secondary-color-current);
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #dc2626;
+  --bs-btn-hover-border-color: #dc2626;
+}
+.btn-outline-danger {
+  --bs-btn-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #ef4444;
+  --bs-btn-hover-border-color: #ef4444;
+}
+
+/* Table Action Buttons Specific Overrides */
+.table-action-buttons .btn-outline-success,
+.btn-group > .btn-outline-success {
+  --bs-btn-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-hover-color: var(--table-action-btn-text-hover-current);
+  --bs-btn-hover-bg: var(--table-action-btn-secondary-hover-bg-light);
+  --bs-btn-hover-border-color: var(--table-action-btn-secondary-hover-bg-light);
+}
+
+.table-action-buttons .btn-outline-warning,
+.btn-group > .btn-outline-warning {
+  --bs-btn-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-hover-color: var(--text-color-base-current);
+  --bs-btn-hover-bg: var(--table-action-btn-warning-hover-bg-current);
+  --bs-btn-hover-border-color: var(--table-action-btn-warning-hover-bg-current);
+}
+
+.table-action-buttons .btn-outline-secondary,
+.btn-group > .btn-outline-secondary:not(:disabled):not(.disabled) {
+  --bs-btn-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-hover-color: var(--table-action-btn-text-hover-current);
+  --bs-btn-hover-bg: var(--table-action-btn-secondary-hover-bg-current);
+  --bs-btn-hover-border-color: var(--table-action-btn-secondary-hover-bg-current);
+}
+
+.btn-icon {
+  padding: 0.375rem 0.5rem;
+}
+
+/* === Form Control & Placeholder Styling === */
+.form-control, .form-select {
+  background-color: var(--card-bg-current);
+  color: var(--text-color-base-current);
+  border: 1px solid var(--border-color-current);
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-color-current);
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--primary-color-current) 30%, transparent);
+  background-color: var(--card-bg-current);
+  color: var(--text-color-base-current);
+}
+.form-control::placeholder {
+  color: var(--text-muted-current);
+  opacity: 0.65;
+}
+.form-control::-webkit-input-placeholder { color: var(--text-muted-current); opacity: 0.65; }
+.form-control::-moz-placeholder { color: var(--text-muted-current); opacity: 0.65; }
+.form-control:-ms-input-placeholder { color: var(--text-muted-current) !important; opacity: 0.65 !important; }
+.form-control::-ms-input-placeholder { color: var(--text-muted-current); opacity: 0.65; }
+
+.form-select option {
+    background-color: var(--card-bg-current);
+    color: var(--text-color-base-current);
+}
+
+/* General card class if used outside specific components */
+.card {
+  background-color: var(--card-bg-current);
+  border: 1px solid var(--border-color-current);
+  padding: 2em;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+}
+
+/* App Layout using the --*-current variables */
+/* The .app-container class was on the navigation sidebar itself.
+   The main layout is now handled by .app-layout-wrapper (defined above) and #app.
+   If .app-container was meant for the overall app, it might be redundant with #app or .app-layout-wrapper.
+   I'll keep it commented out here unless it served a different specific purpose.
+*/
+/*
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+*/
+
+/* === Filter Panel Styles === */
+.filter-panel.card { /* Added .card here for specificity if .filter-panel is always a card */
+  background-color: var(--card-bg-current);
+  color: var(--text-color-base-current);
+  border: none; /* Overrides general .card border if you want no border for filter panel */
+  /* If it's part of a sidebar that has its own border, this is fine.
+     If it's standalone and needs a border, use `border: 1px solid var(--border-color-current);`
+     or remove this 'border: none;' line to inherit from .card. */
+}
+.filter-panel .card-body {
+  padding: 1rem; /* Or 0rem if that was intended. Consistent padding. */
+}
+
+.filter-panel .tabs-title-heading { /* Scoped to .filter-panel */
+  color: var(--text-color-base-current);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.filter-panel .filter-tabs .nav-link { /* Scoped to .filter-panel */
+  font-size: 0.9rem;
+  padding: 0.6rem 0.85rem;
+  color: var(--text-muted-current);
+  background-color: transparent;
+  border: 1px solid transparent;
+  margin-bottom: 0.25rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+.filter-panel .filter-tabs .nav-link:hover:not(.active):not(:disabled) { /* Scoped */
+  background-color: color-mix(in srgb, var(--card-bg-current) 85%, var(--text-muted-current) 15%);
+  color: var(--text-color-base-current);
+}
+.filter-panel .filter-tabs .nav-link.active { /* Scoped */
+  color: var(--bs-light); /* Text color for active tab - ensure contrast with active bg */
+  background-color: var(--primary-color-current); /* Use app's primary color */
+  border-color: var(--primary-color-current);
+  font-weight: 500;
+}
+/* Adjust active tab text color if primary-color-current is light */
+html:not([data-bs-theme="dark"]) .filter-panel .filter-tabs .nav-link.active {
+  color: #fff; /* White text on primary color background */
+}
+html[data-bs-theme="dark"] .filter-panel .filter-tabs .nav-link.active {
+  color: var(--bs-dark); /* Dark text on light-ish primary in dark mode, or white if primary is dark enough */
+   /* If --primary-color-current in dark mode is very dark, use white: color: #fff; */
+}
+
+
+.filter-panel .filter-tabs .nav-link .badge { /* Scoped */
+  font-size: 0.7rem;
+  background-color: var(--border-color-current);
+  color: var(--text-muted-current);
+}
+.filter-panel .filter-tabs .nav-link.active .badge { /* Scoped */
+  background-color: color-mix(in srgb, var(--primary-color-current) 70%, #000 30%); /* Darker shade of primary */
+  color: var(--bs-light);
+}
+html:not([data-bs-theme="dark"]) .filter-panel .filter-tabs .nav-link.active .badge {
+  background-color: color-mix(in srgb, var(--primary-color-current) 80%, #fff 20%); /* Lighter shade for contrast on primary */
+  color: var(--primary-color-current); /* Text color for badge on active tab */
+}
+
+
+.filter-panel .filter-divider { /* Scoped */
+  border-top-color: var(--border-color-current);
+  opacity: 0.5;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-panel .filter-group-label.form-label { /* Scoped */
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-color-base-current);
+  margin-bottom: 0.3rem;
+}
+
+.filter-panel .filter-input,
+.filter-panel .filter-select { /* Scoped */
+  background-color: var(--card-bg-current);
+  color: var(--text-color-base-current);
+  border: 1px solid var(--border-color-current);
+  font-size: 0.875rem;
+}
+.filter-panel .filter-input::placeholder { /* Scoped */
+  color: var(--text-muted-current);
+  opacity: 0.7;
+}
+.filter-panel .filter-input:focus,
+.filter-panel .filter-select:focus { /* Scoped */
+  border-color: var(--primary-color-current);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--primary-color-current) 25%, transparent);
+  background-color: var(--card-bg-current);
+  color: var(--text-color-base-current);
+}
+.filter-panel .filter-select option { /* Scoped */
+    background-color: var(--card-bg-current);
+    color: var(--text-color-base-current);
+}
+
+
+.filter-panel .add-filter-btn.btn-outline-themed { /* Scoped */
+  color: var(--text-muted-current);
+  border-color: var(--border-color-current);
+  background-color: transparent;
+}
+.filter-panel .add-filter-btn.btn-outline-themed:hover { /* Scoped */
+  color: var(--primary-color-current);
+  background-color: color-mix(in srgb, var(--primary-color-current) 15%, transparent); /* More subtle hover */
+  border-color: var(--primary-color-current);
+}
+
+.filter-panel .filter-tag.badge { /* Scoped */
+  background-color: var(--primary-light-current) !important; /* Use primary-light for better contrast potential */
+  color: var(--primary-dark) !important; /* Use primary-dark for text on primary-light background */
+  /* Or if primary-light is very light: color: var(--text-color-base-current) !important; */
+  border: 1px solid var(--primary-color-current);
+  font-size: 0.8em;
+  padding: 0.3em 0.6em;
+  font-weight: 500;
+}
+/* Theming for the btn-close inside the filter tag */
+.filter-panel .filter-tag .btn-close { /* Scoped */
+  --bs-btn-close-color: var(--primary-dark); /* Match text color of badge */
+  /* If primary-dark doesn't contrast enough, use a fixed color like var(--text-color-base-current) */
+  font-size: 0.6em; /* Make close button smaller */
+  vertical-align: middle;
+}
+
+
+.filter-panel .clear-section-btn.btn-icon-danger { /* Scoped */
+  color: var(--text-muted-current); /* Muted by default */
+  background-color: transparent;
+  border: none;
+  padding: 0.1rem 0.25rem;
+}
+.filter-panel .clear-section-btn.btn-icon-danger:hover { /* Scoped */
+  color: var(--bs-danger); /* Use Bootstrap's danger variable */
+  background-color: color-mix(in srgb, var(--bs-danger) 10%, transparent);
+}
+
+.filter-panel .clear-all-btn.btn-danger { /* Scoped */
+  /* This button will use the global .btn-danger theming which is good for consistency.
+     No specific overrides needed here unless you want it to look different from other danger buttons.
+  */
+}
+/* === End of Filter Panel Styles === */
+
+/* Navigation sidebar styling */
+.app-navigation-sidebar {
+  width: var(--app-nav-sidebar-width-collapsed);
+  min-width: var(--app-nav-sidebar-width-collapsed);
+  background-color: var(--sidebar-bg-current);
+  color: var(--sidebar-text-color-current);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  z-index: 1050;
+  flex-shrink: 0; /* Important for flex layout with .app-main-content-area */
+  transition: width var(--sidebar-transition-duration) ease-in-out,
+              min-width var(--sidebar-transition-duration) ease-in-out,
+              background-color var(--sidebar-transition-duration) ease-in-out,
+              color var(--sidebar-transition-duration) ease-in-out;
+  overflow: hidden; /* Keep this to hide text during collapse */
+  position: relative;
+  padding: 0;
+}
+
+.app-navigation-sidebar:hover {
+  width: var(--app-nav-sidebar-width-expanded);
+  min-width: var(--app-nav-sidebar-width-expanded);
+}
+
+.app-navigation-sidebar .logo-area {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem 0;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  height: 64px;
+  box-sizing: border-box;
+  position: relative;
+  text-align: center;
+}
+
+.app-navigation-sidebar .app-logo {
+  height: 32px;
+  width: auto;
+  position: absolute;
+  left: calc(var(--app-nav-sidebar-width-collapsed) / 2 - 16px);
+  transform: translateY(-50%);
+  top: 50%;
+  transition: none;
+  max-width: 100%;
+}
+
+.app-navigation-sidebar .app-title {
+  position: absolute;
+  left: calc(var(--app-nav-sidebar-width-collapsed) + 10px);
+  white-space: nowrap;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--sidebar-logo-title-color-true-light);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out var(--sidebar-text-transition-delay),
+              color var(--sidebar-transition-duration) ease-in-out;
+}
+html[data-bs-theme="dark"] .app-navigation-sidebar .app-title {
+    color: white;
+}
+
+
+.app-navigation-sidebar:hover .app-title {
+  opacity: 1;
+}
+
+.app-navigation-sidebar .nav-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.app-navigation-sidebar .nav-item {
+  margin-bottom: 0.5rem;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  position: relative;
+  border-radius: 0.375rem;
+}
+
+/* Styling for the settings dropdown menu and its items */
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu {
+    background-color: var(--sidebar-bg-current);
+    border: 1px solid var(--border-color-current);
+    --bs-dropdown-link-color: var(--sidebar-text-color-current);
+    --bs-dropdown-link-hover-color: var(--sidebar-text-hover-color-current);
+    --bs-dropdown-link-hover-bg: color-mix(in srgb, var(--sidebar-bg-current) 70%, var(--sidebar-text-hover-color-current) 30%);
+    --bs-dropdown-link-active-color: var(--sidebar-text-hover-color-current);
+    --bs-dropdown-link-active-bg: var(--sidebar-active-bg-current);
+    --bs-dropdown-header-color: color-mix(in srgb, var(--sidebar-text-color-current) 80%, black);
+}
+.app-navigation-sidebar .nav-item .dropdown .dropdown-header {
+    color: var(--bs-dropdown-header-color);
+    opacity: 0.7;
+    padding: 0.5rem 1rem;
+}
+.app-navigation-sidebar .nav-item .dropdown .dropdown-item {
+    color: var(--bs-dropdown-link-color);
+    padding: 0.375rem 1rem;
+}
+.app-navigation-sidebar .nav-item .dropdown .dropdown-item:hover,
+.app-navigation-sidebar .nav-item .dropdown .dropdown-item:focus {
+    background-color: var(--bs-dropdown-link-hover-bg);
+    color: var(--bs-dropdown-link-hover-color);
+}
+.app-navigation-sidebar .nav-item .dropdown .dropdown-item.active {
+    background-color: var(--bs-dropdown-link-active-bg);
+    color: var(--bs-dropdown-link-active-color);
+}
+.app-navigation-sidebar .nav-item .dropdown .dropdown-divider {
+    border-top-color: var(--border-color-current);
+    opacity: 0.25;
+}
+
+
+/* Styles for Segmented Toggle Groups (Theme & Language) */
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-group,
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-group {
+  display: flex;
+}
+
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn,
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn {
+  flex-grow: 1;
+  border-radius: 0;
+  color: var(--bs-dropdown-link-color);
+  background-color: transparent;
+  border: 1px solid color-mix(in srgb, var(--bs-dropdown-link-color) 50%, transparent 50%);
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn:hover,
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn:hover {
+  background-color: var(--bs-dropdown-link-hover-bg);
+  color: var(--bs-dropdown-link-hover-color);
+  border-color: var(--bs-dropdown-link-hover-bg);
+  z-index: 2;
+}
+
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn.active,
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn.active {
+  background-color: var(--bs-dropdown-link-active-bg);
+  color: var(--bs-dropdown-link-active-color);
+  border-color: var(--bs-dropdown-link-active-bg);
+  z-index: 3;
+  font-weight: 500;
+}
+
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn + .theme-toggle-btn,
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn + .language-toggle-btn {
+  margin-left: -1px;
+}
+
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn:first-child,
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn:first-child {
+  border-top-left-radius: var(--bs-border-radius-sm, 0.25rem);
+  border-bottom-left-radius: var(--bs-border-radius-sm, 0.25rem);
+}
+
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn:last-child,
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn:last-child {
+  border-top-right-radius: var(--bs-border-radius-sm, 0.25rem);
+  border-bottom-right-radius: var(--bs-border-radius-sm, 0.25rem);
+}
+/* End of Segmented Toggle Group Styles */
+
+
+.app-navigation-sidebar .nav-link-item {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  border-radius: 1.1rem;
+  color: var(--sidebar-text-color-current);
+  text-decoration: none;
+  position: relative;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-weight: 500;
+  padding: 0;
+  width: 100%;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.app-navigation-sidebar .nav-link-item i {
+  position: absolute;
+  left: var(--sidebar-icon-position-left);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.25rem;
+  width: var(--sidebar-icon-width);
+  text-align: center;
+  line-height: 1;
+  transition: none;
+  z-index: 2;
+  margin-right: var(--sidebar-icon-right-margin);
+  flex-shrink: 0;
+}
+
+.app-navigation-sidebar .nav-link-text {
+  position: absolute;
+  left: calc(var(--sidebar-icon-position-left) + var(--sidebar-icon-width) + var(--sidebar-icon-right-margin));
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out var(--sidebar-text-transition-delay);
+  color: color-mix(in srgb, var(--sidebar-bg-current) 15%, var(--sidebar-text-hover-color-current) 85%);
+}
+
+.app-navigation-sidebar:hover .nav-link-text {
+  opacity: 1;
+}
+
+.app-navigation-sidebar .nav-link-item:hover {
+  background-color: color-mix(in srgb, var(--sidebar-bg-current) 85%, var(--sidebar-text-hover-color-current) 15%);
+  color: var(--sidebar-text-hover-color-current);
+}
+html[data-bs-theme="dark"] .app-navigation-sidebar .nav-link-item:hover {
+  background-color: color-mix(in srgb, var(--sidebar-bg-current) 70%, white 30%);
+}
+
+
+.app-navigation-sidebar .nav-link-item.router-link-exact-active {
+  background-color: var(--sidebar-active-bg-current);
+  color: var(--sidebar-text-hover-color-current);
+  font-weight: 600;
+}
+html:not([data-bs-theme="dark"]) .app-navigation-sidebar .nav-link-item.router-link-exact-active {
+  color: var(--sidebar-text-color-true-light);
+}
+html:not([data-bs-theme="dark"]) .app-navigation-sidebar .nav-link-item.router-link-exact-active {
+    color: #052c65;
+}
+
+
+.app-navigation-sidebar .user-profile-area {
+  flex-shrink: 0;
+  position: relative;
+  height: 150px; /* This seems quite large, check if intended */
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.app-navigation-sidebar .user-profile-toggle {
+  color: var(--sidebar-text-color-current);
+  text-decoration: none;
+  background-color: transparent;
+  border: none;
+  padding: 0.75rem 0;
+  text-align: left;
+  border-radius: 1.1rem;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.app-navigation-sidebar .user-profile-toggle:hover,
+.app-navigation-sidebar .user-profile-toggle:focus {
+  color: var(--sidebar-text-hover-color-current);
+  background-color: color-mix(in srgb, var(--sidebar-bg-current) 90%, var(--sidebar-text-hover-color-current) 10%);
+}
+html[data-bs-theme="dark"] .app-navigation-sidebar .user-profile-toggle:hover,
+html[data-bs-theme="dark"] .app-navigation-sidebar .user-profile-toggle:focus {
+    background-color: color-mix(in srgb, var(--sidebar-bg-current) 85%, white 15%);
+}
+
+
+.app-navigation-sidebar .user-profile-toggle .bi-person-circle {
+  font-size: 1.25rem;
+  width: var(--sidebar-icon-width);
+  text-align: center;
+  flex-shrink: 0;
+  position: absolute;
+  left: var(--sidebar-icon-position-left);
+  top: 50%;
+  transform: translateY(-50%);
+  transition: none;
+}
+
+.app-navigation-sidebar .user-info-text {
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out var(--sidebar-text-transition-delay);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  margin-left: calc(var(--sidebar-icon-position-left) + var(--sidebar-icon-width) + var(--sidebar-icon-right-margin));
+  flex-grow: 1;
+  color: var(--sidebar-text-color-current);
+}
+
+.app-navigation-sidebar:hover .user-info-text {
+  opacity: 1;
+}
+
+.app-navigation-sidebar .user-profile-area .dropdown-menu {
+  font-size: 0.875rem;
+  background-color: var(--sidebar-bg-current);
+  border: 1px solid var(--border-color-current);
+  --bs-dropdown-link-color: var(--sidebar-text-color-current);
+  --bs-dropdown-link-hover-color: var(--sidebar-text-hover-color-current);
+  --bs-dropdown-link-hover-bg: color-mix(in srgb, var(--sidebar-bg-current) 70%, var(--sidebar-text-hover-color-current) 30%);
+  --bs-dropdown-link-active-color: var(--sidebar-text-hover-color-current);
+  --bs-dropdown-link-active-bg: var(--sidebar-active-bg-current);
+  --bs-dropdown-header-color: color-mix(in srgb, var(--sidebar-text-color-current) 80%, black);
+}
+
+.app-navigation-sidebar .user-profile-area .dropdown-item {
+  padding: 0.5rem 1rem;
+  color: var(--bs-dropdown-link-color);
+}
+
+.app-navigation-sidebar .user-profile-area .dropdown-item:hover,
+.app-navigation-sidebar .user-profile-area .dropdown-item:focus {
+  color: var(--bs-dropdown-link-hover-color);
+  background-color: var(--bs-dropdown-link-hover-bg);
+}
+
+.app-navigation-sidebar .user-profile-area .dropdown-item i {
+  width: 1.25em;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Router transition fades */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Collapsed sidebar specific text hiding */
+.app-navigation-sidebar.sidebar-collapsed .nav-link-text,
+.app-navigation-sidebar.sidebar-collapsed .user-info-text,
+.app-navigation-sidebar.sidebar-collapsed .app-title {
+  display: none; /* Use display:none for immediate hiding when not hovered if using js to set class */
+  opacity: 0;    /* Opacity for transition if :hover is used for expansion */
+  pointer-events: none;
+}
+/* === End of navigation bar styling === */
+
+
+/* === Landing Login View Styles === */
+.landing-login-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure footer is at bottom if content is short */
+  /* Background and color will be inherited from .app-main-content-area or html/body */
+  /* overflow-y: auto; /* Scroll is managed by .app-main-content-area */
+}
+
+.landing-header {
+  background-color: var(--card-bg-current);
+  border-bottom: 1px solid var(--border-color-current);
+  z-index: 1030; /* Ensure it's above other content if sticky */
+  /* position: sticky; top: 0; /* If you want a sticky header */
+}
+
+.logo-area-landing .landing-logo-img {
+  height: 32px;
+  filter: var(--logo-filter-current, none);
+}
+
+html[data-bs-theme="dark"] .logo-area-landing .landing-logo-img {
+  /* filter: invert(1) hue-rotate(180deg); */
+}
+
+
+.landing-content {
+  flex-grow: 1;
+}
+
+.product-info-section h1 {
+  color: var(--text-color-base-current);
+}
+
+.product-info-section .lead {
+  color: var(--text-muted-current);
+}
+
+.features-list .bi {
+  font-size: 1.25rem;
+  min-width: 28px;
+}
+
+.login-card-wrapper.card {
+  border: none;
+  background-color: var(--card-bg-current);
+}
+
+.landing-header .language-toggle button {
+    font-size: 0.8rem;
+}
+
+.btn .spinner-border {
+    vertical-align: middle;
+}
+
+.landing-footer {
+  background-color: var(--card-bg-light);
+  border-top: 1px solid var(--border-color-light);
+  padding: 1rem 0;
+}
+html[data-bs-theme="dark"] .landing-footer {
+  background-color: var(--card-bg-current);
+  border-top: 1px solid var(--border-color-current);
+}
+
+@media (max-width: 575.98px) {
+  .login-card-wrapper .card-body {
+    padding: 1.5rem !important;
+  }
+  .product-info-section h1 {
+    font-size: 2.5rem;
+  }
+  .product-info-section .lead {
+    font-size: 1.1rem;
+  }
+}
