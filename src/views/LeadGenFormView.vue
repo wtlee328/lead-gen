@@ -644,6 +644,9 @@ import {
   type SortingState,
   type PaginationState,
   type RowSelectionState,
+  type Header, // Import Header type
+  type Column, // Import Column type (column.columnDef)
+  type Cell,   // Import Cell type
   type Row, // Added Row type
   type CellContext, // Added CellContext type
   type HeaderContext, // Added HeaderContext for header props
@@ -1265,24 +1268,26 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   }),
 ]);
 
-function getColumnStyle(
-  headerOrCell: HeaderContext<Lead, unknown> | CellContext<Lead, unknown>
-) {
-  // Typed parameter
+// Define a common interface for what getColumnStyle needs
+interface ColumnStylingContext {
+  column: Column<Lead, unknown>; // Both Header and Cell have a 'column' property
+}
+function getColumnStyle(context: ColumnStylingContext) {
   const baseStyle: Record<string, string> = {
     "user-select":
-      headerOrCell.column.getCanSort() && !isProcessingBatch.value
+      context.column.getCanSort() && !isProcessingBatch.value // Use context.column
         ? "pointer"
         : "none",
     verticalAlign: "middle",
   };
-  if (!headerOrCell.column.columnDef.meta?.style?.width) {
-    baseStyle.width = `${headerOrCell.column.columnDef.size}px`;
+  // Access properties via context.column
+  if (!context.column.columnDef.meta?.style?.width) {
+    baseStyle.width = `${context.column.columnDef.size}px`;
   }
-  if (!headerOrCell.column.columnDef.meta?.style?.minWidth) {
-    baseStyle.minWidth = `${headerOrCell.column.columnDef.size}px`;
+  if (!context.column.columnDef.meta?.style?.minWidth) {
+    baseStyle.minWidth = `${context.column.columnDef.size}px`;
   }
-  const metaStyle = headerOrCell.column.columnDef.meta?.style || {};
+  const metaStyle = context.column.columnDef.meta?.style || {};
   return { ...baseStyle, ...metaStyle };
 }
 
