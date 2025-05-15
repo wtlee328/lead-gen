@@ -44,7 +44,7 @@
             {{ filterGroup.label }}
           </label>
           <button
-            v-if="activeFilters[filterGroup.key] && ((Array.isArray(activeFilters[filterGroup.key]) && activeFilters[filterGroup.key].length > 0) || (!Array.isArray(activeFilters[filterGroup.key]) && activeFilters[filterGroup.key]))"
+            v-if="activeFilters[filterGroup.key] && ((Array.isArray(activeFilters[filterGroup.key])) || (!Array.isArray(activeFilters[filterGroup.key]) && activeFilters[filterGroup.key]))"
             @click="clearFilterSection(filterGroup.key)"
             class="btn btn-sm btn-icon-danger py-0 px-1 clear-section-btn"
             :title="texts.clearFilterSectionTooltip + ' ' + filterGroup.label"
@@ -80,7 +80,7 @@
           </option>
         </select>
 
-        <div v-if="activeFilters[filterGroup.key] && activeFilters[filterGroup.key].length > 0" class="d-flex flex-wrap gap-1 mt-1 filter-tags-container">
+        <div v-if="activeFilters[filterGroup.key]" class="d-flex flex-wrap gap-1 mt-1 filter-tags-container">
           <span
             v-for="(item, index) in activeFilters[filterGroup.key]"
             :key="`${filterGroup.key}-${index}`"
