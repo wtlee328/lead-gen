@@ -3,7 +3,7 @@
     <header class="landing-header py-3 sticky-top">
       <div class="container d-flex justify-content-between align-items-center">
         <div class="logo-area-landing">
-          <img src="/src/assets/legen.io.svg" alt="Legen.io Logo" class="landing-logo-img" />
+          <img src="@/assets/legen.io.svg" alt="Legen.io Logo" class="landing-logo-img" />
           <!-- You can add a product name next to the logo if desired -->
           <!-- <span class="fw-bold fs-5 ms-2">{{ texts.productName || 'Our Product' }}</span> -->
         </div>
