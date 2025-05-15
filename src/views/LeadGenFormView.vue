@@ -220,11 +220,7 @@
                       type="button"
                       class="btn-close btn-close-sm ms-2"
                       @click="removeFilterTag(tag.id)"
-                      :aria-label="
-                        (texts.removeFilterTooltip || 'Remove') +
-                        ' ' +
-                        tag.label
-                      "
+                      :aria-label="`${texts.removeFilterTooltip} ${tag.label}`"
                     ></button
                   ></span>
                 </div>
@@ -336,13 +332,17 @@
                           class="dropdown-item"
                           href="#"
                           :class="{
-                            disabled: !canBatchRestoreToNewFromSaved || isProcessingBatch,
+                            disabled:
+                              !canBatchRestoreToNewFromSaved ||
+                              isProcessingBatch,
                           }"
                           @click.prevent="
-                            !(!canBatchRestoreToNewFromSaved || isProcessingBatch) &&
-                              batchRestoreSelected()
+                            !(
+                              !canBatchRestoreToNewFromSaved ||
+                              isProcessingBatch
+                            ) && batchRestoreSelected()
                           "
-                          >{{ texts.batchRestoreButton }}</a 
+                          >{{ texts.batchRestoreButton }}</a
                         >
                       </li>
                       <li>
@@ -350,7 +350,8 @@
                           class="dropdown-item"
                           href="#"
                           :class="{
-                            disabled: !canBatchArchiveSaved || isProcessingBatch,
+                            disabled:
+                              !canBatchArchiveSaved || isProcessingBatch,
                           }"
                           @click.prevent="
                             !(!canBatchArchiveSaved || isProcessingBatch) &&
@@ -373,16 +374,17 @@
                             !(!canBatchMoveToSaved || isProcessingBatch) &&
                               batchMoveToSavedSelected()
                           "
-                          >{{ texts.batchMoveToSavedButton }}</a  
-                        > 
+                          >{{ texts.batchMoveToSavedButton }}</a
+                        >
                       </li>
-                       <li><hr class="dropdown-divider"></li>
+                      <li><hr class="dropdown-divider" /></li>
                       <li>
                         <a
                           class="dropdown-item text-danger"
                           href="#"
                           :class="{
-                            disabled: !canBatchDeleteArchived || isProcessingBatch,
+                            disabled:
+                              !canBatchDeleteArchived || isProcessingBatch,
                           }"
                           @click.prevent="
                             !(!canBatchDeleteArchived || isProcessingBatch) &&
@@ -401,7 +403,9 @@
                   class="btn btn-sm btn-icon me-2"
                   @click="toggleSearchForm"
                   :title="
-                    showSearchForm ? texts.searchFormToggleHideTooltip : texts.searchFormToggleShowTooltip
+                    showSearchForm
+                      ? texts.searchFormToggleHideTooltip
+                      : texts.searchFormToggleShowTooltip
                   "
                 >
                   <i
@@ -439,7 +443,10 @@
                 key="loading"
                 class="loading-empty-state"
               >
-                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <div
+                  class="spinner-border text-primary mb-3"
+                  role="status"
+                ></div>
                 <p class="text-muted">{{ texts.loadingLeads }}</p>
               </div>
               <div
@@ -455,7 +462,11 @@
                 <i class="bi bi-search display-1 text-muted mb-3"></i>
                 <p class="lead mb-0">{{ texts.noNewLeadsYet }}</p>
               </div>
-              <div v-else-if="tableData.length === 0" key="empty-generic" class="loading-empty-state">
+              <div
+                v-else-if="tableData.length === 0"
+                key="empty-generic"
+                class="loading-empty-state"
+              >
                 <i class="bi bi-inbox display-1 text-muted mb-3"></i>
                 <p class="lead">{{ noLeadsMessageForTab }}</p>
               </div>
@@ -480,7 +491,8 @@
                           'cursor-pointer':
                             header.column.getCanSort() && !isProcessingBatch,
                           'sorting-asc': header.column.getIsSorted() === 'asc',
-                          'sorting-desc': header.column.getIsSorted() === 'desc',
+                          'sorting-desc':
+                            header.column.getIsSorted() === 'desc',
                         }"
                         :style="getColumnStyle(header)"
                       >
@@ -619,8 +631,8 @@ import FilterPanelView, {
 import { useLanguageStore } from "@/stores/languageStore";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/services/supabaseClient";
-import type { Session, PostgrestFilterBuilder } from "@supabase/supabase-js";
-import { v4 as uuidv4 } from "uuid";
+import type { Session } from "@supabase/supabase-js"; // Removed PostgrestFilterBuilder
+import { v4 as uuidv4 } from "uuid"; // Standard import for v4
 import {
   useVueTable,
   getCoreRowModel,
@@ -632,13 +644,28 @@ import {
   type SortingState,
   type PaginationState,
   type RowSelectionState,
+  type Table, // Added Table type
+  type Row, // Added Row type
+  type CellContext, // Added CellContext type
+  type HeaderContext, // Added HeaderContext for header props
+  type Updater, // Added Updater type
+  // type RowData // If needed for augmentation, ensure it's imported
 } from "@tanstack/vue-table";
 import type { LeadTab } from "@/types/tabs";
 import { Dropdown } from "bootstrap";
+import type { Translations } from "@/types/language"; // Assuming this holds all translation keys
 
+// This augmentation should ideally be in a .d.ts file (e.g., src/tanstack-table.d.ts or src/env.d.ts)
+// and that file should be included in your tsconfig.app.json's "include" array.
 declare module "@tanstack/vue-table" {
+  // Or '@tanstack/table-core' if you augment core types
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData, TValue> {
+    // TData was RowData, changed to TData for consistency with TanStack's generic
     style?: Record<string, string>;
+    // Add any other custom meta properties you use, e.g.:
+    // headerClass?: string;
+    // cellClass?: string;
   }
 }
 
@@ -657,12 +684,12 @@ interface Lead {
   company_size?: string[] | null;
   phone?: string | null;
   linkedIn_url?: string | null;
-  keywords?: any | null;
+  keywords?: any | null; // Consider a more specific type if possible, e.g., string[] or Record<string, any>
   email?: string | null;
   notes?: string | null;
   lead_status?: string | null;
   icebreaker?: string | null;
-  source_query_criteria?: any | null;
+  source_query_criteria?: any | null; // Consider a more specific type
 }
 interface FilterTag {
   id: string;
@@ -707,6 +734,137 @@ const isProcessingBatch = ref(false);
 const batchActionsDropdownToggleRef = ref<HTMLButtonElement | null>(null);
 const columnHelper = createColumnHelper<Lead>();
 
+// Default texts for this component
+const defaultTexts = {
+  mainQueryLabel: "Briefly describe the type of prospects you're looking for:",
+  mainQueryPlaceholder:
+    "e.g., 'Software engineers in fintech startups in London'",
+  advancedBtnTextShow: "Advanced Filters",
+  advancedBtnTextHide: "Hide Filters",
+  jobTitleLabel: "Job Title",
+  industryLabel: "Industry",
+  locationLabel: "Country/City",
+  companySizeLabel: "Company Size",
+  keywordsLabel: "Other Keywords",
+  advKeywordsPlaceholder: "e.g., innovative, AI, B2B",
+  addFiltersBtnText: "Add Filters",
+  tagAreaLabel: "Selected Filters:",
+  removeFilterTooltip: "Remove filter",
+  searchLeadsButton: "Find Prospects",
+  dashboardTitle: "Prospects Dashboard", // Included for completeness if ever used directly
+  formDescription: "Define Your Prospect Persona",
+  industryPlaceholder: "Select Industry",
+  companySizePlaceholder: "Select Company Size",
+  leadsListTitle: "Prospects",
+  refreshButton: "Refresh",
+  loadingLeads: "Loading...",
+  colName: "Name",
+  colJobTitle: "Job Title",
+  colIndustry: "Industry",
+  colLocation: "Location",
+  colCompanyName: "Company",
+  colCompanySize: "Company Size",
+  colPhone: "Phone",
+  colLinkedIn: "LinkedIn",
+  colKeywords: "Keywords",
+  colEmail: "Email",
+  colNotes: "Notes",
+  colCreatedAt: "Date Added",
+  colStatus: "Status",
+  n8nConfigError: "N8N configuration error. Contact admin.",
+  searchLeadsSuccess:
+    "Search submitted successfully. Results are in the 'New' tab.",
+  alertError: "Error: ",
+  alertSuccess: "Success: ",
+  alertWarning: "Warning: ",
+  userNotAuthMessage: "User not authenticated. Please log in.",
+  errorRequired: (fieldName: string) => `${fieldName} is required.`,
+  noSearchCriteria: "Please enter search criteria.",
+  previousPage: "Previous",
+  nextPage: "Next",
+  pageText: "Page",
+  ofText: "of",
+  showNum: "Show",
+  accessDeniedMessage: "Access Denied.",
+  tabNew: "New",
+  tabSaved: "Saved",
+  tabArchived: "Archived",
+  confirmArchiveUnsaved:
+    "You have unsaved leads. Starting a new search will archive them. Proceed?",
+  unsavedLeadsArchived: "Unsaved leads moved to 'Archived'.",
+  noNewLeadsYet: "Submit a search to find new prospects or check other tabs.",
+  noSavedLeads: "No leads saved yet. Save leads from the 'New' tab.",
+  noArchivedLeads: "No leads have been archived.",
+  noLeadsFound: "No prospects found for this tab.",
+  colActions: "Actions",
+  actionSaveTooltip: "Save Lead",
+  actionArchiveTooltip: "Archive Lead",
+  actionRestoreTooltip: "Move to New",
+  actionDeleteTooltip: "Delete Lead",
+  actionMoveToSavedTooltip: "Move to Saved",
+  tooltipSave: "Save",
+  tooltipArchive: "Archive",
+  tooltipRestore: "Restore",
+  tooltipMoveToSaved: "Move to Saved",
+  tooltipDelete: "Delete",
+  leadSavedSuccess: "Lead saved successfully.",
+  leadArchivedSuccess: "Lead archived successfully.",
+  leadRestoredSuccess: "Lead moved to 'New' successfully.",
+  leadDeletedSuccess: "Lead deleted successfully.",
+  leadUpdateError: "Failed to update lead status.",
+  leadDeleteError: "Failed to delete lead.",
+  autoArchiveError: "Failed to auto-archive unsaved leads.",
+  filtersTitle: "Filters",
+  tabsTitle: "Lead Categories",
+  addFilterPlaceholder: "Add", // Used in FilterPanelView
+  selectFilterPlaceholder: "Select", // Used in FilterPanelView
+  clearAllFiltersButton: "Clear All Filters", // Used in FilterPanelView
+  clearFilterSectionTooltip: "Clear section", // Used in FilterPanelView
+  selectAllPageButton: "Select Page",
+  deselectAllButton: "Deselect All",
+  batchActionsDropdownTitle: "Actions for Selected",
+  selectAllPageTooltip: "Select all leads on current page",
+  deselectAllPageTooltip: "Deselect all leads on current page",
+  batchSaveButton: "Save Selected",
+  batchArchiveButton: "Archive Selected",
+  batchRestoreButton: "Restore Selected to New",
+  batchDeleteButton: "Delete Selected",
+  batchMoveToSavedButton: "Move Selected to Saved",
+  confirmBatchSave: (count: number) =>
+    `Are you sure you want to save ${count} selected lead(s)?`,
+  confirmBatchArchive: (count: number) =>
+    `Are you sure you want to archive ${count} selected lead(s)?`,
+  confirmBatchRestore: (count: number) =>
+    `Are you sure you want to restore ${count} selected lead(s) to 'New'?`,
+  confirmBatchDelete: (count: number) =>
+    `Are you sure you want to permanently delete ${count} selected lead(s)? This action cannot be undone.`,
+  confirmBatchMoveToSaved: (count: number) =>
+    `Are you sure you want to move ${count} selected lead(s) to 'Saved'?`,
+  noLeadsEligibleForAction: (action: string) =>
+    `No selected leads are eligible for ${action}.`,
+  batchActionResult: (action: string, success: number, failed: number) =>
+    `${action}: ${success} succeeded, ${failed} failed.`,
+  searchFormToggleShowTooltip: "Show Search Form",
+  searchFormToggleHideTooltip: "Hide Search Form",
+  statusNewProspect: "New Prospect",
+  statusContacted: "Contacted",
+  statusFollowUp: "Follow-up",
+  statusReplied: "Replied",
+};
+
+const texts = computed((): Translations & typeof defaultTexts => {
+  if (
+    languageStore &&
+    typeof languageStore.texts === "object" &&
+    languageStore.texts !== null && // Added null check
+    Object.keys(languageStore.texts).length > 0
+  ) {
+    // @ts-ignore - Acknowledging potential for missing keys if Translations is not exhaustive
+    return { ...defaultTexts, ...languageStore.texts };
+  }
+  return defaultTexts as Translations & typeof defaultTexts; // Asserting the type for the default case
+});
+
 const companySizeOptionsForFilter = computed(() => [
   { value: "1-10", text: "1-10" },
   { value: "11-50", text: "11-50" },
@@ -725,150 +883,13 @@ const leadStatusOptionsForFilter = computed(() => [
   { value: "Replied", text: texts.value.statusReplied },
 ]);
 
-const texts = computed(() => {
-  const defaults = {
-    mainQueryLabel:
-      "Briefly describe the type of prospects you're looking for:",
-    mainQueryPlaceholder:
-      "e.g., 'Software engineers in fintech startups in London'",
-    advancedBtnTextShow: "Advanced Filters",
-    advancedBtnTextHide: "Hide Filters",
-    jobTitleLabel: "Job Title",
-    industryLabel: "Industry",
-    locationLabel: "Country/City",
-    companySizeLabel: "Company Size",
-    keywordsLabel: "Other Keywords",
-    advKeywordsPlaceholder: "e.g., innovative, AI, B2B",
-    addFiltersBtnText: "Add Filters",
-    tagAreaLabel: "Selected Filters:",
-    removeFilterTooltip: "Remove filter",
-    searchLeadsButton: "Find Prospects",
-    dashboardTitle: "Prospects Dashboard",
-    formDescription: "Define Your Prospect Persona",
-    industryPlaceholder: "Select Industry",
-    companySizePlaceholder: "Select Company Size",
-    leadsListTitle: "Prospects",
-    refreshButton: "Refresh",
-    loadingLeads: "Loading...",
-    colName: "Name",
-    colJobTitle: "Job Title",
-    colIndustry: "Industry",
-    colLocation: "Location",
-    colCompanyName: "Company",
-    colCompanySize: "Company Size",
-    colPhone: "Phone",
-    colLinkedIn: "LinkedIn",
-    colKeywords: "Keywords",
-    colEmail: "Email",
-    colNotes: "Notes",
-    colCreatedAt: "Date Added",
-    colStatus: "Status",
-    n8nConfigError: "N8N configuration error. Contact admin.",
-    searchLeadsSuccess:
-      "Search submitted successfully. Results are in the 'New' tab.",
-    alertError: "Error: ",
-    alertSuccess: "Success: ",
-    alertWarning: "Warning: ",
-    userNotAuthMessage: "User not authenticated. Please log in.",
-    errorRequired: (fieldName: string) => `${fieldName} is required.`,
-    noSearchCriteria: "Please enter search criteria.",
-    previousPage: "Previous",
-    nextPage: "Next",
-    pageText: "Page",
-    ofText: "of",
-    showNum: "Show",
-    accessDeniedMessage: "Access Denied.",
-    tabNew: "New",
-    tabSaved: "Saved",
-    tabArchived: "Archived",
-    confirmArchiveUnsaved:
-      "You have unsaved leads. Starting a new search will archive them. Proceed?",
-    unsavedLeadsArchived: "Unsaved leads moved to 'Archived'.",
-    noNewLeadsYet: "Submit a search to find new prospects or check other tabs.",
-    noSavedLeads: "No leads saved yet. Save leads from the 'New' tab.",
-    noArchivedLeads: "No leads have been archived.",
-    noLeadsFound: "No prospects found for this tab.",
-    colActions: "Actions",
-    actionSaveTooltip: "Save Lead", // More descriptive tooltip for the actual action
-    actionArchiveTooltip: "Archive Lead",
-    actionRestoreTooltip: "Move to New",
-    actionDeleteTooltip: "Delete Lead",
-    actionMoveToSavedTooltip: "Move to Saved",
-    tooltipSave: "Save", // Simple hover text
-    tooltipArchive: "Archive",
-    tooltipRestore: "Restore",
-    tooltipMoveToSaved: "Move to Saved",
-    tooltipDelete: "Delete",
-    leadSavedSuccess: "Lead saved successfully.",
-    leadArchivedSuccess: "Lead archived successfully.",
-    leadRestoredSuccess: "Lead moved to 'New' successfully.",
-    leadDeletedSuccess: "Lead deleted successfully.",
-    leadUpdateError: "Failed to update lead status.",
-    leadDeleteError: "Failed to delete lead.",
-    autoArchiveError: "Failed to auto-archive unsaved leads.",
-    filtersTitle: "Filters",
-    tabsTitle: "Lead Categories",
-    addFilterPlaceholder: "Add",
-    selectFilterPlaceholder: "Select",
-    clearAllFiltersButton: "Clear All Filters",
-    clearFilterSectionTooltip: "Clear section",
-    selectAllPageButton: "Select Page",
-    deselectAllButton: "Deselect All",
-    batchActionsDropdownTitle: "Actions for Selected",
-    selectAllPageTooltip: "Select all leads on current page",
-    deselectAllPageTooltip: "Deselect all leads on current page",
-    batchSaveButton: "Save Selected",
-    batchArchiveButton: "Archive Selected",
-    batchRestoreButton: "Restore Selected to New",
-    batchDeleteButton: "Delete Selected",
-    batchMoveToSavedButton: "Move Selected to Saved",
-    confirmBatchSave: (count: number) =>
-      `Are you sure you want to save ${count} selected lead(s)?`,
-    confirmBatchArchive: (count: number) =>
-      `Are you sure you want to archive ${count} selected lead(s)?`,
-    confirmBatchRestore: (count: number) =>
-      `Are you sure you want to restore ${count} selected lead(s) to 'New'?`,
-    confirmBatchDelete: (count: number) => 
-      `Are you sure you want to permanently delete ${count} selected lead(s)? This action cannot be undone.`,
-    confirmBatchMoveToSaved: (count: number) =>
-      `Are you sure you want to move ${count} selected lead(s) to 'Saved'?`,
-    noLeadsEligibleForAction: (action: string) =>
-      `No selected leads are eligible for ${action}.`,
-    batchActionResult: (action: string, success: number, failed: number) =>
-      `${action}: ${success} succeeded, ${failed} failed.`,
-    searchFormToggleShowTooltip: "Show Search Form",
-    searchFormToggleHideTooltip: "Hide Search Form",
-    statusNewProspect: "New Prospect",
-    statusContacted: "Contacted",
-    statusFollowUp: "Follow-up",
-    statusReplied: "Replied",
-  };
-  if (
-    languageStore &&
-    typeof languageStore.texts === "object" &&
-    Object.keys(languageStore.texts).length > 0
-  ) {
-    const mergedTexts = { ...defaults };
-    for (const key in languageStore.texts) {
-      if (Object.prototype.hasOwnProperty.call(languageStore.texts, key)) {
-        // @ts-ignore
-        mergedTexts[key as keyof typeof mergedTexts] = languageStore.texts[
-          key
-        ] as any;
-      }
-    }
-    return mergedTexts;
-  }
-  return defaults;
-});
-
 const noLeadsMessageForTab = computed(() => {
   switch (currentTab.value) {
-    case 'new':
+    case "new":
       return texts.value.noNewLeadsYet;
-    case 'saved':
+    case "saved":
       return texts.value.noSavedLeads;
-    case 'archived':
+    case "archived":
       return texts.value.noArchivedLeads;
     default:
       return texts.value.noLeadsFound;
@@ -878,7 +899,9 @@ const noLeadsMessageForTab = computed(() => {
 const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.display({
     id: "select",
-    header: ({ table }) =>
+    header: (
+      { table }: HeaderContext<Lead, unknown> // Typed HeaderContext
+    ) =>
       h("input", {
         type: "checkbox",
         class: "form-check-input",
@@ -890,7 +913,9 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         onChange: table.getToggleAllPageRowsSelectedHandler(),
         title: texts.value.selectAllPageTooltip,
       }),
-    cell: ({ row }) =>
+    cell: (
+      { row }: CellContext<Lead, unknown> // Typed CellContext
+    ) =>
       h("input", {
         type: "checkbox",
         class: "form-check-input",
@@ -908,7 +933,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         minWidth: "60px",
         textAlign: "center",
         verticalAlign: "middle",
-        zIndex: 18, 
+        zIndex: 18,
         backgroundColor: "var(--card-bg-current)",
         borderRight: "1px solid var(--border-color-current)",
       },
@@ -917,17 +942,17 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.display({
     id: "actions",
     header: () => texts.value.colActions,
-    cell: (info) => {
+    cell: (info: CellContext<Lead, unknown>) => {
+      // Typed info
       const lead = info.row.original;
       const buttons = [];
-
       if (currentTab.value === "new" && lead.tab === "new") {
         buttons.push(
           h(
             "button",
             {
               class: "btn btn-sm btn-outline-success",
-              title: texts.value.tooltipSave, // Use simple tooltip
+              title: texts.value.tooltipSave,
               disabled: isProcessingBatch.value,
               onClick: () =>
                 !isProcessingBatch.value && updateLeadTab(lead.id, "saved"),
@@ -945,7 +970,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
                 buttons.length > 0 ? "ms-1" : ""
               }`,
               disabled: isProcessingBatch.value,
-              title: texts.value.tooltipArchive, // Use simple tooltip
+              title: texts.value.tooltipArchive,
             },
             [h("i", { class: "bi bi-archive" })]
           )
@@ -959,7 +984,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
                 !isProcessingBatch.value && updateLeadTab(lead.id, "new"),
               class: "btn btn-sm btn-outline-secondary",
               disabled: isProcessingBatch.value,
-              title: texts.value.tooltipRestore, // Use simple tooltip
+              title: texts.value.tooltipRestore,
             },
             [h("i", { class: "bi bi-arrow-counterclockwise" })]
           )
@@ -974,7 +999,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
                 buttons.length > 0 ? "ms-1" : ""
               }`,
               disabled: isProcessingBatch.value,
-              title: texts.value.tooltipArchive, // Use simple tooltip
+              title: texts.value.tooltipArchive,
             },
             [h("i", { class: "bi bi-archive" })]
           )
@@ -988,7 +1013,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
                 !isProcessingBatch.value && updateLeadTab(lead.id, "saved"),
               class: "btn btn-sm btn-outline-secondary",
               disabled: isProcessingBatch.value,
-              title: texts.value.tooltipMoveToSaved, // Use simple tooltip
+              title: texts.value.tooltipMoveToSaved,
             },
             [h("i", { class: "bi bi-bookmark-plus" })]
           )
@@ -1002,13 +1027,12 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
                 buttons.length > 0 ? "ms-1" : ""
               }`,
               disabled: isProcessingBatch.value,
-              title: texts.value.tooltipDelete, // Use simple tooltip
+              title: texts.value.tooltipDelete,
             },
             [h("i", { class: "bi bi-trash" })]
           )
         );
       }
-
       return h(
         "div",
         {
@@ -1027,7 +1051,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         minWidth: "150px",
         textAlign: "center",
         verticalAlign: "middle",
-        zIndex: 17, 
+        zIndex: 17,
         backgroundColor: "var(--card-bg-current)",
         borderRight: "1px solid var(--border-color-current)",
       },
@@ -1036,7 +1060,9 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("name", {
     id: "name",
     header: () => texts.value.colName,
-    cell: (info) =>
+    cell: (
+      info: CellContext<Lead, Lead["name"]> // Typed info and TValue
+    ) =>
       info.getValue() ||
       `${info.row.original.first_name || ""} ${
         info.row.original.last_name || ""
@@ -1050,7 +1076,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         left: "210px",
         minWidth: "180px",
         width: "180px",
-        zIndex: 16, 
+        zIndex: 16,
         backgroundColor: "var(--card-bg-current)",
         borderRight: "1px solid var(--border-color-current)",
       },
@@ -1059,7 +1085,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("job_title", {
     id: "job_title",
     header: () => texts.value.colJobTitle,
-    cell: (info) => info.getValue() || "N/A",
+    cell: (info: CellContext<Lead, Lead["job_title"]>) =>
+      info.getValue() || "N/A",
     enableSorting: true,
     size: 200,
     meta: { style: { minWidth: "200px", width: "200px" } },
@@ -1067,7 +1094,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("industry", {
     id: "industry",
     header: () => texts.value.colIndustry,
-    cell: (info) => {
+    cell: (info: CellContext<Lead, Lead["industry"]>) => {
       const industries = info.getValue();
       if (Array.isArray(industries) && industries.length > 0) {
         return h(
@@ -1087,7 +1114,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("location", {
     id: "location",
     header: () => texts.value.colLocation,
-    cell: (info) => info.getValue() || "N/A",
+    cell: (info: CellContext<Lead, Lead["location"]>) =>
+      info.getValue() || "N/A",
     enableSorting: true,
     size: 150,
     meta: { style: { minWidth: "150px", width: "150px" } },
@@ -1095,7 +1123,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("company_name", {
     id: "company_name",
     header: () => texts.value.colCompanyName,
-    cell: (info) => info.getValue() || "N/A",
+    cell: (info: CellContext<Lead, Lead["company_name"]>) =>
+      info.getValue() || "N/A",
     enableSorting: true,
     size: 180,
     meta: { style: { minWidth: "180px", width: "180px" } },
@@ -1103,7 +1132,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("company_size", {
     id: "company_size",
     header: () => texts.value.colCompanySize,
-    cell: (info) => {
+    cell: (info: CellContext<Lead, Lead["company_size"]>) => {
       const sizes = info.getValue();
       if (Array.isArray(sizes) && sizes.length > 0) {
         return h(
@@ -1123,7 +1152,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("phone", {
     id: "phone",
     header: () => texts.value.colPhone,
-    cell: (info) => info.getValue() || "N/A",
+    cell: (info: CellContext<Lead, Lead["phone"]>) => info.getValue() || "N/A",
     enableSorting: false,
     size: 140,
     meta: { style: { minWidth: "140px", width: "140px" } },
@@ -1131,7 +1160,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("linkedIn_url", {
     id: "linkedIn_url",
     header: () => texts.value.colLinkedIn,
-    cell: (info) => {
+    cell: (info: CellContext<Lead, Lead["linkedIn_url"]>) => {
       const url = info.getValue();
       return url
         ? h(
@@ -1154,7 +1183,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("keywords", {
     id: "keywords",
     header: () => texts.value.colKeywords,
-    cell: (info) => {
+    cell: (info: CellContext<Lead, Lead["keywords"]>) => {
+      // Typed info, TValue is Lead["keywords"]
       const keywords = info.getValue();
       let kwsArray: string[] = [];
       if (Array.isArray(keywords)) {
@@ -1189,7 +1219,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("email", {
     id: "email",
     header: () => texts.value.colEmail,
-    cell: (info) => info.getValue() || "N/A",
+    cell: (info: CellContext<Lead, Lead["email"]>) => info.getValue() || "N/A",
     enableSorting: true,
     size: 220,
     meta: { style: { minWidth: "220px", width: "220px" } },
@@ -1197,7 +1227,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("notes", {
     id: "notes",
     header: () => texts.value.colNotes,
-    cell: (info) => info.getValue() || "N/A",
+    cell: (info: CellContext<Lead, Lead["notes"]>) => info.getValue() || "N/A",
     enableSorting: false,
     size: 250,
     meta: { style: { minWidth: "250px", width: "250px" } },
@@ -1205,7 +1235,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("created_at", {
     id: "created_at",
     header: () => texts.value.colCreatedAt,
-    cell: (info) =>
+    cell: (info: CellContext<Lead, Lead["created_at"]>) =>
       info.getValue() ? new Date(info.getValue()).toLocaleDateString() : "N/A",
     enableSorting: true,
     size: 100,
@@ -1214,7 +1244,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("lead_status", {
     id: "lead_status",
     header: () => texts.value.colStatus,
-    cell: (info) => {
+    cell: (info: CellContext<Lead, Lead["lead_status"]>) => {
       const status = info.getValue();
       return status
         ? h("span", { class: `badge ${getStatusBadgeClass(status)}` }, status)
@@ -1228,7 +1258,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         right: "0px",
         minWidth: "130px",
         width: "130px",
-        zIndex: 16, 
+        zIndex: 16,
         backgroundColor: "var(--card-bg-current)",
         borderLeft: "1px solid var(--border-color-current)",
       },
@@ -1236,7 +1266,10 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   }),
 ]);
 
-function getColumnStyle(headerOrCell: any) {
+function getColumnStyle(
+  headerOrCell: HeaderContext<Lead, unknown> | CellContext<Lead, unknown>
+) {
+  // Typed parameter
   const baseStyle: Record<string, string> = {
     "user-select":
       headerOrCell.column.getCanSort() && !isProcessingBatch.value
@@ -1271,18 +1304,21 @@ const table = useVueTable({
     },
   },
   enableRowSelection: true,
-  onRowSelectionChange: (updater) => {
+  onRowSelectionChange: (updater: Updater<RowSelectionState>) => {
+    // Typed updater
     if (isProcessingBatch.value) return;
     rowSelection.value =
       typeof updater === "function" ? updater(rowSelection.value) : updater;
   },
-  onSortingChange: (updater) => {
+  onSortingChange: (updater: Updater<SortingState>) => {
+    // Typed updater
     if (isProcessingBatch.value) return;
     sorting.value =
       typeof updater === "function" ? updater(sorting.value) : updater;
     fetchLeadsForCurrentUser(true);
   },
-  onPaginationChange: (updater) => {
+  onPaginationChange: (updater: Updater<PaginationState>) => {
+    // Typed updater
     if (isProcessingBatch.value) return;
     pagination.value =
       typeof updater === "function" ? updater(pagination.value) : updater;
@@ -1307,110 +1343,137 @@ const selectedRowCount = computed(
   () => table.getSelectedRowModel().rows.length
 );
 
-// --- BATCH ACTION ELIGIBILITY COMPUTED PROPERTIES ---
 const canBatchSave = computed(
   () =>
-    currentTab.value === 'new' &&
+    currentTab.value === "new" &&
     !isProcessingBatch.value &&
     selectedRowCount.value > 0 &&
-    table.getSelectedRowModel().rows.some((row) => row.original.tab === "new")
+    table
+      .getSelectedRowModel()
+      .rows.some((row: Row<Lead>) => row.original.tab === "new")
 );
 const canBatchArchiveNew = computed(
   () =>
-    currentTab.value === 'new' &&
+    currentTab.value === "new" &&
     !isProcessingBatch.value &&
     selectedRowCount.value > 0 &&
-    table.getSelectedRowModel().rows.some((row) => row.original.tab === "new")
+    table
+      .getSelectedRowModel()
+      .rows.some((row: Row<Lead>) => row.original.tab === "new")
 );
 const canBatchRestoreToNewFromSaved = computed(
   () =>
-    currentTab.value === 'saved' &&
+    currentTab.value === "saved" &&
     !isProcessingBatch.value &&
     selectedRowCount.value > 0 &&
-    table.getSelectedRowModel().rows.some((row) => row.original.tab === "saved")
+    table
+      .getSelectedRowModel()
+      .rows.some((row: Row<Lead>) => row.original.tab === "saved")
 );
 const canBatchArchiveSaved = computed(
   () =>
-    currentTab.value === 'saved' &&
+    currentTab.value === "saved" &&
     !isProcessingBatch.value &&
     selectedRowCount.value > 0 &&
-    table.getSelectedRowModel().rows.some((row) => row.original.tab === "saved")
+    table
+      .getSelectedRowModel()
+      .rows.some((row: Row<Lead>) => row.original.tab === "saved")
 );
 const canBatchMoveToSaved = computed(
   () =>
-    currentTab.value === 'archived' &&
+    currentTab.value === "archived" &&
     !isProcessingBatch.value &&
     selectedRowCount.value > 0 &&
-    table.getSelectedRowModel().rows.some((row) => row.original.tab === "archived")
+    table
+      .getSelectedRowModel()
+      .rows.some((row: Row<Lead>) => row.original.tab === "archived")
 );
 const canBatchDeleteArchived = computed(
   () =>
-    currentTab.value === 'archived' &&
+    currentTab.value === "archived" &&
     !isProcessingBatch.value &&
     selectedRowCount.value > 0
 );
 
-
 const batchProcessLeads = async (
   targetTabOrAction: LeadTab | "delete",
-  actionNameKey:
+  actionNameKey: keyof Pick<
+    Translations,
     | "confirmBatchSave"
     | "confirmBatchArchive"
     | "confirmBatchRestore"
     | "confirmBatchDelete"
-    | "confirmBatchMoveToSaved", // Added new key
+    | "confirmBatchMoveToSaved"
+  >,
   filterFn: (lead: Lead) => boolean,
-  operationFn: (leadId: string, target?: LeadTab) => Promise<{success: boolean, error?: any}>
+  operationFn: (
+    leadId: string,
+    target?: LeadTab
+  ) => Promise<{ success: boolean; error?: any }>
 ) => {
   if (isProcessingBatch.value) return;
   const selectedRows = table.getSelectedRowModel().rows;
   if (selectedRows.length === 0) return;
 
-  const leadsToProcess = selectedRows
-    .map((row) => row.original)
+  const leadsToProcess: Lead[] = selectedRows // Explicitly type leadsToProcess
+    .map((row: Row<Lead>) => row.original) // Explicitly type row
     .filter(filterFn);
 
   const actionNameForNoLeadsMsg = actionNameKey
     .replace("confirmBatch", "")
     .toLowerCase();
-
-  if (leadsToProcess.length === 0 && targetTabOrAction !== 'delete') { // Delete might proceed if any selected, even if filterFn then reduces to 0.
+  if (leadsToProcess.length === 0 && targetTabOrAction !== "delete") {
     searchMessage.value = texts.value.noLeadsEligibleForAction(
       actionNameForNoLeadsMsg
     );
     searchStatus.value = "warning";
     return;
   }
-  
-  // @ts-ignore
-  const confirmMessageFn = texts.value[actionNameKey];
+  const confirmMessageFn = texts.value[actionNameKey] as (
+    count: number
+  ) => string; // Assert type
   if (!confirm(confirmMessageFn(leadsToProcess.length))) return;
 
   isProcessingBatch.value = true;
-  const processingActionName = actionNameKey.replace("confirmBatch", ""); // Simple way to get 'Save', 'Archive', etc.
+  const processingActionName = actionNameKey.replace("confirmBatch", "");
   searchMessage.value = `Processing ${processingActionName} batch... (${leadsToProcess.length} leads)`;
   searchStatus.value = null;
-
   let successCount = 0;
   let errorCount = 0;
 
-  const results = await Promise.allSettled(
-    leadsToProcess.map((lead) => operationFn(lead.id, targetTabOrAction !== 'delete' ? targetTabOrAction : undefined))
+  const results: PromiseSettledResult<{ success: boolean; error?: any }>[] =
+    await Promise.allSettled(
+      leadsToProcess.map((lead: Lead) =>
+        operationFn(
+          lead.id,
+          targetTabOrAction !== "delete" ? targetTabOrAction : undefined
+        )
+      ) // Type lead
+    );
+
+  results.forEach(
+    (
+      result: PromiseSettledResult<{ success: boolean; error?: any }>,
+      index: number
+    ) => {
+      // Type result
+      const leadProcessed = leadsToProcess[index]; // Get corresponding lead for context in error logging
+      if (
+        result.status === "fulfilled" &&
+        result.value &&
+        result.value.success
+      ) {
+        successCount++;
+      } else {
+        errorCount++;
+        console.error(
+          `Batch ${processingActionName} error for lead ID ${leadProcessed?.id}:`,
+          result.status === "rejected" ? result.reason : result.value
+        );
+      }
+    }
   );
 
-  results.forEach((result) => {
-    if (result.status === "fulfilled" && result.value && result.value.success) {
-      successCount++;
-    } else {
-      errorCount++;
-      console.error(
-        `Batch ${processingActionName} error for a lead:`,
-        result.status === "rejected" ? result.reason : result.value
-      );
-    }
-  });
-
-  // @ts-ignore
   searchMessage.value = texts.value.batchActionResult(
     processingActionName,
     successCount,
@@ -1418,7 +1481,6 @@ const batchProcessLeads = async (
   );
   searchStatus.value =
     errorCount > 0 ? (successCount > 0 ? "warning" : "error") : "success";
-
   rowSelection.value = {};
   await fetchLeadsForCurrentUser(true);
   await fetchTabCounts(authStore.user?.id);
@@ -1426,39 +1488,58 @@ const batchProcessLeads = async (
 };
 
 const batchSaveSelected = () =>
-  batchProcessLeads("saved", "confirmBatchSave",
+  batchProcessLeads(
+    "saved",
+    "confirmBatchSave",
     (lead) => lead.tab === "new",
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );
-const batchArchiveSelected = () => // This handler is called by both 'new' and 'saved' tab archive buttons
-  batchProcessLeads("archived", "confirmBatchArchive",
-    (lead) => currentTab.value === 'new' ? lead.tab === "new" : lead.tab === "saved", // Filter based on current tab context
+const batchArchiveSelected = () =>
+  // This handler is called by both 'new' and 'saved' tab archive buttons
+  batchProcessLeads(
+    "archived",
+    "confirmBatchArchive",
+    (lead) =>
+      currentTab.value === "new" ? lead.tab === "new" : lead.tab === "saved", // Filter based on current tab context
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );
-const batchRestoreSelected = () => // This is for 'saved' tab -> 'new'
-  batchProcessLeads("new", "confirmBatchRestore",
+const batchRestoreSelected = () =>
+  // This is for 'saved' tab -> 'new'
+  batchProcessLeads(
+    "new",
+    "confirmBatchRestore",
     (lead) => lead.tab === "saved", // Filter for saved leads
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );
-const batchMoveToSavedSelected = () => // New handler for 'archived' -> 'saved'
-  batchProcessLeads("saved", "confirmBatchMoveToSaved",
+const batchMoveToSavedSelected = () =>
+  // New handler for 'archived' -> 'saved'
+  batchProcessLeads(
+    "saved",
+    "confirmBatchMoveToSaved",
     (lead) => lead.tab === "archived",
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );
 const batchDeleteSelected = () =>
-  batchProcessLeads("delete", "confirmBatchDelete",
+  batchProcessLeads(
+    "delete",
+    "confirmBatchDelete",
     (lead) => lead.tab === "archived", // Ensure we only delete from archived in this context
     (leadId) => deleteLead(leadId, true)
-);
+  );
 
 async function updateLeadTab(
   leadId: string,
   newTab: LeadTab,
   isBatchOperation: boolean = false
-): Promise<{ success: boolean; leadId?: string; newTab?: LeadTab; error?: any }> {
+): Promise<{
+  success: boolean;
+  leadId?: string;
+  newTab?: LeadTab;
+  error?: any;
+}> {
   if (!isBatchOperation) {
     isProcessingBatch.value = true;
-    if (searchStatus.value !== "error") { 
+    if (searchStatus.value !== "error") {
       searchMessage.value = null;
       searchStatus.value = null;
     }
@@ -1500,31 +1581,31 @@ async function updateLeadTab(
     console.error(`Error updating lead ${leadId} tab:`, error);
     return { success: false, leadId, newTab, error };
   } finally {
-    if(!isBatchOperation) isProcessingBatch.value = false;
+    if (!isBatchOperation) isProcessingBatch.value = false;
   }
 }
 
-async function deleteLead(leadId: string, isBatchOperation: boolean = false): Promise<{success: boolean, error?: any}> {
+async function deleteLead(
+  leadId: string,
+  isBatchOperation: boolean = false
+): Promise<{ success: boolean; error?: any }> {
   if (!isBatchOperation) {
     isProcessingBatch.value = true;
-    if (searchStatus.value !== 'error') {
-        searchMessage.value = null;
-        searchStatus.value = null;
+    if (searchStatus.value !== "error") {
+      searchMessage.value = null;
+      searchStatus.value = null;
     }
   }
 
   try {
-    const { error } = await supabase
-      .from("leads")
-      .delete()
-      .eq("id", leadId);
+    const { error } = await supabase.from("leads").delete().eq("id", leadId);
 
     if (error) throw error;
 
     if (!isBatchOperation) {
       searchMessage.value = texts.value.leadDeletedSuccess;
       searchStatus.value = "success";
-      
+
       const currentSelection = { ...rowSelection.value };
       if (currentSelection[leadId]) {
         delete currentSelection[leadId];
@@ -1542,7 +1623,7 @@ async function deleteLead(leadId: string, isBatchOperation: boolean = false): Pr
     console.error(`Error deleting lead ${leadId}:`, error);
     return { success: false, error };
   } finally {
-    if(!isBatchOperation) isProcessingBatch.value = false;
+    if (!isBatchOperation) isProcessingBatch.value = false;
   }
 }
 
@@ -1556,7 +1637,9 @@ function toggleSearchForm() {
 watch(
   () => languageStore.currentLang,
   () => {
-    console.log("Language changed, consider re-fetching or re-evaluating texts if necessary.");
+    console.log(
+      "Language changed, consider re-fetching or re-evaluating texts if necessary."
+    );
   }
 );
 watch(
@@ -1620,7 +1703,7 @@ function handleClientFiltersUpdate(updatedFilters: ActiveClientFilters) {
 }
 
 async function fetchTabCounts(userId: string | undefined) {
- if (!userId) {
+  if (!userId) {
     tabCounts.value = { new: 0, saved: 0, archived: 0 };
     return;
   }
@@ -1666,7 +1749,7 @@ function changeTab(newTab: LeadTab) {
 async function archiveUnsavedLeads(
   userId: string | undefined
 ): Promise<boolean> {
- if (!userId) {
+  if (!userId) {
     return false;
   }
   try {
@@ -1682,7 +1765,7 @@ async function archiveUnsavedLeads(
   }
 }
 async function hasUnsavedLeads(userId: string | undefined): Promise<boolean> {
- if (!userId) return false;
+  if (!userId) return false;
   try {
     const { count, error } = await supabase
       .from("leads")
@@ -1787,8 +1870,7 @@ function validateSearchCriteria(): boolean {
   return true;
 }
 async function submitLeadSearchCriteria() {
- if (isProcessingBatch.value || isSearchingLeads.value)
-    return;
+  if (isProcessingBatch.value || isSearchingLeads.value) return;
   if (
     showAdvancedFilters.value &&
     Object.values(advancedFilterInputs).some((v) => String(v).trim())
@@ -1833,7 +1915,7 @@ async function submitLeadSearchCriteria() {
   await handleTriggerN8nLeadSearch(payload);
 }
 async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
- isSearchingLeads.value = true;
+  isSearchingLeads.value = true;
   if (searchStatus.value !== "warning") {
     searchMessage.value = null;
     searchStatus.value = null;
@@ -1897,7 +1979,7 @@ async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
   }
 }
 async function getSupabaseSession(): Promise<Session | null> {
- const {
+  const {
     data: { session },
     error,
   } = await supabase.auth.getSession();
@@ -1913,7 +1995,10 @@ async function getSupabaseSession(): Promise<Session | null> {
 }
 
 async function fetchLeadsForCurrentUser(forceRefresh = false) {
-  if ((isLoadingLeads.value && !forceRefresh) || (isProcessingBatch.value && !forceRefresh) ) {
+  if (
+    (isLoadingLeads.value && !forceRefresh) ||
+    (isProcessingBatch.value && !forceRefresh)
+  ) {
     return;
   }
   isLoadingLeads.value = true;
@@ -1931,7 +2016,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
   }
   const selectFields = `id, created_at, user_id, tab, lead_status, icebreaker, source_query_criteria, first_name, last_name, name, job_title, industry, location, company_name, company_size, phone, linkedIn_url, keywords, email, notes`;
   try {
-    let query: PostgrestFilterBuilder<any, any, Lead[], "leads", any> = supabase
+    let query = supabase
       .from("leads")
       .select(selectFields, { count: "exact" })
       .eq("user_id", user.id)
@@ -1946,13 +2031,18 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
             .join(",");
           if (keywordOrConditions) query = query.or(keywordOrConditions);
         } else if (filterKey === "industry" || filterKey === "company_size") {
-            if (Array.isArray(values) && values.every(v => typeof v === 'string')) {
-                const filterValue = `{${values.join(',')}}`;
-                query = query.filter(filterKey, 'ov', filterValue);
-            }
+          if (
+            Array.isArray(values) &&
+            values.every((v) => typeof v === "string")
+          ) {
+            const filterValue = `{${values.join(",")}}`;
+            query = query.filter(filterKey, "ov", filterValue);
+          }
         } else if (filterKey === "lead_status" && values.length === 1) {
-            query = query.eq(filterKey, values[0]);
-        } else if (["job_title", "location", "company_name"].includes(filterKey)) {
+          query = query.eq(filterKey, values[0]);
+        } else if (
+          ["job_title", "location", "company_name"].includes(filterKey)
+        ) {
           const orConditions = values
             .map((val) => `${filterKey}.ilike.%${val}%`)
             .join(",");
@@ -1963,12 +2053,20 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
     if (sorting.value.length > 0) {
       const sortColumn = sorting.value[0];
       const dbSortColumn = sortColumn.id;
-      const allowedSort = ["name", "job_title", "company_name", "email", "created_at", "lead_status"];
+      const allowedSort = [
+        "name",
+        "job_title",
+        "company_name",
+        "email",
+        "created_at",
+        "lead_status",
+      ];
       if (allowedSort.includes(dbSortColumn))
         query = query.order(dbSortColumn, { ascending: !sortColumn.desc });
       else {
         query = query.order("created_at", { ascending: false });
-        if (dbSortColumn !== "created_at") console.warn(`Unmapped/array sort attempt: ${dbSortColumn}`);
+        if (dbSortColumn !== "created_at")
+          console.warn(`Unmapped/array sort attempt: ${dbSortColumn}`);
       }
     } else {
       query = query.order("created_at", { ascending: false });
@@ -2001,15 +2099,19 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       const currentPageIndex = pagination.value.pageIndex;
       if (currentPageIndex >= newPageCount && newPageCount > 0) {
         pagination.value.pageIndex = newPageCount - 1;
-      } else if (currentPageIndex > 0 && totalCount === 0 && currentTab.value !== 'new') {
+      } else if (
+        currentPageIndex > 0 &&
+        totalCount === 0 &&
+        currentTab.value !== "new"
+      ) {
         pagination.value.pageIndex = 0;
       }
     }
   } catch (e: any) {
     console.error("ERROR caught in fetchLeadsForCurrentUser:", e);
     if (!searchMessage.value) {
-        searchMessage.value = texts.value.alertError + e.message;
-        searchStatus.value = "error";
+      searchMessage.value = texts.value.alertError + e.message;
+      searchStatus.value = "error";
     }
     tableData.value = [];
     // @ts-ignore
@@ -2023,12 +2125,19 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
 function getStatusBadgeClass(status?: string | null): string {
   if (!status) return "bg-secondary text-white";
   switch (status.toLowerCase().replace(/\s+/g, "")) {
-    case "newprospect": return "bg-primary text-white";
-    case "icebreakersent": case "contacted": return "bg-success text-white";
-    case "follow-up": return "bg-warning text-dark";
-    case "replied": return "bg-info text-dark";
-    case "archived": return "bg-secondary text-white";
-    default: return "bg-light text-dark border";
+    case "newprospect":
+      return "bg-primary text-white";
+    case "icebreakersent":
+    case "contacted":
+      return "bg-success text-white";
+    case "follow-up":
+      return "bg-warning text-dark";
+    case "replied":
+      return "bg-info text-dark";
+    case "archived":
+      return "bg-secondary text-white";
+    default:
+      return "bg-light text-dark border";
   }
 }
 
@@ -2251,12 +2360,12 @@ onMounted(async () => {
   border-bottom: 1px solid var(--border-color-current);
   flex-shrink: 0;
   background-color: var(--card-bg-current);
-  z-index: 30; 
+  z-index: 30;
   position: relative;
 }
 .table-content {
   flex-grow: 1;
-  overflow: hidden; 
+  overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2272,20 +2381,20 @@ onMounted(async () => {
 }
 .table-wrapper {
   flex-grow: 1;
-  overflow: auto; 
+  overflow: auto;
   position: relative;
 }
 .lead-table {
   width: 100%;
-  border-collapse: separate; 
+  border-collapse: separate;
   border-spacing: 0;
-  min-width: 2430px; 
+  min-width: 2430px;
 }
 
 .lead-table thead tr {
   position: sticky;
   top: 0;
-  z-index: 25; 
+  z-index: 25;
 }
 
 .lead-table thead th {
@@ -2293,9 +2402,9 @@ onMounted(async () => {
   font-weight: 600;
   color: var(--text-color-base-current);
   text-align: left;
-  vertical-align: middle; 
-  background-color: var(--card-bg-current); 
-  border-bottom: 2px solid var(--border-color-current); 
+  vertical-align: middle;
+  background-color: var(--card-bg-current);
+  border-bottom: 2px solid var(--border-color-current);
 }
 
 .lead-table thead th .sort-indicator {
@@ -2313,10 +2422,10 @@ onMounted(async () => {
 .lead-table tbody td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color-current);
-  vertical-align: middle; 
+  vertical-align: middle;
   font-size: 0.875rem;
   color: var(--text-muted-current);
-  background-color: var(--card-bg-current); 
+  background-color: var(--card-bg-current);
 }
 .lead-table tbody tr:hover td {
   background-color: var(--table-row-hover-bg-current);
@@ -2329,7 +2438,7 @@ onMounted(async () => {
 
 .lead-table tbody tr:hover td[style*="position: sticky"],
 .lead-table tbody tr.table-active td[style*="position: sticky"] {
-  background-color: inherit; 
+  background-color: inherit;
 }
 
 .lead-table td[data-column-id="keywords"] > div,
@@ -2372,14 +2481,14 @@ onMounted(async () => {
   border-top: 1px solid var(--border-color-current);
   flex-shrink: 0;
   background-color: var(--card-bg-current);
-  z-index: 5; 
+  z-index: 5;
   position: relative;
 }
 
 /* --- Utility & Animation Styles --- */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease; 
+  transition: opacity 0.3s ease;
 }
 .fade-enter-from,
 .fade-leave-to {
@@ -2415,7 +2524,7 @@ onMounted(async () => {
 .dropdown-item:disabled {
   pointer-events: none;
   opacity: 0.65;
-  background-color: transparent; 
+  background-color: transparent;
   color: var(--bs-dropdown-link-disabled-color);
 }
 </style>

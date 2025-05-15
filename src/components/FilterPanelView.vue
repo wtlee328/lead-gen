@@ -106,7 +106,8 @@
 
 <script setup lang="ts">
 // ----- SCRIPT is THE SAME as your provided version -----
-import { ref, reactive, watch, computed, PropType } from 'vue';
+import { ref, reactive, watch, computed } from 'vue';
+import type { PropType } from 'vue'
 import type { LeadTab } from '@/types/tabs';
 
 export interface TabCounts { new: number; saved: number; archived: number; }

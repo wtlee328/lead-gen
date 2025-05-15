@@ -2,12 +2,14 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import {
-    LanguageCode,
-    Industry,
     industriesData, // Import the actual data
-    uiTexts,      // Import the actual translations
-    Translations
+    uiTexts      // Import the actual translations
 } from '@/types/language'; // Use '@' for alias to src directory (Vite default)
+import type {
+    LanguageCode,
+    Industry,  // Import the actual translations
+    Translations
+} from '@/types/language'; 
 
 // Define the store
 export const useLanguageStore = defineStore('language', () => {

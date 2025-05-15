@@ -1,5 +1,6 @@
 // src/router/index.ts
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
+import type { RouteRecordRaw } from 'vue-router'
 import LeadGenFormView from '../views/LeadGenFormView.vue'; // Your main prospecting dashboard
 import LoginView from '../views/LoginView.vue';         // Login page
 import SignUpView from '../views/SignUpView.vue';       // Sign up page
@@ -57,7 +58,7 @@ const router = createRouter({
 });
 
 // Navigation Guard
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _, next) => {
     // Fetch the current session directly to ensure up-to-date auth state
     const { data: { session } } = await supabase.auth.getSession();
     const isAuthenticated = !!session; // True if session exists, false otherwise

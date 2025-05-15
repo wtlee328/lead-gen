@@ -43,8 +43,8 @@ export const useAuthStore = defineStore('auth', () => {
             session.value = activeSession;
             user.value = activeSession?.user ?? null;
 
-            if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-                console.log('AuthStore: User signed out or deleted, redirecting to /login.');
+            if (event === 'SIGNED_OUT') {
+                console.log('AuthStore: User signed out, redirecting to /login.');
                 router.push({ name: 'Login' });
             } else if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && activeSession) || (event === 'TOKEN_REFRESHED' && activeSession)) {
                 console.log('AuthStore: User signed in or session refreshed.');
