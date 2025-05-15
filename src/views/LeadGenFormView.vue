@@ -644,7 +644,6 @@ import {
   type SortingState,
   type PaginationState,
   type RowSelectionState,
-  type Table, // Added Table type
   type Row, // Added Row type
   type CellContext, // Added CellContext type
   type HeaderContext, // Added HeaderContext for header props
