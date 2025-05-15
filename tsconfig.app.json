@@ -1,39 +1,45 @@
-// tsconfig.app.json
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "compilerOptions": {
-    "composite": true, // Add this if not already in the extended config, good practice for 'references'
+    "composite": true, // ESSENTIAL for referenced projects
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
 
-    // --- ADD baseUrl and paths FOR ALIAS RESOLUTION ---
-    "baseUrl": ".", // Assumes tsconfig.app.json is in your project root
+    "baseUrl": ".", // Relative to this file (project root)
     "paths": {
-      "@/*": ["./src/*"] // Defines @/* to point to your src directory
+      "@/*": ["./src/*"] // For your @/ alias
     },
-    "jsx": "preserve", // Ensure this is effectively set for Vue
-    "declaration": false, 
-    // --- END ALIAS RESOLUTION ---
 
-    /* Ensure JSX is correct for Vue if you use TSX files */
-    // The extended config "@vue/tsconfig/tsconfig.dom.json" should set "jsx": "preserve"
-    // but if you encounter JSX issues, you can explicitly set it here:
-    // "jsx": "preserve",
+    "jsx": "preserve", // Crucial for Vue
 
-    /* Linting - these are good */
+    // --- EMIT AND DECLARATION SETTINGS ---
+    "declaration": true,          // MUST be true (or absent, as it might be true in the extended config)
+    "emitDeclarationOnly": true,  // RECOMMENDED: vue-tsc -b will only emit .d.ts files. Vite handles JS emit.
+    "noEmit": false,              // MUST NOT be true. If emitDeclarationOnly is true, noEmit should be false.
+                                  // If emitDeclarationOnly is false, noEmit should also be false.
+                                  // If "@vue/tsconfig/tsconfig.dom.json" sets noEmit:true, you MUST override it here.
+
+    /* Linting & Strictness - these are good */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
+    "noUncheckedSideEffectImports": true, // If you added this
 
-    /* Ensure moduleResolution from the extended config is compatible
-       with "verbatimModuleSyntax" behavior if that's enabled by the root or extended config.
-       "@vue/tsconfig/tsconfig.dom.json" usually handles this well.
-       If PropType errors persist, it means verbatimModuleSyntax is active.
-    */
-    "esModuleInterop": true, // Often good to have for better CJS/ESM interop, might be in extended config
-    "resolveJsonModule": true // Also good, might be in extended config
+    // Other potentially inherited or useful options
+    "esModuleInterop": true, // Likely inherited, but good to be aware
+    "resolveJsonModule": true, // Likely inherited
+    "isolatedModules": true, // Vite often needs this
+    "skipLibCheck": true // Can be here or in root
   },
-  "include": ["./src/**/*.ts", "./src/**/*.d.ts", "./src/**/*.tsx", "./src/**/*.vue"], // Added .d.ts for good measure
-  "exclude": ["node_modules", "dist"] // Good to exclude node_modules and output dir
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.d.ts",
+    "./src/**/*.tsx",
+    "./src/**/*.vue",
+    "./src/tanstack-table.d.ts" // Explicitly include your augmentation file if it's separate
+  ],
+  "exclude": [
+    "node_modules",
+    "dist" // Or your Vite output directory
+  ]
 }

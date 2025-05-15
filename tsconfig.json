@@ -1,36 +1,24 @@
 {
-  "files": [],
+  "files": [], // Correct: specifies this config doesn't directly manage individual files for compilation
   "references": [
     {
-      "path": "./tsconfig.app.json"
+      "path": "./tsconfig.app.json" // For your Vue app code
     },
     {
-      "path": "./tsconfig.node.json"
+      "path": "./tsconfig.node.json" // For Node.js specific files like vite.config.ts
     }
   ],
   "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    // Added this for ShadCN UI Library
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  "include": ["src"],
-  "module": "es2020"
+    // Minimal, solution-wide options.
+    // These do NOT dictate how src/ files are compiled, that's tsconfig.app.json's job.
+    "moduleResolution": "bundler", // Good modern choice, implies verbatimModuleSyntax behavior
+    "esModuleInterop": true,      // For better CJS/ESM compatibility
+    "skipLibCheck": true,         // Speeds up type checking by skipping .d.ts files in node_modules
+    "allowSyntheticDefaultImports": true // Often useful with esModuleInterop
+    // NO "include" array here that points to "src"
+    // NO "paths" or "baseUrl" here, those are for tsconfig.app.json
+    // NO "jsx" here
+    // NO "target", "lib", "module", "strict" etc. here, these are for the referenced projects
+  }
+  // REMOVE any "include": ["src"] or "include": ["src/**/*.ts", "src/**/*.vue"] from this root file.
 }
