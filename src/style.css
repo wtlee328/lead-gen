@@ -279,17 +279,17 @@ button:focus, button:focus-visible { outline: 4px auto -webkit-focus-ring-color;
 
 .btn-danger {
   --bs-btn-color: #fff;
-  --bs-btn-bg: var(--table-action-btn-secondary-color-current);
+  --bs-btn-bg: var(--table-action-btn-secondary-color-current); /* This seems to be using secondary for danger? Check if intended. Default BS danger is red. */
   --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
   --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #dc2626;
+  --bs-btn-hover-bg: #dc2626; /* Standard Bootstrap danger hover */
   --bs-btn-hover-border-color: #dc2626;
 }
 .btn-outline-danger {
-  --bs-btn-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-color: var(--table-action-btn-secondary-color-current); /* This seems to be using secondary for danger? */
   --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
   --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #ef4444;
+  --bs-btn-hover-bg: #ef4444; /* Standard Bootstrap danger outline hover */
   --bs-btn-hover-border-color: #ef4444;
 }
 
@@ -299,8 +299,8 @@ button:focus, button:focus-visible { outline: 4px auto -webkit-focus-ring-color;
   --bs-btn-color: var(--table-action-btn-secondary-color-current);
   --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
   --bs-btn-hover-color: var(--table-action-btn-text-hover-current);
-  --bs-btn-hover-bg: var(--table-action-btn-secondary-hover-bg-light);
-  --bs-btn-hover-border-color: var(--table-action-btn-secondary-hover-bg-light);
+  --bs-btn-hover-bg: var(--table-action-btn-secondary-hover-bg-light); /* CHECK: This uses light theme var always */
+  --bs-btn-hover-border-color: var(--table-action-btn-secondary-hover-bg-light); /* CHECK: This uses light theme var always */
 }
 
 .table-action-buttons .btn-outline-warning,
@@ -355,47 +355,30 @@ button:focus, button:focus-visible { outline: 4px auto -webkit-focus-ring-color;
 .card {
   background-color: var(--card-bg-current);
   border: 1px solid var(--border-color-current);
-  padding: 2em;
+  padding: 2em; /* General card padding */
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
 }
 
-/* App Layout using the --*-current variables */
-/* The .app-container class was on the navigation sidebar itself.
-   The main layout is now handled by .app-layout-wrapper (defined above) and #app.
-   If .app-container was meant for the overall app, it might be redundant with #app or .app-layout-wrapper.
-   I'll keep it commented out here unless it served a different specific purpose.
-*/
-/*
-.app-container {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-}
-*/
-
 /* === Filter Panel Styles === */
-.filter-panel.card { /* Added .card here for specificity if .filter-panel is always a card */
+.filter-panel.card {
   background-color: var(--card-bg-current);
   color: var(--text-color-base-current);
-  border: none; /* Overrides general .card border if you want no border for filter panel */
-  /* If it's part of a sidebar that has its own border, this is fine.
-     If it's standalone and needs a border, use `border: 1px solid var(--border-color-current);`
-     or remove this 'border: none;' line to inherit from .card. */
+  border: none;
+  padding: 0; /* Remove general card padding for filter panel if card-body handles it */
 }
 .filter-panel .card-body {
-  padding: 1rem; /* Or 0rem if that was intended. Consistent padding. */
+  padding: 1rem; /* Specific padding for filter panel content */
 }
 
-.filter-panel .tabs-title-heading { /* Scoped to .filter-panel */
+.filter-panel .tabs-title-heading {
   color: var(--text-color-base-current);
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
 }
 
-.filter-panel .filter-tabs .nav-link { /* Scoped to .filter-panel */
+.filter-panel .filter-tabs .nav-link {
   font-size: 0.9rem;
   padding: 0.6rem 0.85rem;
   color: var(--text-muted-current);
@@ -405,127 +388,109 @@ button:focus, button:focus-visible { outline: 4px auto -webkit-focus-ring-color;
   border-radius: 0.375rem;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
 }
-.filter-panel .filter-tabs .nav-link:hover:not(.active):not(:disabled) { /* Scoped */
+.filter-panel .filter-tabs .nav-link:hover:not(.active):not(:disabled) {
   background-color: color-mix(in srgb, var(--card-bg-current) 85%, var(--text-muted-current) 15%);
   color: var(--text-color-base-current);
 }
-.filter-panel .filter-tabs .nav-link.active { /* Scoped */
-  color: var(--bs-light); /* Text color for active tab - ensure contrast with active bg */
-  background-color: var(--primary-color-current); /* Use app's primary color */
+.filter-panel .filter-tabs .nav-link.active {
+  color: var(--bs-light);
+  background-color: var(--primary-color-current);
   border-color: var(--primary-color-current);
   font-weight: 500;
 }
-/* Adjust active tab text color if primary-color-current is light */
 html:not([data-bs-theme="dark"]) .filter-panel .filter-tabs .nav-link.active {
-  color: #fff; /* White text on primary color background */
+  color: #fff;
 }
 html[data-bs-theme="dark"] .filter-panel .filter-tabs .nav-link.active {
-  color: var(--bs-dark); /* Dark text on light-ish primary in dark mode, or white if primary is dark enough */
-   /* If --primary-color-current in dark mode is very dark, use white: color: #fff; */
+  color: var(--bs-dark);
 }
-
-
-.filter-panel .filter-tabs .nav-link .badge { /* Scoped */
+.filter-panel .filter-tabs .nav-link .badge {
   font-size: 0.7rem;
   background-color: var(--border-color-current);
   color: var(--text-muted-current);
 }
-.filter-panel .filter-tabs .nav-link.active .badge { /* Scoped */
-  background-color: color-mix(in srgb, var(--primary-color-current) 70%, #000 30%); /* Darker shade of primary */
+.filter-panel .filter-tabs .nav-link.active .badge {
+  background-color: color-mix(in srgb, var(--primary-color-current) 70%, #000 30%);
   color: var(--bs-light);
 }
 html:not([data-bs-theme="dark"]) .filter-panel .filter-tabs .nav-link.active .badge {
-  background-color: color-mix(in srgb, var(--primary-color-current) 80%, #fff 20%); /* Lighter shade for contrast on primary */
-  color: var(--primary-color-current); /* Text color for badge on active tab */
+  background-color: color-mix(in srgb, var(--primary-color-current) 80%, #fff 20%);
+  color: var(--primary-color-current);
 }
-
-
-.filter-panel .filter-divider { /* Scoped */
+.filter-panel .filter-divider {
   border-top-color: var(--border-color-current);
   opacity: 0.5;
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
-
-.filter-panel .filter-group-label.form-label { /* Scoped */
+.filter-panel .filter-group-label.form-label {
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-color-base-current);
   margin-bottom: 0.3rem;
 }
-
 .filter-panel .filter-input,
-.filter-panel .filter-select { /* Scoped */
+.filter-panel .filter-select {
   background-color: var(--card-bg-current);
   color: var(--text-color-base-current);
   border: 1px solid var(--border-color-current);
   font-size: 0.875rem;
 }
-.filter-panel .filter-input::placeholder { /* Scoped */
+.filter-panel .filter-input::placeholder {
   color: var(--text-muted-current);
   opacity: 0.7;
 }
 .filter-panel .filter-input:focus,
-.filter-panel .filter-select:focus { /* Scoped */
+.filter-panel .filter-select:focus {
   border-color: var(--primary-color-current);
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--primary-color-current) 25%, transparent);
   background-color: var(--card-bg-current);
   color: var(--text-color-base-current);
 }
-.filter-panel .filter-select option { /* Scoped */
+.filter-panel .filter-select option {
     background-color: var(--card-bg-current);
     color: var(--text-color-base-current);
 }
-
-
-.filter-panel .add-filter-btn.btn-outline-themed { /* Scoped */
+.filter-panel .add-filter-btn.btn-outline-themed {
   color: var(--text-muted-current);
   border-color: var(--border-color-current);
   background-color: transparent;
 }
-.filter-panel .add-filter-btn.btn-outline-themed:hover { /* Scoped */
+.filter-panel .add-filter-btn.btn-outline-themed:hover {
   color: var(--primary-color-current);
-  background-color: color-mix(in srgb, var(--primary-color-current) 15%, transparent); /* More subtle hover */
+  background-color: color-mix(in srgb, var(--primary-color-current) 15%, transparent);
   border-color: var(--primary-color-current);
 }
-
-.filter-panel .filter-tag.badge { /* Scoped */
-  background-color: var(--primary-light-current) !important; /* Use primary-light for better contrast potential */
-  color: var(--primary-dark) !important; /* Use primary-dark for text on primary-light background */
-  /* Or if primary-light is very light: color: var(--text-color-base-current) !important; */
+.filter-panel .filter-tag.badge {
+  background-color: var(--primary-light-current) !important;
+  color: var(--primary-dark) !important;
   border: 1px solid var(--primary-color-current);
   font-size: 0.8em;
   padding: 0.3em 0.6em;
   font-weight: 500;
 }
-/* Theming for the btn-close inside the filter tag */
-.filter-panel .filter-tag .btn-close { /* Scoped */
-  --bs-btn-close-color: var(--primary-dark); /* Match text color of badge */
-  /* If primary-dark doesn't contrast enough, use a fixed color like var(--text-color-base-current) */
-  font-size: 0.6em; /* Make close button smaller */
+.filter-panel .filter-tag .btn-close {
+  --bs-btn-close-color: var(--primary-dark);
+  font-size: 0.6em;
   vertical-align: middle;
 }
-
-
-.filter-panel .clear-section-btn.btn-icon-danger { /* Scoped */
-  color: var(--text-muted-current); /* Muted by default */
+.filter-panel .clear-section-btn.btn-icon-danger {
+  color: var(--text-muted-current);
   background-color: transparent;
   border: none;
   padding: 0.1rem 0.25rem;
 }
-.filter-panel .clear-section-btn.btn-icon-danger:hover { /* Scoped */
-  color: var(--bs-danger); /* Use Bootstrap's danger variable */
+.filter-panel .clear-section-btn.btn-icon-danger:hover {
+  color: var(--bs-danger);
   background-color: color-mix(in srgb, var(--bs-danger) 10%, transparent);
 }
-
-.filter-panel .clear-all-btn.btn-danger { /* Scoped */
-  /* This button will use the global .btn-danger theming which is good for consistency.
-     No specific overrides needed here unless you want it to look different from other danger buttons.
-  */
+.filter-panel .clear-all-btn.btn-danger {
+  /* Uses global .btn-danger theming */
 }
 /* === End of Filter Panel Styles === */
 
-/* Navigation sidebar styling */
+
+/* === Navigation Sidebar Styling === */
 .app-navigation-sidebar {
   width: var(--app-nav-sidebar-width-collapsed);
   min-width: var(--app-nav-sidebar-width-collapsed);
@@ -535,340 +500,64 @@ html:not([data-bs-theme="dark"]) .filter-panel .filter-tabs .nav-link.active .ba
   flex-direction: column;
   box-shadow: 2px 0 10px rgba(0,0,0,0.1);
   z-index: 1050;
-  flex-shrink: 0; /* Important for flex layout with .app-main-content-area */
+  flex-shrink: 0;
   transition: width var(--sidebar-transition-duration) ease-in-out,
               min-width var(--sidebar-transition-duration) ease-in-out,
               background-color var(--sidebar-transition-duration) ease-in-out,
               color var(--sidebar-transition-duration) ease-in-out;
-  overflow: hidden; /* Keep this to hide text during collapse */
-  position: relative;
-  padding: 0;
-}
-
-.app-navigation-sidebar:hover {
-  width: var(--app-nav-sidebar-width-expanded);
-  min-width: var(--app-nav-sidebar-width-expanded);
-}
-
-.app-navigation-sidebar .logo-area {
-  display: flex;
-  align-items: center;
-  padding: 1.5rem 0;
-  margin-bottom: 1rem;
-  flex-shrink: 0;
-  height: 64px;
-  box-sizing: border-box;
-  position: relative;
-  text-align: center;
-}
-
-.app-navigation-sidebar .app-logo {
-  height: 32px;
-  width: auto;
-  position: absolute;
-  left: calc(var(--app-nav-sidebar-width-collapsed) / 2 - 16px);
-  transform: translateY(-50%);
-  top: 50%;
-  transition: none;
-  max-width: 100%;
-}
-
-.app-navigation-sidebar .app-title {
-  position: absolute;
-  left: calc(var(--app-nav-sidebar-width-collapsed) + 10px);
-  white-space: nowrap;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--sidebar-logo-title-color-true-light);
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out var(--sidebar-text-transition-delay),
-              color var(--sidebar-transition-duration) ease-in-out;
-}
-html[data-bs-theme="dark"] .app-navigation-sidebar .app-title {
-    color: white;
-}
-
-
-.app-navigation-sidebar:hover .app-title {
-  opacity: 1;
-}
-
-.app-navigation-sidebar .nav-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex-grow: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  width: 100%;
-}
-
-.app-navigation-sidebar .nav-item {
-  margin-bottom: 0.5rem;
-  margin-left: 1rem;
-  margin-right: 1rem;
-  position: relative;
-  border-radius: 0.375rem;
-}
-
-/* Styling for the settings dropdown menu and its items */
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu {
-    background-color: var(--sidebar-bg-current);
-    border: 1px solid var(--border-color-current);
-    --bs-dropdown-link-color: var(--sidebar-text-color-current);
-    --bs-dropdown-link-hover-color: var(--sidebar-text-hover-color-current);
-    --bs-dropdown-link-hover-bg: color-mix(in srgb, var(--sidebar-bg-current) 70%, var(--sidebar-text-hover-color-current) 30%);
-    --bs-dropdown-link-active-color: var(--sidebar-text-hover-color-current);
-    --bs-dropdown-link-active-bg: var(--sidebar-active-bg-current);
-    --bs-dropdown-header-color: color-mix(in srgb, var(--sidebar-text-color-current) 80%, black);
-}
-.app-navigation-sidebar .nav-item .dropdown .dropdown-header {
-    color: var(--bs-dropdown-header-color);
-    opacity: 0.7;
-    padding: 0.5rem 1rem;
-}
-.app-navigation-sidebar .nav-item .dropdown .dropdown-item {
-    color: var(--bs-dropdown-link-color);
-    padding: 0.375rem 1rem;
-}
-.app-navigation-sidebar .nav-item .dropdown .dropdown-item:hover,
-.app-navigation-sidebar .nav-item .dropdown .dropdown-item:focus {
-    background-color: var(--bs-dropdown-link-hover-bg);
-    color: var(--bs-dropdown-link-hover-color);
-}
-.app-navigation-sidebar .nav-item .dropdown .dropdown-item.active {
-    background-color: var(--bs-dropdown-link-active-bg);
-    color: var(--bs-dropdown-link-active-color);
-}
-.app-navigation-sidebar .nav-item .dropdown .dropdown-divider {
-    border-top-color: var(--border-color-current);
-    opacity: 0.25;
-}
-
-
-/* Styles for Segmented Toggle Groups (Theme & Language) */
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-group,
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-group {
-  display: flex;
-}
-
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn,
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn {
-  flex-grow: 1;
-  border-radius: 0;
-  color: var(--bs-dropdown-link-color);
-  background-color: transparent;
-  border: 1px solid color-mix(in srgb, var(--bs-dropdown-link-color) 50%, transparent 50%);
-  padding-top: 0.375rem;
-  padding-bottom: 0.375rem;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  white-space: nowrap;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-}
-
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn:hover,
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn:hover {
-  background-color: var(--bs-dropdown-link-hover-bg);
-  color: var(--bs-dropdown-link-hover-color);
-  border-color: var(--bs-dropdown-link-hover-bg);
-  z-index: 2;
-}
-
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn.active,
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn.active {
-  background-color: var(--bs-dropdown-link-active-bg);
-  color: var(--bs-dropdown-link-active-color);
-  border-color: var(--bs-dropdown-link-active-bg);
-  z-index: 3;
-  font-weight: 500;
-}
-
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn + .theme-toggle-btn,
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn + .language-toggle-btn {
-  margin-left: -1px;
-}
-
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn:first-child,
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn:first-child {
-  border-top-left-radius: var(--bs-border-radius-sm, 0.25rem);
-  border-bottom-left-radius: var(--bs-border-radius-sm, 0.25rem);
-}
-
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn:last-child,
-.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn:last-child {
-  border-top-right-radius: var(--bs-border-radius-sm, 0.25rem);
-  border-bottom-right-radius: var(--bs-border-radius-sm, 0.25rem);
-}
-/* End of Segmented Toggle Group Styles */
-
-
-.app-navigation-sidebar .nav-link-item {
-  display: flex;
-  align-items: center;
-  height: 42px;
-  border-radius: 1.1rem;
-  color: var(--sidebar-text-color-current);
-  text-decoration: none;
-  position: relative;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  font-weight: 500;
-  padding: 0;
-  width: 100%;
-  white-space: nowrap;
-  box-sizing: border-box;
-}
-
-.app-navigation-sidebar .nav-link-item i {
-  position: absolute;
-  left: var(--sidebar-icon-position-left);
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.25rem;
-  width: var(--sidebar-icon-width);
-  text-align: center;
-  line-height: 1;
-  transition: none;
-  z-index: 2;
-  margin-right: var(--sidebar-icon-right-margin);
-  flex-shrink: 0;
-}
-
-.app-navigation-sidebar .nav-link-text {
-  position: absolute;
-  left: calc(var(--sidebar-icon-position-left) + var(--sidebar-icon-width) + var(--sidebar-icon-right-margin));
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out var(--sidebar-text-transition-delay);
-  color: color-mix(in srgb, var(--sidebar-bg-current) 15%, var(--sidebar-text-hover-color-current) 85%);
-}
-
-.app-navigation-sidebar:hover .nav-link-text {
-  opacity: 1;
-}
-
-.app-navigation-sidebar .nav-link-item:hover {
-  background-color: color-mix(in srgb, var(--sidebar-bg-current) 85%, var(--sidebar-text-hover-color-current) 15%);
-  color: var(--sidebar-text-hover-color-current);
-}
-html[data-bs-theme="dark"] .app-navigation-sidebar .nav-link-item:hover {
-  background-color: color-mix(in srgb, var(--sidebar-bg-current) 70%, white 30%);
-}
-
-
-.app-navigation-sidebar .nav-link-item.router-link-exact-active {
-  background-color: var(--sidebar-active-bg-current);
-  color: var(--sidebar-text-hover-color-current);
-  font-weight: 600;
-}
-html:not([data-bs-theme="dark"]) .app-navigation-sidebar .nav-link-item.router-link-exact-active {
-  color: var(--sidebar-text-color-true-light);
-}
-html:not([data-bs-theme="dark"]) .app-navigation-sidebar .nav-link-item.router-link-exact-active {
-    color: #052c65;
-}
-
-
-.app-navigation-sidebar .user-profile-area {
-  flex-shrink: 0;
-  position: relative;
-  height: 150px; /* This seems quite large, check if intended */
-  padding: 0 1rem;
-  display: flex;
-  align-items: center;
-}
-
-.app-navigation-sidebar .user-profile-toggle {
-  color: var(--sidebar-text-color-current);
-  text-decoration: none;
-  background-color: transparent;
-  border: none;
-  padding: 0.75rem 0;
-  text-align: left;
-  border-radius: 1.1rem;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  position: relative;
-  height: 42px;
-  box-sizing: border-box;
-}
-
-.app-navigation-sidebar .user-profile-toggle:hover,
-.app-navigation-sidebar .user-profile-toggle:focus {
-  color: var(--sidebar-text-hover-color-current);
-  background-color: color-mix(in srgb, var(--sidebar-bg-current) 90%, var(--sidebar-text-hover-color-current) 10%);
-}
-html[data-bs-theme="dark"] .app-navigation-sidebar .user-profile-toggle:hover,
-html[data-bs-theme="dark"] .app-navigation-sidebar .user-profile-toggle:focus {
-    background-color: color-mix(in srgb, var(--sidebar-bg-current) 85%, white 15%);
-}
-
-
-.app-navigation-sidebar .user-profile-toggle .bi-person-circle {
-  font-size: 1.25rem;
-  width: var(--sidebar-icon-width);
-  text-align: center;
-  flex-shrink: 0;
-  position: absolute;
-  left: var(--sidebar-icon-position-left);
-  top: 50%;
-  transform: translateY(-50%);
-  transition: none;
-}
-
-.app-navigation-sidebar .user-info-text {
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out var(--sidebar-text-transition-delay);
-  text-overflow: ellipsis;
   overflow: hidden;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  margin-left: calc(var(--sidebar-icon-position-left) + var(--sidebar-icon-width) + var(--sidebar-icon-right-margin));
-  flex-grow: 1;
-  color: var(--sidebar-text-color-current);
+  position: relative;
+  padding: 0;
 }
-
-.app-navigation-sidebar:hover .user-info-text {
-  opacity: 1;
-}
-
-.app-navigation-sidebar .user-profile-area .dropdown-menu {
-  font-size: 0.875rem;
-  background-color: var(--sidebar-bg-current);
-  border: 1px solid var(--border-color-current);
-  --bs-dropdown-link-color: var(--sidebar-text-color-current);
-  --bs-dropdown-link-hover-color: var(--sidebar-text-hover-color-current);
-  --bs-dropdown-link-hover-bg: color-mix(in srgb, var(--sidebar-bg-current) 70%, var(--sidebar-text-hover-color-current) 30%);
-  --bs-dropdown-link-active-color: var(--sidebar-text-hover-color-current);
-  --bs-dropdown-link-active-bg: var(--sidebar-active-bg-current);
-  --bs-dropdown-header-color: color-mix(in srgb, var(--sidebar-text-color-current) 80%, black);
-}
-
-.app-navigation-sidebar .user-profile-area .dropdown-item {
-  padding: 0.5rem 1rem;
-  color: var(--bs-dropdown-link-color);
-}
-
-.app-navigation-sidebar .user-profile-area .dropdown-item:hover,
-.app-navigation-sidebar .user-profile-area .dropdown-item:focus {
-  color: var(--bs-dropdown-link-hover-color);
-  background-color: var(--bs-dropdown-link-hover-bg);
-}
-
-.app-navigation-sidebar .user-profile-area .dropdown-item i {
-  width: 1.25em;
-  text-align: center;
-  flex-shrink: 0;
-}
+/* ... (Rest of your AppNavigationSidebar styles as provided before) ... */
+.app-navigation-sidebar:hover { width: var(--app-nav-sidebar-width-expanded); min-width: var(--app-nav-sidebar-width-expanded); }
+.app-navigation-sidebar .logo-area { display: flex; align-items: center; padding: 1.5rem 0; margin-bottom: 1rem; flex-shrink: 0; height: 64px; box-sizing: border-box; position: relative; text-align: center; }
+.app-navigation-sidebar .app-logo { height: 32px; width: auto; position: absolute; left: calc(var(--app-nav-sidebar-width-collapsed) / 2 - 16px); transform: translateY(-50%); top: 50%; transition: none; max-width: 100%; }
+.app-navigation-sidebar .app-title { position: absolute; left: calc(var(--app-nav-sidebar-width-collapsed) + 10px); white-space: nowrap; font-size: 1.25rem; font-weight: 700; color: var(--sidebar-logo-title-color-true-light); opacity: 0; transition: opacity 0.2s ease-in-out var(--sidebar-text-transition-delay), color var(--sidebar-transition-duration) ease-in-out; }
+html[data-bs-theme="dark"] .app-navigation-sidebar .app-title { color: white; }
+.app-navigation-sidebar:hover .app-title { opacity: 1; }
+.app-navigation-sidebar .nav-links { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; overflow-x: hidden; width: 100%; }
+.app-navigation-sidebar .nav-item { margin-bottom: 0.5rem; margin-left: 1rem; margin-right: 1rem; position: relative; border-radius: 0.375rem; }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu { background-color: var(--sidebar-bg-current); border: 1px solid var(--border-color-current); --bs-dropdown-link-color: var(--sidebar-text-color-current); --bs-dropdown-link-hover-color: var(--sidebar-text-hover-color-current); --bs-dropdown-link-hover-bg: color-mix(in srgb, var(--sidebar-bg-current) 70%, var(--sidebar-text-hover-color-current) 30%); --bs-dropdown-link-active-color: var(--sidebar-text-hover-color-current); --bs-dropdown-link-active-bg: var(--sidebar-active-bg-current); --bs-dropdown-header-color: color-mix(in srgb, var(--sidebar-text-color-current) 80%, black); }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-header { color: var(--bs-dropdown-header-color); opacity: 0.7; padding: 0.5rem 1rem; }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-item { color: var(--bs-dropdown-link-color); padding: 0.375rem 1rem; }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-item:hover, .app-navigation-sidebar .nav-item .dropdown .dropdown-item:focus { background-color: var(--bs-dropdown-link-hover-bg); color: var(--bs-dropdown-link-hover-color); }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-item.active { background-color: var(--bs-dropdown-link-active-bg); color: var(--bs-dropdown-link-active-color); }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-divider { border-top-color: var(--border-color-current); opacity: 0.25; }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-group, .app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-group { display: flex; }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn, .app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn { flex-grow: 1; border-radius: 0; color: var(--bs-dropdown-link-color); background-color: transparent; border: 1px solid color-mix(in srgb, var(--bs-dropdown-link-color) 50%, transparent 50%); padding-top: 0.375rem; padding-bottom: 0.375rem; font-size: 0.875rem; line-height: 1.5; white-space: nowrap; transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out; }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn:hover, .app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn:hover { background-color: var(--bs-dropdown-link-hover-bg); color: var(--bs-dropdown-link-hover-color); border-color: var(--bs-dropdown-link-hover-bg); z-index: 2; }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn.active, .app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn.active { background-color: var(--bs-dropdown-link-active-bg); color: var(--bs-dropdown-link-active-color); border-color: var(--bs-dropdown-link-active-bg); z-index: 3; font-weight: 500; }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn + .theme-toggle-btn, .app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn + .language-toggle-btn { margin-left: -1px; }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn:first-child, .app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn:first-child { border-top-left-radius: var(--bs-border-radius-sm, 0.25rem); border-bottom-left-radius: var(--bs-border-radius-sm, 0.25rem); }
+.app-navigation-sidebar .nav-item .dropdown .dropdown-menu .theme-toggle-btn:last-child, .app-navigation-sidebar .nav-item .dropdown .dropdown-menu .language-toggle-btn:last-child { border-top-right-radius: var(--bs-border-radius-sm, 0.25rem); border-bottom-right-radius: var(--bs-border-radius-sm, 0.25rem); }
+.app-navigation-sidebar .nav-link-item { display: flex; align-items: center; height: 42px; border-radius: 1.1rem; color: var(--sidebar-text-color-current); text-decoration: none; position: relative; transition: background-color 0.2s ease, color 0.2s ease; font-weight: 500; padding: 0; width: 100%; white-space: nowrap; box-sizing: border-box; }
+.app-navigation-sidebar .nav-link-item i { position: absolute; left: var(--sidebar-icon-position-left); top: 50%; transform: translateY(-50%); font-size: 1.25rem; width: var(--sidebar-icon-width); text-align: center; line-height: 1; transition: none; z-index: 2; margin-right: var(--sidebar-icon-right-margin); flex-shrink: 0; }
+.app-navigation-sidebar .nav-link-text { position: absolute; left: calc(var(--sidebar-icon-position-left) + var(--sidebar-icon-width) + var(--sidebar-icon-right-margin)); white-space: nowrap; opacity: 0; transition: opacity 0.2s ease-in-out var(--sidebar-text-transition-delay); color: color-mix(in srgb, var(--sidebar-bg-current) 15%, var(--sidebar-text-hover-color-current) 85%); }
+.app-navigation-sidebar:hover .nav-link-text { opacity: 1; }
+.app-navigation-sidebar .nav-link-item:hover { background-color: color-mix(in srgb, var(--sidebar-bg-current) 85%, var(--sidebar-text-hover-color-current) 15%); color: var(--sidebar-text-hover-color-current); }
+html[data-bs-theme="dark"] .app-navigation-sidebar .nav-link-item:hover { background-color: color-mix(in srgb, var(--sidebar-bg-current) 70%, white 30%); }
+.app-navigation-sidebar .nav-link-item.router-link-exact-active { background-color: var(--sidebar-active-bg-current); color: var(--sidebar-text-hover-color-current); font-weight: 600; }
+html:not([data-bs-theme="dark"]) .app-navigation-sidebar .nav-link-item.router-link-exact-active { color: var(--sidebar-text-color-true-light); }
+html:not([data-bs-theme="dark"]) .app-navigation-sidebar .nav-link-item.router-link-exact-active { color: #052c65; }
+.app-navigation-sidebar .user-profile-area { flex-shrink: 0; position: relative; height: 150px; padding: 0 1rem; display: flex; align-items: center; }
+.app-navigation-sidebar .user-profile-toggle { color: var(--sidebar-text-color-current); text-decoration: none; background-color: transparent; border: none; padding: 0.75rem 0; text-align: left; border-radius: 1.1rem; display: flex; align-items: center; width: 100%; position: relative; height: 42px; box-sizing: border-box; }
+.app-navigation-sidebar .user-profile-toggle:hover, .app-navigation-sidebar .user-profile-toggle:focus { color: var(--sidebar-text-hover-color-current); background-color: color-mix(in srgb, var(--sidebar-bg-current) 90%, var(--sidebar-text-hover-color-current) 10%); }
+html[data-bs-theme="dark"] .app-navigation-sidebar .user-profile-toggle:hover, html[data-bs-theme="dark"] .app-navigation-sidebar .user-profile-toggle:focus { background-color: color-mix(in srgb, var(--sidebar-bg-current) 85%, white 15%); }
+.app-navigation-sidebar .user-profile-toggle .bi-person-circle { font-size: 1.25rem; width: var(--sidebar-icon-width); text-align: center; flex-shrink: 0; position: absolute; left: var(--sidebar-icon-position-left); top: 50%; transform: translateY(-50%); transition: none; }
+.app-navigation-sidebar .user-info-text { white-space: nowrap; opacity: 0; transition: opacity 0.2s ease-in-out var(--sidebar-text-transition-delay); text-overflow: ellipsis; overflow: hidden; font-size: 0.875rem; line-height: 1.25rem; margin-left: calc(var(--sidebar-icon-position-left) + var(--sidebar-icon-width) + var(--sidebar-icon-right-margin)); flex-grow: 1; color: var(--sidebar-text-color-current); }
+.app-navigation-sidebar:hover .user-info-text { opacity: 1; }
+.app-navigation-sidebar .user-profile-area .dropdown-menu { font-size: 0.875rem; background-color: var(--sidebar-bg-current); border: 1px solid var(--border-color-current); --bs-dropdown-link-color: var(--sidebar-text-color-current); --bs-dropdown-link-hover-color: var(--sidebar-text-hover-color-current); --bs-dropdown-link-hover-bg: color-mix(in srgb, var(--sidebar-bg-current) 70%, var(--sidebar-text-hover-color-current) 30%); --bs-dropdown-link-active-color: var(--sidebar-text-hover-color-current); --bs-dropdown-link-active-bg: var(--sidebar-active-bg-current); --bs-dropdown-header-color: color-mix(in srgb, var(--sidebar-text-color-current) 80%, black); }
+.app-navigation-sidebar .user-profile-area .dropdown-item { padding: 0.5rem 1rem; color: var(--bs-dropdown-link-color); }
+.app-navigation-sidebar .user-profile-area .dropdown-item:hover, .app-navigation-sidebar .user-profile-area .dropdown-item:focus { color: var(--bs-dropdown-link-hover-color); background-color: var(--bs-dropdown-link-hover-bg); }
+.app-navigation-sidebar .user-profile-area .dropdown-item i { width: 1.25em; text-align: center; flex-shrink: 0; }
+/* === End of Navigation Sidebar Styling === */
 
 /* Router transition fades */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
@@ -878,69 +567,57 @@ html[data-bs-theme="dark"] .app-navigation-sidebar .user-profile-toggle:focus {
 .app-navigation-sidebar.sidebar-collapsed .nav-link-text,
 .app-navigation-sidebar.sidebar-collapsed .user-info-text,
 .app-navigation-sidebar.sidebar-collapsed .app-title {
-  display: none; /* Use display:none for immediate hiding when not hovered if using js to set class */
-  opacity: 0;    /* Opacity for transition if :hover is used for expansion */
+  display: none;
+  opacity: 0;
   pointer-events: none;
 }
-/* === End of navigation bar styling === */
-
 
 /* === Landing Login View Styles === */
 .landing-login-view {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Ensure footer is at bottom if content is short */
-  /* Background and color will be inherited from .app-main-content-area or html/body */
-  /* overflow-y: auto; /* Scroll is managed by .app-main-content-area */
+  min-height: 100vh;
 }
-
 .landing-header {
   background-color: var(--card-bg-current);
   border-bottom: 1px solid var(--border-color-current);
-  z-index: 1030; /* Ensure it's above other content if sticky */
-  /* position: sticky; top: 0; /* If you want a sticky header */
+  z-index: 1030;
 }
-
 .logo-area-landing .landing-logo-img {
   height: 32px;
   filter: var(--logo-filter-current, none);
 }
-
 html[data-bs-theme="dark"] .logo-area-landing .landing-logo-img {
   /* filter: invert(1) hue-rotate(180deg); */
 }
-
-
 .landing-content {
   flex-grow: 1;
 }
-
 .product-info-section h1 {
   color: var(--text-color-base-current);
 }
-
 .product-info-section .lead {
   color: var(--text-muted-current);
 }
-
 .features-list .bi {
   font-size: 1.25rem;
   min-width: 28px;
 }
-
 .login-card-wrapper.card {
   border: none;
   background-color: var(--card-bg-current);
+  padding: 0; /* Remove general card padding if card-body handles it */
+}
+.login-card-wrapper .card-body {
+  padding: 2.5rem; /* Specific padding for login card */
 }
 
 .landing-header .language-toggle button {
     font-size: 0.8rem;
 }
-
 .btn .spinner-border {
     vertical-align: middle;
 }
-
 .landing-footer {
   background-color: var(--card-bg-light);
   border-top: 1px solid var(--border-color-light);
@@ -950,15 +627,386 @@ html[data-bs-theme="dark"] .landing-footer {
   background-color: var(--card-bg-current);
   border-top: 1px solid var(--border-color-current);
 }
-
-@media (max-width: 575.98px) {
-  .login-card-wrapper .card-body {
-    padding: 1.5rem !important;
-  }
-  .product-info-section h1 {
-    font-size: 2.5rem;
-  }
-  .product-info-section .lead {
-    font-size: 1.1rem;
-  }
+/* Login View Specific Enhancements */
+.divider-or {
+  position: relative;
+  text-align: center;
+  height: 1px;
+  background-color: var(--border-color-current); /* Line color */
 }
+.divider-or-text {
+  position: relative;
+  top: -0.7em; /* Adjust to vertically center the text on the line */
+  background-color: var(--card-bg-current); /* Match card background to "cut through" the line */
+  font-size: 0.85rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-google .google-logo {
+  width: 18px;
+  height: 18px;
+}
+@media (max-width: 575.98px) {
+  .login-card-wrapper .card-body { padding: 1.5rem !important; }
+  .product-info-section h1 { font-size: 2.5rem; }
+  .product-info-section .lead { font-size: 1.1rem; }
+}
+/* === End of Landing Login View Styles === */
+
+
+/* === Lead Generation View Layout Styles === */
+.lead-gen-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* This should be handled by .app-main-content-area taking 100% height */
+  overflow: hidden;
+  background-color: var(--content-bg-current); /* Matches app background */
+}
+.view-main-content {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+  min-height: 0; /* Important for flex children that need to scroll */
+}
+.filter-sidebar-view {
+  width: 18%; /* Consider using CSS variables for responsive widths if needed */
+  min-width: 280px;
+  max-width: 450px; /* Max width for the sidebar */
+  background-color: var(--card-bg-current); /* Sidebar background */
+  border-right: 1px solid var(--border-color-current);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.2s ease-out, min-width 0.2s ease-out;
+  overflow: hidden; /* The .filter-content inside will scroll */
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.04);
+  z-index: 10; /* Ensure it's above table content if overlapping during resize/transitions */
+}
+.filter-sidebar-view.collapsed {
+  width: 60px;
+  min-width: 60px;
+}
+.filter-sidebar-view.collapsed .filter-content,
+.filter-sidebar-view.collapsed .filter-header h5 {
+  display: none;
+}
+.filter-sidebar-view .filter-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color-current);
+  height: 60px; /* Fixed height for header */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.filter-sidebar-view .filter-header h5 {
+  color: var(--text-color-base-current);
+  margin-bottom: 0;
+}
+.filter-sidebar-view .filter-header .btn-icon { /* Styling for the toggle button in filter header */
+  color: var(--text-muted-current);
+}
+.filter-sidebar-view .filter-header .btn-icon:hover {
+  color: var(--text-color-base-current);
+  background-color: var(--button-bg-current); /* Use button bg for hover */
+}
+.filter-sidebar-view .filter-content {
+  flex-grow: 1;
+  overflow-y: auto; /* This makes the content scrollable */
+  padding: 1rem; /* Padding is handled by FilterPanelView's card-body now */
+}
+
+.content-area-view {
+  flex: 1; /* Takes remaining space */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* This content area itself doesn't scroll; children will. */
+  padding: 1rem; /* Padding around search and table sections */
+  gap: 1rem; /* Space between search panel and table section */
+}
+
+/* Search Panel Specific Styling (within .lead-gen-view-wrapper .content-area-view) */
+.content-area-view .search-panel {
+  padding: 1.5rem;
+  background-color: var(--card-bg-current);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  flex-shrink: 0; /* Prevent shrinking when table content grows */
+  transition: max-height 0.3s ease-out, padding 0.3s ease-out, opacity 0.3s ease-out;
+  max-height: 1000px; /* Arbitrary large value for expanded state */
+  overflow: hidden;
+  opacity: 1;
+  border: 1px solid var(--border-color-current);
+}
+.content-area-view .search-panel.collapsed {
+  max-height: 60px; /* Adjust to fit only the header */
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  /* overflow: hidden; /* Already set */
+}
+.content-area-view .search-panel.collapsed .search-panel-body {
+  display: none;
+}
+.content-area-view .search-panel-header .search-panel-title {
+  color: var(--text-color-base-current);
+  font-weight: 600;
+  font-size: 1.05rem; /* Slightly larger title for search panel */
+}
+.content-area-view .search-panel-header .search-panel-toggle-icon.btn-icon {
+  color: var(--text-muted-current);
+}
+.content-area-view .search-panel-header .search-panel-toggle-icon.btn-icon:hover {
+  color: var(--text-color-base-current);
+}
+.content-area-view .search-panel-body .search-panel-label.form-label {
+  color: var(--text-color-base-current);
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+.content-area-view .search-panel-body .search-panel-textarea.form-control-lg {
+  background-color: var(--card-bg-current); /* Ensure form elements use card bg */
+  color: var(--text-color-base-current);
+  border-color: var(--border-color-current);
+  font-size: 1rem; /* Slightly larger text area */
+}
+.content-area-view .search-panel-body .search-panel-textarea.form-control-lg::placeholder {
+  color: var(--text-muted-current);
+  opacity: 0.7;
+}
+.content-area-view .search-panel-body .search-panel-textarea.form-control-lg:focus {
+  border-color: var(--primary-color-current);
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--primary-color-current) 25%, transparent);
+  background-color: var(--card-bg-current);
+}
+.content-area-view .advanced-filters-panel-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out 0.1s;
+  opacity: 0;
+}
+.content-area-view .advanced-filters-panel-content.show {
+  max-height: 1000px; /* Or a more appropriate max height */
+  opacity: 1;
+}
+.content-area-view .advanced-filters-panel-content .search-panel-divider {
+  border-top-color: var(--border-color-current);
+  opacity: 0.5;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+.content-area-view .advanced-filters-panel-content .search-panel-adv-label.form-label {
+  font-size: 0.85rem;
+  color: var(--text-muted-current);
+}
+.content-area-view .advanced-filters-panel-content .search-panel-adv-input.form-control-sm,
+.content-area-view .advanced-filters-panel-content .search-panel-adv-select.form-select-sm {
+  background-color: var(--card-bg-current);
+  color: var(--text-color-base-current);
+  border-color: var(--border-color-current);
+}
+.content-area-view .advanced-filters-panel-content .search-panel-adv-input.form-control-sm::placeholder,
+.content-area-view .advanced-filters-panel-content .search-panel-adv-select.form-select-sm option[value=""] {
+  color: var(--text-muted-current);
+  opacity: 0.7;
+}
+.content-area-view .advanced-filters-panel-content .search-panel-adv-input.form-control-sm:focus,
+.content-area-view .advanced-filters-panel-content .search-panel-adv-select.form-select-sm:focus {
+  border-color: var(--primary-color-current);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--primary-color-current) 20%, transparent);
+  background-color: var(--card-bg-current);
+}
+.content-area-view .search-panel-tag.tag-pill { /* Ensuring specificity for search panel tags */
+  background-color: var(--primary-light-current);
+  color: var(--primary-dark-current); /* Ensure contrast */
+  border: 1px solid var(--primary-color-current);
+  font-weight: 500;
+}
+.content-area-view .search-panel-tag.tag-pill .btn-close {
+  --bs-btn-close-color: var(--primary-dark-current); /* Ensure contrast */
+}
+.content-area-view .search-panel-alert.alert {
+  border-width: 0px;
+  border-left-width: 4px; /* Accent border */
+}
+
+/* Table Section Styling (within .lead-gen-view-wrapper .content-area-view) */
+.content-area-view .table-section-view {
+  flex-grow: 1; /* Allows table section to fill remaining vertical space */
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-bg-current);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  overflow: hidden; /* Important for internal scrolling of .table-wrapper */
+  min-height: 0; /* For flex-grow to work correctly in a flex column */
+  border: 1px solid var(--border-color-current);
+}
+.content-area-view .table-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color-current);
+  flex-shrink: 0;
+  background-color: var(--card-bg-current); /* Ensure header matches card */
+  z-index: 30; /* Keep table actions above scrolling content */
+  position: relative; /* For z-index to work */
+}
+.content-area-view .table-content {
+  flex-grow: 1;
+  overflow: hidden; /* Table wrapper inside will scroll */
+  position: relative;
+  display: flex; /* To allow loading/empty state to fill this container */
+  flex-direction: column; /* Stack table-wrapper or loading state */
+}
+.content-area-view .loading-empty-state {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-muted-current);
+}
+.content-area-view .table-wrapper {
+  flex-grow: 1; /* Make wrapper take available space if table is present */
+  overflow: auto; /* THIS IS WHERE THE TABLE SCROLLS (horizontal and vertical) */
+  position: relative; /* For sticky headers/columns if any */
+}
+.content-area-view .lead-table {
+  width: 100%;
+  border-collapse: separate; /* Or collapse, depending on desired border style */
+  border-spacing: 0;
+  min-width: 2430px; /* Your specified min-width for horizontal scroll */
+}
+.content-area-view .lead-table thead tr {
+  position: sticky;
+  top: 0; /* Sticks to the top of .table-wrapper */
+  z-index: 25; /* Above table body, below table header */
+}
+.content-area-view .lead-table thead th {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: var(--text-color-base-current);
+  text-align: left;
+  vertical-align: middle;
+  background-color: var(--table-header-bg-current); /* Use specific table header bg */
+  border-bottom: 2px solid var(--border-color-current);
+}
+.content-area-view .lead-table thead th .sort-indicator {
+  min-width: 1em;
+  display: inline-block;
+}
+.content-area-view .lead-table thead th .sort-indicator .bi-sort-up,
+.content-area-view .lead-table thead th .sort-indicator .bi-sort-down {
+  color: var(--sort-indicator-active-color-current);
+}
+.content-area-view .lead-table thead th .sort-indicator .bi-filter {
+  color: var(--sort-indicator-inactive-color-current);
+  opacity: var(--sort-indicator-inactive-opacity-current);
+}
+.content-area-view .lead-table tbody td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color-current);
+  vertical-align: middle;
+  font-size: 0.875rem;
+  color: var(--text-muted-current);
+  background-color: var(--card-bg-current); /* Row background */
+}
+.content-area-view .lead-table tbody tr:hover td {
+  background-color: var(--table-row-hover-bg-current);
+  color: var(--table-row-hover-text-current);
+}
+.content-area-view .lead-table tbody tr.table-active td {
+  background-color: var(--primary-light-current); /* Or a specific active row color */
+  color: var(--primary-dark-current); /* Or a specific active row text color */
+}
+/* Ensure sticky column backgrounds in tbody inherit correctly on hover/active states */
+.content-area-view .lead-table tbody tr:hover td[style*="position: sticky"],
+.content-area-view .lead-table tbody tr.table-active td[style*="position: sticky"] {
+  background-color: inherit; /* Let the row's hover/active background show through */
+}
+/* Specific cell content styling for better text wrapping */
+.content-area-view .lead-table td[data-column-id="keywords"] > div, /* If keywords are rendered in a div */
+.content-area-view .lead-table td[data-column-id="notes"] {
+  white-space: normal !important; /* Allow wrapping */
+  text-overflow: clip !important;
+  overflow: visible !important;
+}
+.content-area-view .table-action-buttons .btn { /* Style for action buttons in table */
+  padding: 0.25rem 0.5rem; /* Smaller padding for table action buttons */
+}
+.content-area-view .table-action-buttons .btn:last-child {
+  margin-right: 0;
+}
+/* Table action button theming (re-check variable usage as per earlier comments) */
+.content-area-view .table-action-buttons .btn-outline-success {
+  --bs-btn-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-hover-color: var(--table-action-btn-text-hover-current);
+  --bs-btn-hover-bg: var(--table-action-btn-success-hover-bg-current);
+  --bs-btn-hover-border-color: var(--table-action-btn-success-hover-bg-current);
+}
+.content-area-view .table-action-buttons .btn-outline-warning {
+  --bs-btn-color: var(--table-action-btn-secondary-color-current); /* Changed to warning var */
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current); /* Changed to warning var */
+  --bs-btn-hover-color: #000; /* Or var(--table-action-btn-text-hover-current) if it contrasts */
+  --bs-btn-hover-bg: var(--table-action-btn-warning-hover-bg-current);
+  --bs-btn-hover-border-color: var(--table-action-btn-warning-hover-bg-current);
+}
+.content-area-view .table-action-buttons .btn-outline-secondary {
+  --bs-btn-color: var(--table-action-btn-secondary-color-current); /* Changed to secondary var */
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current); /* Changed to secondary var */
+  --bs-btn-hover-color: var(--table-action-btn-text-hover-current);
+  --bs-btn-hover-bg: var(--table-action-btn-secondary-hover-bg-current);
+  --bs-btn-hover-border-color: var(--table-action-btn-secondary-hover-bg-current);
+}
+.content-area-view .table-footer {
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--border-color-current);
+  flex-shrink: 0;
+  background-color: var(--card-bg-current);
+  z-index: 5; /* Above table body but below table header if they overlap */
+  position: relative;
+}
+
+/* --- Utility & Animation Styles (can be global) --- */
+.spin-animation {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.display-1.text-muted { /* For empty state icons */
+  opacity: 0.3;
+  font-size: 3.5rem; /* Or adjust as needed */
+}
+/* Ensure form checks in table are aligned */
+.lead-table td .form-check-input,
+.lead-table th .form-check-input {
+  vertical-align: middle; /* Aligns checkbox/radio inputs */
+}
+/* Style for rows during batch processing */
+.processing-row-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+/* Style for disabled dropdown items */
+.dropdown-item.disabled,
+.dropdown-item:disabled {
+  pointer-events: none;
+  opacity: 0.65;
+  background-color: transparent;
+  color: var(--bs-dropdown-link-disabled-color, var(--text-muted-current)); /* Use Bootstrap var or fallback */
+}
+/* === End of Lead Generation View Layout Styles === */
+
+
+/* === End of file === */
