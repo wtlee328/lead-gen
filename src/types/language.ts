@@ -11,11 +11,11 @@ export type LanguageCode = 'zh' | 'en';
 export interface Translations {
     // --- General App/Page Titles & Descriptions ---
     dashboardTitle: string;
-    formDescription: string;
+    formDescription: string; // Used in LeadGenFormView and EngagementCenterView
 
     // --- App Navigation Sidebar ---
-    sidebarLeadSearchLink: string; // Changed from sidebarProspectsLink to match your zh version
-    sidebarLeadSearchTitle: string;  // Changed from sidebarProspectsTitle
+    sidebarLeadSearchLink: string;
+    sidebarLeadSearchTitle: string;
     sidebarEngagementLink: string;
     sidebarEngagementTitle: string;
     sidebarSettingsLink: string;
@@ -26,7 +26,7 @@ export interface Translations {
     userSettingsPageLink: string;
     signOutButton: string;
 
-    // --- Filter Panel Sidebar ---
+    // --- Filter Panel Sidebar (shared by LeadGenFormView) ---
     filtersTitle: string;
     tabsTitle: string;
     tabNew: string;
@@ -37,7 +37,7 @@ export interface Translations {
     clearAllFiltersButton: string;
     clearFilterSectionTooltip: string;
 
-    // --- Search Criteria Section ---
+    // --- Search Criteria Section (Main Form - LeadGenFormView) ---
     mainQueryLabel: string;
     mainQueryPlaceholder: string;
     advancedBtnTextShow: string;
@@ -57,16 +57,16 @@ export interface Translations {
     searchFormToggleShowTooltip: string;
     searchFormToggleHideTooltip: string;
 
-    // --- Leads List / Grid Section ---
+    // --- Leads List / Grid Section (LeadGenFormView) ---
     leadsListTitle: string;
     refreshButton: string;
-    loadingLeads: string;
+    loadingLeads: string; // General loading text for leads
     noNewLeadsYet: string;
     noSavedLeads: string;
     noArchivedLeads: string;
-    noLeadsFound: string;
+    noLeadsFound: string; // General "no results" for leads list
 
-    // --- Table Columns ---
+    // --- Table Columns (Shared by LeadGenFormView & EngagementCenterView potentially) ---
     colName: string;
     colJobTitle: string;
     colIndustry: string;
@@ -82,7 +82,7 @@ export interface Translations {
     colStatus: string;
     colActions: string;
 
-    // --- Table Actions ---
+    // --- Table Actions (Single & Batch - LeadGenFormView) ---
     actionSaveTooltip: string;
     actionArchiveTooltip: string;
     actionRestoreTooltip: string;
@@ -104,14 +104,14 @@ export interface Translations {
     batchDeleteButton: string;
     batchMoveToSavedButton: string;
 
-    // --- Pagination ---
+    // --- Pagination (Shared) ---
     previousPage: string;
     nextPage: string;
     pageText: string;
     ofText: string;
     showNum: string;
 
-    // --- Feedback, Alerts & Confirmation Messages ---
+    // --- Feedback, Alerts & Confirmation Messages (Shared) ---
     alertError: string;
     alertSuccess: string;
     alertWarning: string;
@@ -140,13 +140,13 @@ export interface Translations {
 
     // --- Engagement Center View Specific ---
     engagementCenterTitle: string;
-    searchLeadsPlaceholder: string;
+    searchLeadsPlaceholder: string; // Search within the hub
     filterByStatusAll: string;
     filterStatusPendingIcebreaker: string;
     filterStatusIcebreakerSent: string;
-    filterStatusReplied: string;
+    filterStatusReplied: string; // Could be distinct from lead_status 'Replied' for engagement
     filterStatusFollowUpDue: string;
-    loading: string;
+    loading: string; // General loading text, e.g., for the hub itself
     noLeadsInHub: string;
     addLeadsFromProspects: string;
     followUpOn: string;
@@ -165,20 +165,20 @@ export interface Translations {
     logMeeting: string;
     scheduleFollowUpEmail: string;
     scheduleFollowUpCall: string;
-    notesPlaceholder: string;
+    notesPlaceholder: string; // General notes placeholder in engagement
     addActivityButton: string;
     historyLog: string;
-    followUpDue: string;
+    followUpDue: string; // e.g., "Follow-up Due:" (for an activity item)
     noActivityYet: string;
     generalNotesTitle: string;
-    addNotesPlaceholder: string;
+    addNotesPlaceholder: string; // Placeholder for general notes in engagement
     saveNotesButton: string;
-    statusNotSent: string;
+    statusNotSent: string; // For icebreaker status display
     statusSent: string;
     statusOpened: string;
-    statusRepliedEngagement: string;
+    statusRepliedEngagement: string; // Specific for engagement reply status if needed
     statusBounced: string;
-    statusError: string;
+    statusError: string; // General error status display for icebreaker
 
     // --- Login/Signup Page Specific & Shared Form Fields ---
     productName?: string;
@@ -195,14 +195,14 @@ export interface Translations {
     landingFeature4Desc?: string;
     signUpNowButton?: string;
     loginTitle?: string;
-    emailLabel?: string;
+    emailLabel?: string; // Shared for login, signup, etc.
     passwordLabel?: string;
     loginButton?: string;
     signInWithGoogleButton?: string;
     orDivider?: string;
     noAccountPrompt?: string;
     signUpLink?: string;
-    emailPlaceholder?: string;
+    emailPlaceholder?: string; // Shared
     passwordPlaceholder?: string;
     loginErrorDefault?: string;
 
@@ -214,21 +214,18 @@ export interface Translations {
     viewDetailsTooltip?: string;
     contactNameLabel?: string;
     companyNameLabel?: string;
+    // phoneLabel?: string; // Covered by colPhone if same
     statusLabel?: string;
     selectStatusPlaceholder?: string;
-    statusNew?: string;
+    statusNew?: string; // Display text for lead status "New"
     statusContacted?: string;
     statusFollowUp?: string;
     statusClosed?: string;
-    statusNewProspect?: string;
-    // statusReplied?: string; // This was already here, make sure it's distinct from filterStatusReplied if needed
+    statusNewProspect?: string; // Filter option text for "New Prospect"
+    statusReplied?: string;     // Filter option text for "Replied"
     customNotesLabel?: string;
     errorMinLength?: (fieldName: string, min: number) => string;
     contactOrCompanyRequiredError?: string;
-
-    // --- App Update Notification ---
-    updateAvailableMessage: string; // ADDED
-    refreshNowButton: string;     // ADDED
 }
 
 export const industriesData: Industry[] = [
@@ -266,7 +263,7 @@ export interface LeadStatusOption {
 // UI Texts for each language
 export const uiTexts: Record<LanguageCode, Translations> = {
     zh: {
-        // --- Your existing Chinese translations ---
+        // --- Existing Chinese translations from your file ---
         dashboardTitle: '潛在客戶搜尋儀表板',
         formDescription: '定義您的潛在客戶搜尋輪廓',
         filtersTitle: '篩選條件',
@@ -375,8 +372,8 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         statusNewProspect: '新開發客戶',
         statusReplied: '已回覆',
         // --- Sidebar ---
-        sidebarLeadSearchLink: '潛在客戶搜尋', // Matched to your existing convention
-        sidebarLeadSearchTitle: '潛在客戶搜尋', // Matched
+        sidebarLeadSearchLink: '潛在客戶搜尋',
+        sidebarLeadSearchTitle: '潛在客戶搜尋搜尋',
         sidebarEngagementLink: '客戶拓展中心',
         sidebarEngagementTitle: '客戶拓展中心',
         sidebarSettingsLink: '設定',
@@ -392,7 +389,7 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         filterByStatusAll: '所有狀態',
         filterStatusPendingIcebreaker: '待傳送破冰訊息',
         filterStatusIcebreakerSent: '已傳送破冰訊息',
-        filterStatusReplied: '已回覆 (互動)', // This was 'statusReplied' before, making distinct for engagement filter
+        filterStatusReplied: '已回覆 (互動)',
         filterStatusFollowUpDue: '待追蹤',
         loading: '載入中...',
         noLeadsInHub: '客戶拓展中心內無符合條件的潛在客戶搜尋。',
@@ -452,12 +449,9 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         emailPlaceholder: 'you@example.com',
         passwordPlaceholder: '輸入您的密碼',
         loginErrorDefault: '登入時發生未知錯誤。',
-        // --- App Update Notification --- ADDED
-        updateAvailableMessage: '應用程式有新版本可用。',
-        refreshNowButton: '立即刷新',
     },
     en: {
-        // --- Your existing English translations ---
+        // --- Existing English translations from your file ---
         dashboardTitle: 'Prospects Dashboard',
         formDescription: 'Define Your Prospect Persona',
         filtersTitle: 'Filters',
@@ -564,10 +558,10 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         statusFollowUp: 'Follow-up',
         statusClosed: 'Closed',
         statusNewProspect: 'New Prospect',
-        statusReplied: 'Replied', // This was for filter options
+        statusReplied: 'Replied',
         // --- Sidebar ---
-        sidebarLeadSearchLink: 'Lead Search', // Matched to your existing convention
-        sidebarLeadSearchTitle: 'Lead Search', // Matched
+        sidebarLeadSearchLink: 'Lead Search',
+        sidebarLeadSearchTitle: 'Lead Search',
         sidebarEngagementLink: 'Engagement Hub',
         sidebarEngagementTitle: 'Engagement Hub',
         sidebarSettingsLink: 'Settings',
@@ -583,7 +577,7 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         filterByStatusAll: 'All Statuses',
         filterStatusPendingIcebreaker: 'Pending Icebreaker',
         filterStatusIcebreakerSent: 'Icebreaker Sent',
-        // filterStatusReplied: 'Replied', // Already have a general 'statusReplied', ensure distinction if needed for engagement
+        filterStatusReplied: 'Replied', // Engagement context
         filterStatusFollowUpDue: 'Follow-up Due',
         loading: 'Loading...',
         noLeadsInHub: 'No leads in the hub matching your criteria.',
@@ -607,7 +601,7 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         notesPlaceholder: 'Notes...',
         addActivityButton: 'Add Activity',
         historyLog: 'History:',
-        // followUpDue: 'Follow-up Due:', // Already have one, ensure distinction if needed for activity item
+        followUpDue: 'Follow-up Due:',
         noActivityYet: 'No activity logged yet.',
         generalNotesTitle: 'General Notes',
         addNotesPlaceholder: 'Add notes specific to your engagement...',
@@ -615,7 +609,7 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         statusNotSent: 'To Send',
         statusSent: 'Sent',
         statusOpened: 'Opened',
-        statusRepliedEngagement: 'Replied (Engagement)', // Made distinct
+        statusRepliedEngagement: 'Replied', // Engagement context
         statusBounced: 'Bounced',
         statusError: 'Error',
         // --- Login/Signup ---
@@ -643,8 +637,5 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         emailPlaceholder: 'you@example.com',
         passwordPlaceholder: 'Enter your password',
         loginErrorDefault: 'An error occurred during login.',
-        // --- App Update Notification --- ADDED
-        updateAvailableMessage: 'A new version is available.',
-        refreshNowButton: 'Refresh Now',
     }
 };
