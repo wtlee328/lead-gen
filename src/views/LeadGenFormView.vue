@@ -933,7 +933,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         minWidth: "60px",
         textAlign: "center",
         verticalAlign: "middle",
-        zIndex: '18',
+        zIndex: "18",
         backgroundColor: "var(--card-bg-current)",
         borderRight: "1px solid var(--border-color-current)",
       },
@@ -1051,7 +1051,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         minWidth: "150px",
         textAlign: "center",
         verticalAlign: "middle",
-        zIndex: '17',
+        zIndex: "17",
         backgroundColor: "var(--card-bg-current)",
         borderRight: "1px solid var(--border-color-current)",
       },
@@ -1076,7 +1076,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         left: "210px",
         minWidth: "180px",
         width: "180px",
-        zIndex: '16',
+        zIndex: "16",
         backgroundColor: "var(--card-bg-current)",
         borderRight: "1px solid var(--border-color-current)",
       },
@@ -1258,7 +1258,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         right: "0px",
         minWidth: "130px",
         width: "130px",
-        zIndex: '16',
+        zIndex: "16",
         backgroundColor: "var(--card-bg-current)",
         borderLeft: "1px solid var(--border-color-current)",
       },
@@ -1313,18 +1313,68 @@ const table = useVueTable({
       typeof updater === "function" ? updater(rowSelection.value) : updater;
   },
   onSortingChange: (updater: Updater<SortingState>) => {
-    // Typed updater
     if (isProcessingBatch.value) return;
-    sorting.value =
+    const oldSortingString = JSON.stringify(sorting.value); // Compare stringified versions
+
+    const newSortingState =
       typeof updater === "function" ? updater(sorting.value) : updater;
-    fetchLeadsForCurrentUser(true);
+
+    if (JSON.stringify(newSortingState) !== oldSortingString) {
+      sorting.value = newSortingState;
+      console.log(
+        `%cLeadGenFormView: SORTING CHANGED (Values Differ). From: ${oldSortingString} -> To: ${JSON.stringify(
+          sorting.value
+        )}`,
+        "color: orange; font-weight: bold;"
+      );
+      console.count("LeadGenFormView: onSortingChange (fetch triggered)");
+      fetchLeadsForCurrentUser(true);
+    } else {
+      sorting.value = newSortingState; // Keep state in sync
+      console.log(
+        `%cLeadGenFormView: SORTING state updated by table (ref changed, values same). Current: ${JSON.stringify(
+          sorting.value
+        )}. NO FETCH.`,
+        "color: orange;"
+      );
+      console.count("LeadGenFormView: onSortingChange (ref updated, no fetch)");
+    }
   },
+  // Inside useVueTable configuration
   onPaginationChange: (updater: Updater<PaginationState>) => {
-    // Typed updater
     if (isProcessingBatch.value) return;
-    pagination.value =
+
+    const oldPageIndex = pagination.value.pageIndex;
+    const oldPageSize = pagination.value.pageSize;
+
+    // Apply the updater to get the potential new state
+    const newPaginationState =
       typeof updater === "function" ? updater(pagination.value) : updater;
-    fetchLeadsForCurrentUser(true);
+
+    // Check if the actual values have changed before updating the ref and fetching
+    if (
+      newPaginationState.pageIndex !== oldPageIndex ||
+      newPaginationState.pageSize !== oldPageSize
+    ) {
+      pagination.value = newPaginationState; // Update the reactive ref
+      console.log(
+        `%cLeadGenFormView: PAGINATION CHANGED (Values Differ). From Index: ${oldPageIndex}, Size: ${oldPageSize} -> To Index: ${pagination.value.pageIndex}, Size: ${pagination.value.pageSize}`,
+        "color: orange; font-weight: bold;"
+      );
+      console.count("LeadGenFormView: onPaginationChange (fetch triggered)");
+      fetchLeadsForCurrentUser(true); // Only fetch if values actually changed
+    } else {
+      // If only the reference changed but values are the same, still update the ref
+      // for consistency with the table's internal state, but DON'T fetch.
+      pagination.value = newPaginationState;
+      console.log(
+        `%cLeadGenFormView: PAGINATION state updated by table (ref changed, values same). Index: ${pagination.value.pageIndex}, Size: ${pagination.value.pageSize}. NO FETCH.`,
+        "color: orange;"
+      );
+      console.count(
+        "LeadGenFormView: onPaginationChange (ref updated, no fetch)"
+      );
+    }
   },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
@@ -1695,9 +1745,20 @@ const isAdvancedCriteriaActive = computed(
     filterTags.value.length > 0
 );
 function handleTabChangeFromPanel(newTab: LeadTab) {
+  console.log(
+    `%cLeadGenFormView: Received @update:currentTab -> ${newTab}`,
+    "color: green; font-weight: bold;"
+  );
+  console.count("LeadGenFormView: handleTabChangeFromPanel called");
   changeTab(newTab);
 }
 function handleClientFiltersUpdate(updatedFilters: ActiveClientFilters) {
+  console.log(
+    "%cLeadGenFormView: Received @update:filters ->",
+    "color: green; font-weight: bold;",
+    JSON.stringify(updatedFilters)
+  );
+  console.count("LeadGenFormView: handleClientFiltersUpdate called"); // CRITICAL: Watch this count
   activeClientFilters.value = updatedFilters;
   pagination.value.pageIndex = 0;
   rowSelection.value = {};
@@ -1997,16 +2058,40 @@ async function getSupabaseSession(): Promise<Session | null> {
 }
 
 async function fetchLeadsForCurrentUser(forceRefresh = false) {
+  // --- START: Added Logging ---
+  console.log(
+    `%cLeadGenFormView: fetchLeadsForCurrentUser CALLED. forceRefresh: ${forceRefresh}`,
+    "color: red; font-weight: bold;", // Style for easy spotting
+    `\n  Current Tab: ${currentTab.value}`,
+    `\n  Pagination: Index=${pagination.value.pageIndex}, Size=${pagination.value.pageSize}`,
+    `\n  Sorting: ${JSON.stringify(sorting.value)}`,
+    `\n  Active Client Filters: ${JSON.stringify(activeClientFilters.value)}` // Log current filter state
+  );
+  console.count("LeadGenFormView: fetchLeadsForCurrentUser execution count");
+  // --- END: Added Logging ---
+
   if (
     (isLoadingLeads.value && !forceRefresh) ||
     (isProcessingBatch.value && !forceRefresh)
   ) {
+    // --- START: Added Logging ---
+    console.log(
+      "%cLeadGenFormView: fetchLeadsForCurrentUser SKIPPED (isLoading or isProcessingBatch)",
+      "color: gray;"
+    );
+    // --- END: Added Logging ---
     return;
   }
   isLoadingLeads.value = true;
 
   const user = authStore.user;
   if (!user) {
+    // --- START: Added Logging ---
+    console.log(
+      "%cLeadGenFormView: fetchLeadsForCurrentUser SKIPPED (no user)",
+      "color: gray;"
+    );
+    // --- END: Added Logging ---
     tableData.value = [];
     rowSelection.value = {};
     isLoadingLeads.value = false;
@@ -2077,7 +2162,28 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
     const pageSize = pagination.value.pageSize;
     query = query.range(page * pageSize, (page + 1) * pageSize - 1);
 
+    // --- START: Added Logging ---
+    console.log(
+      "%cLeadGenFormView: Supabase Query constructed. Attempting to execute...",
+      "color: purple;", // Style for query execution
+      // You could log the actual query string if Supabase client offers a way to inspect it,
+      // but often just knowing it's about to run is enough for flow tracing.
+      // For example: `query.toString()` if that's a method, or just the parameters.
+      `Parameters - Tab: ${currentTab.value}, Page: ${page}, PageSize: ${pageSize}`
+    );
+    // --- END: Added Logging ---
+
     const { data: fetchedData, error, status, count } = await query;
+
+    // --- START: Added Logging ---
+    console.log(
+      `%cLeadGenFormView: Supabase Response -> Status: ${status}, Count: ${count}, Fetched Data Length: ${
+        fetchedData?.length || 0
+      }`,
+      "color: purple; font-weight: bold;",
+      error ? `Error: ${error.message}` : "No Supabase error."
+    );
+    // --- END: Added Logging ---
 
     if (error && status !== 406) {
       if (error.message.includes("JWT")) {
@@ -2085,7 +2191,10 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
         searchStatus.value = "error";
         await authStore.signOut();
       } else {
-        console.error("Supabase fetch error:", error);
+        console.error(
+          "Supabase fetch error (logged before this point, or here if specific):",
+          error
+        ); // Original log
         throw error;
       }
       tableData.value = [];
@@ -2099,19 +2208,47 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       table.setPageCount(newPageCount);
 
       const currentPageIndex = pagination.value.pageIndex;
+      // --- START: Added Logging for pagination correction logic ---
+      console.log(
+        `%cLeadGenFormView: Pagination correction check -> CurrentIndex: ${currentPageIndex}, NewPageCount: ${newPageCount}, TotalCount: ${totalCount}, CurrentTab: ${currentTab.value}`,
+        "color: #007bff;" // Blue color for this specific log
+      );
+      // --- END: Added Logging ---
+
       if (currentPageIndex >= newPageCount && newPageCount > 0) {
+        // --- START: Added Logging ---
+        console.log(
+          `%cLeadGenFormView: Correcting pagination. Current page (${currentPageIndex}) is out of new bounds (${
+            newPageCount - 1
+          }). Setting to ${newPageCount - 1}.`,
+          "color: #007bff; font-style: italic;"
+        );
+        // --- END: Added Logging ---
         pagination.value.pageIndex = newPageCount - 1;
       } else if (
         currentPageIndex > 0 &&
         totalCount === 0 &&
         currentTab.value !== "new"
       ) {
+        // --- START: Added Logging ---
+        console.log(
+          `%cLeadGenFormView: Correcting pagination. Current page (${currentPageIndex}) has no items on non-'new' tab. Setting to page 0.`,
+          "color: #007bff; font-style: italic;"
+        );
+        // --- END: Added Logging ---
         pagination.value.pageIndex = 0;
       }
     }
   } catch (e: any) {
-    console.error("ERROR caught in fetchLeadsForCurrentUser:", e);
+    // --- START: Added Logging ---
+    console.error(
+      "%cLeadGenFormView: ERROR caught in fetchLeadsForCurrentUser try-catch block:",
+      "background: red; color: white; font-weight: bold;", // Make errors highly visible
+      e
+    );
+    // --- END: Added Logging ---
     if (!searchMessage.value) {
+      // Keep existing logic for setting user-facing messages
       searchMessage.value = texts.value.alertError + e.message;
       searchStatus.value = "error";
     }
@@ -2121,6 +2258,12 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
   } finally {
     isLoadingLeads.value = false;
     if (!initialLoadComplete.value) initialLoadComplete.value = true;
+    // --- START: Added Logging ---
+    console.log(
+      "%cLeadGenFormView: fetchLeadsForCurrentUser FINISHED.",
+      "color: red;"
+    );
+    // --- END: Added Logging ---
   }
 }
 
