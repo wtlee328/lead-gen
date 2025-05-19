@@ -2,64 +2,69 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import {
-    industriesData, // Import the actual data
-    uiTexts      // Import the actual translations
-} from '@/types/language'; // Use '@' for alias to src directory (Vite default)
+    industriesData,
+    uiTexts // Import the actual translations
+} from '@/types/language';
 import type {
     LanguageCode,
-    Industry,  // Import the actual translations
+    Industry,
     Translations
-} from '@/types/language'; 
+} from '@/types/language';
 
-// Define the store
+// Log uiTexts immediately after import to see if it's loaded correctly
+console.log('[languageStore] Imported uiTexts:', JSON.parse(JSON.stringify(uiTexts || { note: "uiTexts was undefined/null upon import" })));
+console.log('[languageStore] Type of uiTexts:', typeof uiTexts);
+
+
 export const useLanguageStore = defineStore('language', () => {
-    // --- STATE ---
-    const currentLang = ref<LanguageCode>('en'); // Default language (e.g., Chinese)
+    console.log('[languageStore] Initializing store setup function...');
+    const currentLang = ref<LanguageCode>('en');
 
-    // --- ACTIONS ---
     const setLanguage = (lang: LanguageCode) => {
+        console.log('[languageStore] setLanguage called with:', lang);
         currentLang.value = lang;
-        // You could also save this preference to localStorage here
-        // localStorage.setItem('preferredLang', lang);
     };
 
     const toggleLanguage = () => {
-        currentLang.value = currentLang.value === 'zh' ? 'en' : 'zh';
-        // localStorage.setItem('preferredLang', currentLang.value);
+        const newLang = currentLang.value === 'zh' ? 'en' : 'zh';
+        console.log('[languageStore] toggleLanguage. Old:', currentLang.value, 'New:', newLang);
+        currentLang.value = newLang;
     };
 
-    // --- GETTERS (Computed properties) ---
-    // Provides the list of industries in the currently selected language
     const industries = computed((): { value: string; text: string }[] => {
+        // ... (your industries logic)
         return industriesData.map((industry: Industry) => ({
             value: industry.value,
-            text: industry[currentLang.value] // Access 'zh' or 'en' property of industry object
+            text: industry[currentLang.value]
         }));
     });
 
-    // Provides all UI texts in the currently selected language
     const texts = computed((): Translations => {
-        return uiTexts[currentLang.value];
+        console.log(`[languageStore] 'texts' computed triggered. currentLang: ${currentLang.value}`);
+        if (!uiTexts || !uiTexts[currentLang.value]) {
+            console.error(`[languageStore] CRITICAL: uiTexts OR uiTexts[${currentLang.value}] is undefined/null!`);
+            // Return a minimal fallback to prevent "cannot read properties of undefined"
+            return {
+                updateAvailableMessage: 'Error: Lang texts missing!',
+                refreshNowButton: 'Error Refresh',
+                // Add other critical keys your app might immediately access from texts
+            } as unknown as Translations; // Cast if your minimal fallback isn't a full Translations
+        }
+        const resolvedTexts = uiTexts[currentLang.value];
+        console.log('[languageStore] "texts" computed resolved to:', JSON.parse(JSON.stringify(resolvedTexts)));
+        return resolvedTexts;
     });
 
-    // Provides the text for the language toggle button itself
     const langToggleText = computed((): string => {
         return currentLang.value === 'zh' ? 'EN' : '中文';
     });
 
-    // Optional: Initialize language from localStorage on store creation
-    // const preferredLang = localStorage.getItem('preferredLang');
-    // if (preferredLang && (preferredLang === 'zh' || preferredLang === 'en')) {
-    //   currentLang.value = preferredLang;
-    // }
+    console.log('[languageStore] Store setup function complete. Default lang:', currentLang.value);
 
     return {
-        // State
         currentLang,
-        // Actions
         setLanguage,
         toggleLanguage,
-        // Getters
         industries,
         texts,
         langToggleText
