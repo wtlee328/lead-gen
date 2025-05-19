@@ -11,9 +11,22 @@ export type LanguageCode = 'zh' | 'en';
 export interface Translations {
     // --- General App/Page Titles & Descriptions ---
     dashboardTitle: string;
-    formDescription: string;
+    formDescription: string; // Used in LeadGenFormView and EngagementCenterView
 
-    // --- Filter Panel Sidebar ---
+    // --- App Navigation Sidebar ---
+    sidebarLeadSearchLink: string;
+    sidebarLeadSearchTitle: string;
+    sidebarEngagementLink: string;
+    sidebarEngagementTitle: string;
+    sidebarSettingsLink: string;
+    sidebarSettingsTitle: string;
+    languageDropdownHeader: string;
+    themeDropdownHeader: string;
+    userActionsDropdownTitle: string;
+    userSettingsPageLink: string;
+    signOutButton: string;
+
+    // --- Filter Panel Sidebar (shared by LeadGenFormView) ---
     filtersTitle: string;
     tabsTitle: string;
     tabNew: string;
@@ -24,7 +37,7 @@ export interface Translations {
     clearAllFiltersButton: string;
     clearFilterSectionTooltip: string;
 
-    // --- Search Criteria Section (Main Form) ---
+    // --- Search Criteria Section (Main Form - LeadGenFormView) ---
     mainQueryLabel: string;
     mainQueryPlaceholder: string;
     advancedBtnTextShow: string;
@@ -44,16 +57,16 @@ export interface Translations {
     searchFormToggleShowTooltip: string;
     searchFormToggleHideTooltip: string;
 
-    // --- Leads List / Grid Section ---
+    // --- Leads List / Grid Section (LeadGenFormView) ---
     leadsListTitle: string;
     refreshButton: string;
-    loadingLeads: string;
+    loadingLeads: string; // General loading text for leads
     noNewLeadsYet: string;
     noSavedLeads: string;
     noArchivedLeads: string;
-    noLeadsFound: string;
+    noLeadsFound: string; // General "no results" for leads list
 
-    // --- Table Columns ---
+    // --- Table Columns (Shared by LeadGenFormView & EngagementCenterView potentially) ---
     colName: string;
     colJobTitle: string;
     colIndustry: string;
@@ -69,21 +82,17 @@ export interface Translations {
     colStatus: string;
     colActions: string;
 
-    // --- Table Actions (Single & Batch) ---
-    actionSaveTooltip: string;         // Descriptive: "Save Lead"
-    actionArchiveTooltip: string;      // Descriptive: "Archive Lead"
-    actionRestoreTooltip: string;      // Descriptive: "Move to New"
-    actionDeleteTooltip: string;       // Descriptive: "Delete Lead"
-    actionMoveToSavedTooltip: string;  // Descriptive: "Move to Saved"
-
-    // ---- NEW SIMPLE TOOLTIPS for hover ----
-    tooltipSave: string;               // Simple: "Save"
-    tooltipArchive: string;            // Simple: "Archive"
-    tooltipRestore: string;            // Simple: "Restore"
-    tooltipMoveToSaved: string;        // Simple: "Move to Saved"
-    tooltipDelete: string;             // Simple: "Delete"
-    // ---- END OF NEW SIMPLE TOOLTIPS ----
-
+    // --- Table Actions (Single & Batch - LeadGenFormView) ---
+    actionSaveTooltip: string;
+    actionArchiveTooltip: string;
+    actionRestoreTooltip: string;
+    actionDeleteTooltip: string;
+    actionMoveToSavedTooltip: string;
+    tooltipSave: string;
+    tooltipArchive: string;
+    tooltipRestore: string;
+    tooltipMoveToSaved: string;
+    tooltipDelete: string;
     selectAllPageButton: string;
     selectAllPageTooltip: string;
     deselectAllButton: string;
@@ -93,16 +102,16 @@ export interface Translations {
     batchArchiveButton: string;
     batchRestoreButton: string;
     batchDeleteButton: string;
-    batchMoveToSavedButton: string; // Key for "Move Selected to Saved" button text
+    batchMoveToSavedButton: string;
 
-    // --- Pagination ---
+    // --- Pagination (Shared) ---
     previousPage: string;
     nextPage: string;
     pageText: string;
     ofText: string;
     showNum: string;
 
-    // --- Feedback, Alerts & Confirmation Messages ---
+    // --- Feedback, Alerts & Confirmation Messages (Shared) ---
     alertError: string;
     alertSuccess: string;
     alertWarning: string;
@@ -125,11 +134,79 @@ export interface Translations {
     confirmBatchArchive: (count: number) => string;
     confirmBatchRestore: (count: number) => string;
     confirmBatchDelete: (count: number) => string;
-    confirmBatchMoveToSaved: (count: number) => string; // Key for "Move Selected to Saved" confirmation
+    confirmBatchMoveToSaved: (count: number) => string;
     noLeadsEligibleForAction: (action: string) => string;
     batchActionResult: (action: string, success: number, failed: number) => string;
 
-    // --- Fields for potential future use ---
+    // --- Engagement Center View Specific ---
+    engagementCenterTitle: string;
+    searchLeadsPlaceholder: string; // Search within the hub
+    filterByStatusAll: string;
+    filterStatusPendingIcebreaker: string;
+    filterStatusIcebreakerSent: string;
+    filterStatusReplied: string; // Could be distinct from lead_status 'Replied' for engagement
+    filterStatusFollowUpDue: string;
+    loading: string; // General loading text, e.g., for the hub itself
+    noLeadsInHub: string;
+    addLeadsFromProspects: string;
+    followUpOn: string;
+    selectLeadPrompt: string;
+    viewLinkedIn: string;
+    removeFromHub: string;
+    icebreakerSectionTitle: string;
+    craftIcebreakerPlaceholder: string;
+    getAISuggestion: string;
+    sendIcebreakerButton: string;
+    sentOn: string;
+    activityAndFollowUpsTitle: string;
+    logOrSchedule: string;
+    logEmailReply: string;
+    logCall: string;
+    logMeeting: string;
+    scheduleFollowUpEmail: string;
+    scheduleFollowUpCall: string;
+    notesPlaceholder: string; // General notes placeholder in engagement
+    addActivityButton: string;
+    historyLog: string;
+    followUpDue: string; // e.g., "Follow-up Due:" (for an activity item)
+    noActivityYet: string;
+    generalNotesTitle: string;
+    addNotesPlaceholder: string; // Placeholder for general notes in engagement
+    saveNotesButton: string;
+    statusNotSent: string; // For icebreaker status display
+    statusSent: string;
+    statusOpened: string;
+    statusRepliedEngagement: string; // Specific for engagement reply status if needed
+    statusBounced: string;
+    statusError: string; // General error status display for icebreaker
+
+    // --- Login/Signup Page Specific & Shared Form Fields ---
+    productName?: string;
+    landingHeadline?: string;
+    landingSubheadline?: string;
+    landingFeaturesTitle?: string;
+    landingFeature1Title?: string;
+    landingFeature1Desc?: string;
+    landingFeature2Title?: string;
+    landingFeature2Desc?: string;
+    landingFeature3Title?: string;
+    landingFeature3Desc?: string;
+    landingFeature4Title?: string;
+    landingFeature4Desc?: string;
+    signUpNowButton?: string;
+    loginTitle?: string;
+    emailLabel?: string; // Shared for login, signup, etc.
+    passwordLabel?: string;
+    loginButton?: string;
+    signInWithGoogleButton?: string;
+    orDivider?: string;
+    noAccountPrompt?: string;
+    signUpLink?: string;
+    emailPlaceholder?: string; // Shared
+    passwordPlaceholder?: string;
+    loginErrorDefault?: string;
+
+    // --- Other/Future Use ---
     formTitle?: string;
     searchSectionTitle?: string;
     leadIcebreakerColumn?: string;
@@ -137,22 +214,20 @@ export interface Translations {
     viewDetailsTooltip?: string;
     contactNameLabel?: string;
     companyNameLabel?: string;
-    emailLabel?: string;
-    phoneLabel?: string;
+    // phoneLabel?: string; // Covered by colPhone if same
     statusLabel?: string;
     selectStatusPlaceholder?: string;
-    statusNew?: string; // For lead status display text, e.g., "New Prospect"
+    statusNew?: string; // Display text for lead status "New"
     statusContacted?: string;
     statusFollowUp?: string;
     statusClosed?: string;
-    statusNewProspect?: string; // For filter options, if different from statusNew
-    statusReplied?: string;     // For filter options
+    statusNewProspect?: string; // Filter option text for "New Prospect"
+    statusReplied?: string;     // Filter option text for "Replied"
     customNotesLabel?: string;
     errorMinLength?: (fieldName: string, min: number) => string;
     contactOrCompanyRequiredError?: string;
 }
 
-// ... (industriesData remains the same) ...
 export const industriesData: Industry[] = [
     { value: "information technology & services", zh: "資訊科技與服務", en: "Information Technology & Services" },
     { value: "construction", zh: "建築業", en: "Construction" },
@@ -180,20 +255,19 @@ export const industriesData: Industry[] = [
     { value: "package/freight delivery", zh: "包裹/貨運配送", en: "Package/Freight Delivery" }
 ];
 
-
 export interface LeadStatusOption {
     value: string;
     textKey: 'statusNewProspect' | 'statusContacted' | 'statusFollowUp' | 'statusReplied';
 }
 
-
 // UI Texts for each language
 export const uiTexts: Record<LanguageCode, Translations> = {
     zh: {
-        dashboardTitle: '潛在客戶儀表板',
-        formDescription: '定義您的潛在客戶輪廓',
+        // --- Existing Chinese translations from your file ---
+        dashboardTitle: '潛在客戶搜尋儀表板',
+        formDescription: '定義您的潛在客戶搜尋輪廓',
         filtersTitle: '篩選條件',
-        tabsTitle: '潛在客戶類別',
+        tabsTitle: '潛在客戶搜尋類別',
         tabNew: '新獲取',
         tabSaved: '已儲存',
         tabArchived: '已封存',
@@ -201,7 +275,7 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         selectFilterPlaceholder: '請選擇',
         clearAllFiltersButton: '清除所有篩選',
         clearFilterSectionTooltip: '清除此區篩選',
-        mainQueryLabel: '描述您想找的潛在客戶類型：',
+        mainQueryLabel: '描述您想找的潛在客戶搜尋類型：',
         mainQueryPlaceholder: '例如：倫敦金融科技新創公司的軟體工程師',
         advancedBtnTextShow: '進階篩選',
         advancedBtnTextHide: '隱藏進階篩選',
@@ -216,16 +290,16 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         addFiltersBtnText: '加入條件標籤',
         tagAreaLabel: '已選條件：',
         removeFilterTooltip: '移除此條件',
-        searchLeadsButton: '尋找潛在客戶',
+        searchLeadsButton: '尋找潛在客戶搜尋',
         searchFormToggleShowTooltip: '顯示搜尋表單',
         searchFormToggleHideTooltip: '隱藏搜尋表單',
-        leadsListTitle: '潛在客戶列表',
+        leadsListTitle: '潛在客戶搜尋列表',
         refreshButton: '重新整理',
         loadingLeads: '載入中...',
-        noNewLeadsYet: '開始搜尋以發掘新的潛在客戶，或查看其他分類。',
-        noSavedLeads: '尚無已儲存的潛在客戶。您可以從「新獲取」分類中儲存客戶。',
-        noArchivedLeads: '尚無已封存的潛在客戶。',
-        noLeadsFound: '找不到符合條件的潛在客戶。',
+        noNewLeadsYet: '開始搜尋以發掘新的潛在客戶搜尋，或查看其他分類。',
+        noSavedLeads: '尚無已儲存的潛在客戶搜尋。您可以從「新獲取」分類中儲存客戶。',
+        noArchivedLeads: '尚無已封存的潛在客戶搜尋。',
+        noLeadsFound: '找不到符合條件的潛在客戶搜尋。',
         colName: '姓名',
         colJobTitle: '職稱',
         colIndustry: '產業別',
@@ -240,10 +314,10 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         colCreatedAt: '加入日期',
         colStatus: '狀態',
         colActions: '操作',
-        actionSaveTooltip: '儲存此潛在客戶',
-        actionArchiveTooltip: '封存此潛在客戶',
+        actionSaveTooltip: '儲存此潛在客戶搜尋',
+        actionArchiveTooltip: '封存此潛在客戶搜尋',
         actionRestoreTooltip: '移至新獲取',
-        actionDeleteTooltip: '刪除此潛在客戶',
+        actionDeleteTooltip: '刪除此潛在客戶搜尋',
         actionMoveToSavedTooltip: '移至已儲存',
         tooltipSave: '儲存',
         tooltipArchive: '封存',
@@ -251,9 +325,9 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         tooltipMoveToSaved: '移至已儲存',
         tooltipDelete: '刪除',
         selectAllPageButton: '全選本頁',
-        selectAllPageTooltip: '全選本頁所有潛在客戶',
+        selectAllPageTooltip: '全選本頁所有潛在客戶搜尋',
         deselectAllButton: '取消全選',
-        deselectAllPageTooltip: '取消選取本頁所有潛在客戶',
+        deselectAllPageTooltip: '取消選取本頁所有潛在客戶搜尋',
         batchActionsDropdownTitle: '批次操作',
         batchSaveButton: '儲存選取項目',
         batchArchiveButton: '封存選取項目',
@@ -273,32 +347,111 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         userNotAuthMessage: '使用者未驗證，請重新登入。',
         n8nConfigError: '系統整合設定錯誤，請聯絡管理員。',
         accessDeniedMessage: '存取被拒，請重新登入或確認您的權限。',
-        confirmArchiveUnsaved: '您有未儲存的「新獲取」潛在客戶。開始新的搜尋將會封存這些客戶，確定要繼續嗎？',
-        unsavedLeadsArchived: '未儲存的「新獲取」潛在客戶已移至「已封存」。',
+        confirmArchiveUnsaved: '您有未儲存的「新獲取」潛在客戶搜尋。開始新的搜尋將會封存這些客戶，確定要繼續嗎？',
+        unsavedLeadsArchived: '未儲存的「新獲取」潛在客戶搜尋已移至「已封存」。',
         searchLeadsSuccess: '搜尋請求已送出，結果將顯示於「新獲取」分頁。',
-        leadSavedSuccess: '潛在客戶已成功儲存。',
-        leadArchivedSuccess: '潛在客戶已成功封存。',
-        leadRestoredSuccess: '潛在客戶已成功移至「新獲取」。',
-        leadDeletedSuccess: '潛在客戶已成功刪除。',
-        leadUpdateError: '更新潛在客戶狀態失敗。',
-        leadDeleteError: '刪除潛在客戶失敗。',
-        autoArchiveError: '自動封存未儲存潛在客戶失敗。',
-        confirmBatchSave: (count: number) => `確定要儲存 ${count} 個選取的潛在客戶嗎？`,
-        confirmBatchArchive: (count: number) => `確定要封存 ${count} 個選取的潛在客戶嗎？`,
-        confirmBatchRestore: (count: number) => `確定要將 ${count} 個選取的潛在客戶還原至「新獲取」嗎？`,
-        confirmBatchDelete: (count: number) => `確定要永久刪除 ${count} 個選取的潛在客戶嗎？此操作無法復原。`,
-        confirmBatchMoveToSaved: (count: number) => `確定要將 ${count} 個選取的潛在客戶移至「已儲存」嗎？`,
-        noLeadsEligibleForAction: (action: string) => `沒有選取的潛在客戶符合「${action}」操作的條件。`,
+        leadSavedSuccess: '潛在客戶搜尋已成功儲存。',
+        leadArchivedSuccess: '潛在客戶搜尋已成功封存。',
+        leadRestoredSuccess: '潛在客戶搜尋已成功移至「新獲取」。',
+        leadDeletedSuccess: '潛在客戶搜尋已成功刪除。',
+        leadUpdateError: '更新潛在客戶搜尋狀態失敗。',
+        leadDeleteError: '刪除潛在客戶搜尋失敗。',
+        autoArchiveError: '自動封存未儲存潛在客戶搜尋失敗。',
+        confirmBatchSave: (count: number) => `確定要儲存 ${count} 個選取的潛在客戶搜尋嗎？`,
+        confirmBatchArchive: (count: number) => `確定要封存 ${count} 個選取的潛在客戶搜尋嗎？`,
+        confirmBatchRestore: (count: number) => `確定要將 ${count} 個選取的潛在客戶搜尋還原至「新獲取」嗎？`,
+        confirmBatchDelete: (count: number) => `確定要永久刪除 ${count} 個選取的潛在客戶搜尋嗎？此操作無法復原。`,
+        confirmBatchMoveToSaved: (count: number) => `確定要將 ${count} 個選取的潛在客戶搜尋移至「已儲存」嗎？`,
+        noLeadsEligibleForAction: (action: string) => `沒有選取的潛在客戶搜尋符合「${action}」操作的條件。`,
         batchActionResult: (action: string, success: number, failed: number) => `${action}：${success} 個成功，${failed} 個失敗。`,
-        formTitle: '潛在客戶發掘中心',
+        formTitle: '潛在客戶搜尋發掘中心',
         statusNew: '新開發',
         statusContacted: '已聯繫',
         statusFollowUp: '追蹤中',
         statusClosed: '已結案',
         statusNewProspect: '新開發客戶',
         statusReplied: '已回覆',
+        // --- Sidebar ---
+        sidebarLeadSearchLink: '潛在客戶搜尋',
+        sidebarLeadSearchTitle: '潛在客戶搜尋搜尋',
+        sidebarEngagementLink: '客戶拓展中心',
+        sidebarEngagementTitle: '客戶拓展中心',
+        sidebarSettingsLink: '設定',
+        sidebarSettingsTitle: '設定',
+        languageDropdownHeader: '語言',
+        themeDropdownHeader: '主題',
+        userActionsDropdownTitle: '使用者操作',
+        userSettingsPageLink: '使用者設定',
+        signOutButton: '登出',
+        // --- Engagement Center ---
+        engagementCenterTitle: '客戶拓展中心',
+        searchLeadsPlaceholder: '搜尋客戶拓展中心內的潛在客戶搜尋...',
+        filterByStatusAll: '所有狀態',
+        filterStatusPendingIcebreaker: '待傳送破冰訊息',
+        filterStatusIcebreakerSent: '已傳送破冰訊息',
+        filterStatusReplied: '已回覆 (互動)',
+        filterStatusFollowUpDue: '待追蹤',
+        loading: '載入中...',
+        noLeadsInHub: '客戶拓展中心內無符合條件的潛在客戶搜尋。',
+        addLeadsFromProspects: '請從「潛在客戶搜尋」視圖新增客戶。',
+        followUpOn: '追蹤於：',
+        selectLeadPrompt: '請從左側列表中選取潛在客戶搜尋以開始管理。',
+        viewLinkedIn: '查看 LinkedIn',
+        removeFromHub: '從客戶拓展中心移除',
+        icebreakerSectionTitle: '破冰訊息',
+        craftIcebreakerPlaceholder: '在此撰寫您的個人化破冰訊息...',
+        getAISuggestion: 'AI 建議',
+        sendIcebreakerButton: '傳送破冰訊息',
+        sentOn: '傳送於：',
+        activityAndFollowUpsTitle: '活動與追蹤',
+        logOrSchedule: '記錄互動 / 安排追蹤',
+        logEmailReply: '記錄郵件回覆',
+        logCall: '記錄通話',
+        logMeeting: '記錄會議',
+        scheduleFollowUpEmail: '安排郵件追蹤',
+        scheduleFollowUpCall: '安排通話追蹤',
+        notesPlaceholder: '備註...',
+        addActivityButton: '新增活動',
+        historyLog: '歷史記錄：',
+        followUpDue: '待追蹤：',
+        noActivityYet: '尚無活動記錄。',
+        generalNotesTitle: '一般備註',
+        addNotesPlaceholder: '新增關於互動的特定備註...',
+        saveNotesButton: '儲存備註',
+        statusNotSent: '待傳送',
+        statusSent: '已傳送',
+        statusOpened: '已開啟',
+        statusRepliedEngagement: '已回覆',
+        statusBounced: '退回',
+        statusError: '錯誤',
+        // --- Login/Signup ---
+        productName: 'Legen.io',
+        landingHeadline: '用 AI 強化您的業務拓展',
+        landingSubheadline: '以前所未有的方式發現、篩選並與潛在客戶搜尋互動。Legen.io 使用頂尖 AI 技術找到您的理想客戶並個性化溝通，為您節省時間、提高轉換率。',
+        landingFeaturesTitle: '為何選擇 Legen.io？',
+        landingFeature1Title: 'AI 驅動潛客開發：',
+        landingFeature1Desc: '發掘隱藏的潛力客戶和高意向線索。',
+        landingFeature2Title: '智能資格篩選：',
+        landingFeature2Desc: '透過智能評分，專注於真正重要的潛在客戶搜尋。',
+        landingFeature3Title: '個性化互動：',
+        landingFeature3Desc: '打造引人入勝且能引起共鳴的溝通內容。',
+        landingFeature4Title: '提升轉換率：',
+        landingFeature4Desc: '將更多潛在客戶搜尋轉化為忠實顧客。',
+        signUpNowButton: '免費開始',
+        loginTitle: '歡迎回來！',
+        emailLabel: '電子郵件地址',
+        passwordLabel: '密碼',
+        loginButton: '登入',
+        signInWithGoogleButton: '使用 Google 帳戶登入',
+        orDivider: '或',
+        noAccountPrompt: '還沒有帳戶？',
+        signUpLink: '在此註冊',
+        emailPlaceholder: 'you@example.com',
+        passwordPlaceholder: '輸入您的密碼',
+        loginErrorDefault: '登入時發生未知錯誤。',
     },
     en: {
+        // --- Existing English translations from your file ---
         dashboardTitle: 'Prospects Dashboard',
         formDescription: 'Define Your Prospect Persona',
         filtersTitle: 'Filters',
@@ -400,11 +553,89 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         noLeadsEligibleForAction: (action: string) => `No selected leads are eligible for ${action}.`,
         batchActionResult: (action: string, success: number, failed: number) => `${action}: ${success} succeeded, ${failed} failed.`,
         formTitle: 'Lead Prospecting Center',
-        statusNew: 'New', // This is for display of the status, distinct from the filter option.
+        statusNew: 'New',
         statusContacted: 'Contacted',
         statusFollowUp: 'Follow-up',
         statusClosed: 'Closed',
-        statusNewProspect: 'New Prospect', // This is for the filter panel's select options
-        statusReplied: 'Replied',     // This is for the filter panel's select options
+        statusNewProspect: 'New Prospect',
+        statusReplied: 'Replied',
+        // --- Sidebar ---
+        sidebarLeadSearchLink: 'Lead Search',
+        sidebarLeadSearchTitle: 'Lead Search',
+        sidebarEngagementLink: 'Engagement Hub',
+        sidebarEngagementTitle: 'Engagement Hub',
+        sidebarSettingsLink: 'Settings',
+        sidebarSettingsTitle: 'Settings',
+        languageDropdownHeader: 'Language',
+        themeDropdownHeader: 'Theme',
+        userActionsDropdownTitle: 'User Actions',
+        userSettingsPageLink: 'User Settings',
+        signOutButton: 'Sign Out',
+        // --- Engagement Center ---
+        engagementCenterTitle: 'Engagement Hub',
+        searchLeadsPlaceholder: 'Search leads in hub...',
+        filterByStatusAll: 'All Statuses',
+        filterStatusPendingIcebreaker: 'Pending Icebreaker',
+        filterStatusIcebreakerSent: 'Icebreaker Sent',
+        filterStatusReplied: 'Replied', // Engagement context
+        filterStatusFollowUpDue: 'Follow-up Due',
+        loading: 'Loading...',
+        noLeadsInHub: 'No leads in the hub matching your criteria.',
+        addLeadsFromProspects: 'Add leads from the Prospects view.',
+        followUpOn: 'Follow-up:',
+        selectLeadPrompt: 'Select a lead from the list to start managing engagement.',
+        viewLinkedIn: 'View LinkedIn',
+        removeFromHub: 'Remove from Hub',
+        icebreakerSectionTitle: 'Icebreaker Message',
+        craftIcebreakerPlaceholder: 'Craft your personalized icebreaker here...',
+        getAISuggestion: 'AI Suggestion',
+        sendIcebreakerButton: 'Send Icebreaker',
+        sentOn: 'Sent:',
+        activityAndFollowUpsTitle: 'Activity & Follow-ups',
+        logOrSchedule: 'Log Interaction / Schedule Follow-up',
+        logEmailReply: 'Log Email Reply',
+        logCall: 'Log Call',
+        logMeeting: 'Log Meeting',
+        scheduleFollowUpEmail: 'Schedule Follow-up Email',
+        scheduleFollowUpCall: 'Schedule Follow-up Call',
+        notesPlaceholder: 'Notes...',
+        addActivityButton: 'Add Activity',
+        historyLog: 'History:',
+        followUpDue: 'Follow-up Due:',
+        noActivityYet: 'No activity logged yet.',
+        generalNotesTitle: 'General Notes',
+        addNotesPlaceholder: 'Add notes specific to your engagement...',
+        saveNotesButton: 'Save Notes',
+        statusNotSent: 'To Send',
+        statusSent: 'Sent',
+        statusOpened: 'Opened',
+        statusRepliedEngagement: 'Replied', // Engagement context
+        statusBounced: 'Bounced',
+        statusError: 'Error',
+        // --- Login/Signup ---
+        productName: 'Legen.io',
+        landingHeadline: 'Supercharge Your Outreach with AI',
+        landingSubheadline: 'Discover, qualify, and engage prospects like never before. Legen.io uses cutting-edge AI to find your ideal customers and personalize communication, saving you time and boosting conversions.',
+        landingFeaturesTitle: 'Why Choose Legen.io?',
+        landingFeature1Title: 'AI-Powered Prospecting:',
+        landingFeature1Desc: 'Uncover hidden gems and high-intent leads.',
+        landingFeature2Title: 'Intelligent Qualification:',
+        landingFeature2Desc: 'Focus on leads that matter with smart scoring.',
+        landingFeature3Title: 'Personalized Engagement:',
+        landingFeature3Desc: 'Craft compelling outreach that resonates.',
+        landingFeature4Title: 'Boost Conversions:',
+        landingFeature4Desc: 'Turn more prospects into loyal customers.',
+        signUpNowButton: 'Get Started Free',
+        loginTitle: 'Welcome Back!',
+        emailLabel: 'Email Address',
+        passwordLabel: 'Password',
+        loginButton: 'Log In',
+        signInWithGoogleButton: 'Sign in with Google',
+        orDivider: 'OR',
+        noAccountPrompt: "Don't have an account?",
+        signUpLink: 'Sign up here',
+        emailPlaceholder: 'you@example.com',
+        passwordPlaceholder: 'Enter your password',
+        loginErrorDefault: 'An error occurred during login.',
     }
 };

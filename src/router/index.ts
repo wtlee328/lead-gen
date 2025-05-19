@@ -1,9 +1,11 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router';
-import type { RouteRecordRaw } from 'vue-router'
-import LeadGenFormView from '../views/LeadGenFormView.vue'; // Your main prospecting dashboard
-import LoginView from '../views/LoginView.vue';         // Login page
-import SignUpView from '../views/SignUpView.vue';       // Sign up page
+import type { RouteRecordRaw } from 'vue-router'; // Correct type-only import
+
+import LeadGenFormView from '../views/LeadGenFormView.vue';
+import LoginView from '../views/LoginView.vue';
+import SignUpView from '../views/SignUpView.vue';
+import EngagementCenterView from '../views/EngagementCenterView.vue'; // 1. IMPORT THE NEW VIEW
 
 // Import Supabase client for direct session check in the guard
 import { supabase } from '@/services/supabaseClient';
@@ -11,11 +13,21 @@ import { supabase } from '@/services/supabaseClient';
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
-        name: 'LeadProspecting', // Changed name to be more descriptive of the dashboard
+        name: 'LeadProspecting',
         component: LeadGenFormView,
         meta: {
             requiresAuth: true,
-            hideNavbar: false // MODIFIED: Explicitly set, though default would be false
+            hideNavbar: false
+        }
+    },
+    // 2. ADD THE NEW ROUTE DEFINITION
+    {
+        path: '/engagement-hub', // Or your preferred path
+        name: 'EngagementHub',    // Choose a unique name for the route
+        component: EngagementCenterView,
+        meta: {
+            requiresAuth: true, // This view likely requires authentication
+            hideNavbar: false   // The main app navbar should be visible
         }
     },
     {
@@ -23,8 +35,8 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Login',
         component: LoginView,
         meta: {
-            guestOnly: true, // This route is for guests (unauthenticated users) only
-            hideNavbar: true   // ADDED: Hide navbar for this route
+            guestOnly: true,
+            hideNavbar: true
         }
     },
     {
@@ -32,47 +44,44 @@ const routes: Array<RouteRecordRaw> = [
         name: 'SignUp',
         component: SignUpView,
         meta: {
-            guestOnly: true, // This route is for guests only
-            hideNavbar: true   // ADDED: Hide navbar for this route
+            guestOnly: true,
+            hideNavbar: true
         }
     },
-    // Example of another protected route you might add later:
-    // {
-    //   path: '/my-profile',
-    //   name: 'MyProfile',
-    //   component: () => import('../views/UserProfileView.vue'), // Lazy loading
-    //   meta: { requiresAuth: true, hideNavbar: false } // Navbar visible
-    // },
-    // Catch-all route for 404 Not Found (optional)
+    // Example of a settings route (if you have one from AppNavigationSidebar)
+    {
+      path: '/settings',
+      name: 'UserSettings', // Make sure this name is unique
+      // component: () => import('../views/UserSettingsView.vue'), // Lazy load if it's a separate view
+      component: LeadGenFormView, // TEMPORARY: Point to an existing view if UserSettingsView doesn't exist yet
+      meta: { requiresAuth: true, hideNavbar: false }
+    },
+    // Catch-all route for 404 Not Found (optional but recommended)
     // {
     //   path: '/:pathMatch(.*)*',
     //   name: 'NotFound',
     //   component: () => import('../views/NotFoundView.vue'), // Create a NotFoundView.vue
-    //   meta: { hideNavbar: true } // Or false, depending on your 404 page design
+    //   meta: { hideNavbar: true } // Or false, or a specific layout for 404
     // }
 ];
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL), // Uses HTML5 history mode
-    routes, // short for `routes: routes`
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes,
 });
 
 // Navigation Guard
-router.beforeEach(async (to, _, next) => {
-    // Fetch the current session directly to ensure up-to-date auth state
+router.beforeEach(async (to, _from, next) => { // _from to indicate it's intentionally unused
     const { data: { session } } = await supabase.auth.getSession();
-    const isAuthenticated = !!session; // True if session exists, false otherwise
-    // console.log('AuthGuard: Navigating to', to.fullPath, 'IsAuthenticated:', isAuthenticated); // Keep for debugging if needed
+    const isAuthenticated = !!session;
 
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
     const guestOnly = to.matched.some(record => record.meta.guestOnly);
 
     if (requiresAuth && !isAuthenticated) {
-        // console.log('AuthGuard: Route requires auth, user NOT authenticated. Redirecting to /login.');
         next({ name: 'Login', query: { redirect: to.fullPath } });
     } else if (guestOnly && isAuthenticated) {
-        // console.log('AuthGuard: Guest-only route, user IS authenticated. Redirecting to /.');
-        next({ name: 'LeadProspecting' });
+        next({ name: 'LeadProspecting' }); // Or your main authenticated dashboard route
     } else {
         next();
     }

@@ -1,11 +1,12 @@
 {
   "name": "lead-gen",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "generate-build-info": "node ./scripts/generate-build-info.js",
+    "build": "npm run generate-build-info && vue-tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

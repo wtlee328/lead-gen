@@ -219,6 +219,7 @@ watch(() => props.currentTab, (newVal) => {
 });
 
 function emitTabChange(tab: LeadTab) {
+  console.log(`%cFilterPanel: Emitting @update:currentTab -> ${tab}`, 'color: blue; font-weight: bold;'); // Log tab change
   if (props.isLoading) return;
   localCurrentTab.value = tab;
   emit('update:currentTab', tab);
@@ -280,6 +281,8 @@ function clearAllClientFilters() {
 
 function emitUpdateFilters() {
   const filtersToEmit = JSON.parse(JSON.stringify(activeFilters));
+  console.log('%cFilterPanel: Emitting @update:filters ->', 'color: blue; font-weight: bold;', JSON.stringify(filtersToEmit)); // Log filters
+  console.count('FilterPanel: @update:filters emitted'); // Count how many times this happens
   emit('update:filters', filtersToEmit);
 }
 </script>
