@@ -707,7 +707,7 @@ interface Lead {
 interface FilterTag {
   id: string;
   type: "jobTitle" | "industry" | "location" | "companySize" | "otherKeywords";
-  value: string;
+  value: string; // Keep as string for inputs, will convert to string[] for DB query
   displayValue: string;
   label: string;
 }
@@ -732,9 +732,9 @@ const naturalLanguageQuery = ref("");
 const showAdvancedFilters = ref(false);
 const advancedFilterInputs = reactive({
   jobTitle: "",
-  industry: "",
+  industry: "", // String for select binding
   location: "",
-  companySize: "",
+  companySize: "", // String for select binding
   otherKeywords: "",
 });
 const filterTags = ref<FilterTag[]>([]);
@@ -1225,6 +1225,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
       const rowId = row.id;
       let actualKeywordsArray: string[] = [];
 
+      // Robustly convert keywords to an array of strings
       if (Array.isArray(leadRawKeywords)) {
         actualKeywordsArray = leadRawKeywords
           .map((kw) => String(kw).trim())
@@ -1242,6 +1243,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         typeof leadRawKeywords === "object" &&
         !Array.isArray(leadRawKeywords)
       ) {
+        // If it's an object, try to extract values (e.g., from a JSON object {k1: 'v1', k2: 'v2'})
         actualKeywordsArray = Object.values(leadRawKeywords)
           .map((kw) => String(kw).trim())
           .filter(Boolean);
@@ -1347,13 +1349,16 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   }),
 ]);
 
+// Updated: Refined parameter type for getColumnStyle
 function getColumnStyle(
-  context: HeaderContext<Lead, unknown> | CellContext<Lead, unknown>
+  context:
+    | Column<Lead, unknown> // Direct column object for consistency
+    | { column: Column<Lead, unknown> } // For cases where it's passed as part of a context object
 ) {
-  const column = context.column;
+  const column = (context as any).column || context; // Safely get column from either structure
+
   const baseStyle: Record<string, string> = {
-    "user-select":
-      column.getCanSort() && !isProcessingBatch.value ? "pointer" : "none",
+    "user-select": column.getCanSort() && !isProcessingBatch.value ? "pointer" : "none",
     verticalAlign: "middle",
   };
   if (!column.columnDef.meta?.style?.width) {
@@ -1814,7 +1819,7 @@ async function updateLeadTab(
     console.error(`Error updating lead ${leadId} tab:`, error);
     return { success: false, leadId, newTab, error };
   } finally {
-    if (!isBatchOperation) isProcessingBatch.value = false;
+    if (!isProcessingBatch.value) isProcessingBatch.value = false;
   }
 }
 
@@ -2138,11 +2143,9 @@ async function submitLeadSearchCriteria() {
   if (filterTags.value.length > 0) {
     payload.filters = {};
     filterTags.value.forEach((t) => {
-      if (t.type === "otherKeywords") {
-        payload.filters!.otherKeywords = [
-          ...(payload.filters!.otherKeywords || []),
-          t.value,
-        ];
+      // Ensure the value sent to the backend for JSONB array columns is an array
+      if (t.type === "otherKeywords" || t.type === "industry" || t.type === "companySize") {
+        payload.filters![t.type] = [t.value]; // Wrap single selection into array for Supabase JSONB contains operator
       } else {
         payload.filters![t.type] = t.value;
       }
