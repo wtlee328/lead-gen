@@ -674,6 +674,7 @@ import type { Translations } from "@/types/language";
 // IMPORTANT: This module augmentation block MUST be in a global .d.ts file
 // (e.g., src/types/tanstack-table.d.ts or env.d.ts) and included in your tsconfig.json.
 // Placing it here will cause TypeScript errors during compilation.
+// REMOVE this entire commented-out block from your actual .vue file if it's there.
 /*
 declare module "@tanstack/vue-table" {
   interface ColumnMeta<TData, TValue> {
@@ -691,10 +692,10 @@ interface Lead {
   last_name?: string | null;
   name?: string | null;
   job_title?: string | null;
-  industry?: string[] | null; // Changed to string[] | null for JSONB array
+  industry?: string[] | null; // Confirmed as JSONB array
   location?: string | null;
   company_name?: string | null;
-  company_size?: string[] | null; // Changed to string[] | null for JSONB array
+  company_size?: string[] | null; // Confirmed as JSONB array
   phone?: string | null;
   linkedIn_url?: string | null;
   keywords?: string[] | Record<string, any> | string | null; // Flexible for JSONB keywords
@@ -895,7 +896,7 @@ const companySizeOptionsForFilter = computed(() => [
   { value: "501-1000", text: "501-1000" },
   { value: "1001-5000", text: "1001-5000" },
   { value: "5001-10000", text: "5001-10000" },
-  { value: "10001+", text: "10001+" },
+  { value="10001+", text: "10001+" },
 ]);
 
 const leadStatusOptionsForFilter = computed(() => [
@@ -1228,7 +1229,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
       // Robustly convert keywords to an array of strings
       if (Array.isArray(leadRawKeywords)) {
         actualKeywordsArray = leadRawKeywords
-          .map((kw) => String(kw).trim())
+          .map((kw) => String(kw).trim()) // Ensure trim is called on string
           .filter(Boolean);
       } else if (
         typeof leadRawKeywords === "string" &&
@@ -1236,7 +1237,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
       ) {
         actualKeywordsArray = leadRawKeywords
           .split(",")
-          .map((kw) => kw.trim())
+          .map((kw) => kw.trim()) // Ensure trim is called on string
           .filter(Boolean);
       } else if (
         leadRawKeywords &&
@@ -1245,7 +1246,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
       ) {
         // If it's an object, try to extract values (e.g., from a JSON object {k1: 'v1', k2: 'v2'})
         actualKeywordsArray = Object.values(leadRawKeywords)
-          .map((kw) => String(kw).trim())
+          .map((kw) => String(kw).trim()) // Ensure trim is called on string
           .filter(Boolean);
       }
 
@@ -1352,10 +1353,12 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
 // Updated: Refined parameter type for getColumnStyle
 function getColumnStyle(
   context:
-    | Column<Lead, unknown> // Direct column object for consistency
-    | { column: Column<Lead, unknown> } // For cases where it's passed as part of a context object
+    | Column<Lead, unknown> // Direct column object (e.g. from cell.column directly)
+    | HeaderContext<Lead, unknown> // Context object passed in header, has a .column property
+    | CellContext<Lead, unknown> // Context object passed in cell, has a .column property
 ) {
-  const column = (context as any).column || context; // Safely get column from either structure
+  // Safely get the column object from either structure
+  const column = (context as HeaderContext<Lead, unknown> | CellContext<Lead, unknown>).column || (context as Column<Lead, unknown>);
 
   const baseStyle: Record<string, string> = {
     "user-select": column.getCanSort() && !isProcessingBatch.value ? "pointer" : "none",
@@ -1370,6 +1373,7 @@ function getColumnStyle(
   const metaStyle = column.columnDef.meta?.style || {};
   return { ...baseStyle, ...metaStyle };
 }
+
 
 const table = useVueTable({
   get data() {
@@ -1819,7 +1823,7 @@ async function updateLeadTab(
     console.error(`Error updating lead ${leadId} tab:`, error);
     return { success: false, leadId, newTab, error };
   } finally {
-    if (!isProcessingBatch.value) isProcessingBatch.value = false;
+    if (!isBatchOperation) isProcessingBatch.value = false;
   }
 }
 
@@ -1861,7 +1865,7 @@ async function deleteLead(
     console.error(`Error deleting lead ${leadId}:`, error);
     return { success: false, error };
   } finally {
-    if (!isBatchOperation) isProcessingBatch.value = false;
+    if (!isProcessingBatch.value) isProcessingBatch.value = false;
   }
 }
 
@@ -1927,7 +1931,7 @@ watch(selectedRowCount, async (newCount, oldCount) => {
 
 const isAdvancedCriteriaActive = computed(
   () =>
-    (showAdvancedFilters.value && !naturalLanguageQuery.value.trim()) ||
+    (showAdvancedFilters.value && naturalLanguageQuery.value.trim() === "") ||
     filterTags.value.length > 0
 );
 function handleTabChangeFromPanel(newTab: LeadTab) {
@@ -2092,25 +2096,29 @@ function validateSearchCriteria(): boolean {
   searchStatus.value = null;
   const nq = !!naturalLanguageQuery.value.trim();
   const tags = filterTags.value.length > 0;
+  // Make sure advanced inputs are trimmed before checking if they are non-empty
   const untagged = Object.values(advancedFilterInputs).some(
-    (v) => v && String(v).trim() !== ""
+    (v) => typeof v === 'string' && v.trim() !== ""
   );
+
+  // If no natural language query and no tags, check if advanced filters are *active* and populated
   if (!nq && !tags && (showAdvancedFilters.value || untagged)) {
-    if (!advancedFilterInputs.jobTitle.trim()) {
-      searchMessage.value = texts.value.errorRequired(
-        getFieldLabel("jobTitle")
-      );
-      searchStatus.value = "error";
-      return false;
-    }
-    if (!advancedFilterInputs.industry) {
-      searchMessage.value = texts.value.errorRequired(
-        getFieldLabel("industry")
-      );
-      searchStatus.value = "error";
-      return false;
+    // If showAdvancedFilters is active, and jobTitle or industry are required, check them
+    // This logic relies on `isAdvancedCriteriaActive` which checks both `showAdvancedFilters` and `filterTags.length`
+    if (showAdvancedFilters.value && naturalLanguageQuery.value.trim() === "") { // Only strict validation if NLP is empty AND advanced is shown
+        if (!advancedFilterInputs.jobTitle.trim()) {
+            searchMessage.value = texts.value.errorRequired(getFieldLabel("jobTitle"));
+            searchStatus.value = "error";
+            return false;
+        }
+        if (!advancedFilterInputs.industry) { // Industry select will be empty string if not selected
+            searchMessage.value = texts.value.errorRequired(getFieldLabel("industry"));
+            searchStatus.value = "error";
+            return false;
+        }
     }
   }
+  // This is the fallback if no criteria at all
   if (!nq && !tags && !untagged) {
     searchMessage.value = texts.value.noSearchCriteria;
     searchStatus.value = "error";
@@ -2118,11 +2126,12 @@ function validateSearchCriteria(): boolean {
   }
   return true;
 }
+
 async function submitLeadSearchCriteria() {
   if (isProcessingBatch.value || isSearchingLeads.value) return;
   if (
     showAdvancedFilters.value &&
-    Object.values(advancedFilterInputs).some((v) => String(v).trim())
+    Object.values(advancedFilterInputs).some((v) => typeof v === 'string' && v.trim())
   )
     addAdvancedInputsAsTags();
 
@@ -2143,9 +2152,12 @@ async function submitLeadSearchCriteria() {
   if (filterTags.value.length > 0) {
     payload.filters = {};
     filterTags.value.forEach((t) => {
-      // Ensure the value sent to the backend for JSONB array columns is an array
+      // For JSONB array filters, the backend expects an array even if it's a single value from a select
       if (t.type === "otherKeywords" || t.type === "industry" || t.type === "companySize") {
-        payload.filters![t.type] = [t.value]; // Wrap single selection into array for Supabase JSONB contains operator
+        payload.filters![t.type] = [...(payload.filters![t.type] || []), t.value];
+        // Note: For industry/companySize (single select), the previous `[t.value]` was simpler,
+        // but this allows collecting multiple 'otherKeywords' from different tags into one array.
+        // If industry/companySize filters from the panel are always single, they will effectively be `[value]`.
       } else {
         payload.filters![t.type] = t.value;
       }
@@ -2153,7 +2165,7 @@ async function submitLeadSearchCriteria() {
   }
   if (
     !payload.mainQuery &&
-    (!payload.filters || !Object.keys(payload.filters).length)
+    (!payload.filters || Object.keys(payload.filters).length === 0)
   ) {
     searchMessage.value = texts.value.noSearchCriteria;
     searchStatus.value = "error";
@@ -2293,9 +2305,8 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
 
         // Unified handling for JSONB array columns
         if (filterKey === "keywords" || filterKey === "industry" || filterKey === "company_size") {
-          // values is an array from the filter panel (e.g., ['Software', 'Fintech'])
-          // We want to check if the database JSONB array column overlaps with any of these values.
           // Supabase 'ov' operator takes a Postgrest literal array '{val1,val2}'
+          // Map values to ensure they are strings and correctly quoted/escaped for the literal array
           const filterValue = `{${values.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')}}`;
           query = query.filter(filterKey, 'ov', filterValue);
         } else if (filterKey === "lead_status") {
@@ -2309,7 +2320,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
           ["job_title", "location", "company_name"].includes(filterKey)
         ) {
           const orConditions = values
-            .map((val) => `${filterKey}.ilike.%${val}%`)
+            .map((val) => `${filterKey}.ilike.%${String(val).trim()}%`) // Ensure val is string before trim
             .join(",");
           if (orConditions) query = query.or(orConditions);
         }
