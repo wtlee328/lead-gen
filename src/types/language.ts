@@ -103,6 +103,8 @@ export interface Translations {
     batchRestoreButton: string;
     batchDeleteButton: string;
     batchMoveToSavedButton: string;
+    showLessButton: string;
+    showMoreButtonText: (count: number) => string; // Function type for dynamic text
 
     // --- Pagination (Shared) ---
     previousPage: string;
@@ -449,6 +451,8 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         emailPlaceholder: 'you@example.com',
         passwordPlaceholder: '輸入您的密碼',
         loginErrorDefault: '登入時發生未知錯誤。',
+        showLessButton: '顯示較少',
+        showMoreButtonText: (count: number) => `還有 (${count} 個)`,
     },
     en: {
         // --- Existing English translations from your file ---
@@ -637,5 +641,7 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         emailPlaceholder: 'you@example.com',
         passwordPlaceholder: 'Enter your password',
         loginErrorDefault: 'An error occurred during login.',
+        showLessButton: 'Show less',
+        showMoreButtonText: (count: number) => `... (${count} more)`,
     }
 };
