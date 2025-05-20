@@ -199,7 +199,7 @@
                       @click="addAdvancedInputsAsTags"
                     >
                       <i class="bi bi-plus-lg me-1"></i>
-                      <span>{{ texts.addFiltersBtnText }}</span>
+                      <span>{{ texts.addFiltersBtn-text }}</span>
                     </button>
                   </div>
                 </div>
@@ -511,7 +511,7 @@
                           'sorting-desc':
                             header.column.getIsSorted() === 'desc',
                         }"
-                        :style="getColumnStyle(header)"
+                        :style="getColumnStyle(header.column)" <!-- Pass header.column directly -->
                       >
                         <div class="d-flex align-items-center">
                           <FlexRender
@@ -555,7 +555,7 @@
                       <td
                         v-for="cell in row.getVisibleCells()"
                         :key="cell.id"
-                        :style="getColumnStyle(cell)"
+                        :style="getColumnStyle(cell.column)" <!-- Pass cell.column directly -->
                       >
                         <FlexRender
                           v-if="cell && cell.column && cell.column.columnDef"
@@ -648,7 +648,7 @@ import FilterPanelView, {
 import { useLanguageStore } from "@/stores/languageStore";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/services/supabaseClient";
-import type { Session } from "@supabase/supabase-js"; // Removed PostgrestError
+import type { Session } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
 import {
   useVueTable,
@@ -661,7 +661,7 @@ import {
   type SortingState,
   type PaginationState,
   type RowSelectionState,
-  type Column,
+  type Column, // Explicitly import Column
   type Row,
   type CellContext,
   type HeaderContext,
@@ -896,7 +896,7 @@ const companySizeOptionsForFilter = computed(() => [
   { value: "501-1000", text: "501-1000" },
   { value: "1001-5000", text: "1001-5000" },
   { value: "5001-10000", text: "5001-10000" },
-  { value="10001+", text: "10001+" },
+  { value: "10001+", text: "10001+" },
 ]);
 
 const leadStatusOptionsForFilter = computed(() => [
@@ -1351,15 +1351,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
 ]);
 
 // Updated: Refined parameter type for getColumnStyle
-function getColumnStyle(
-  context:
-    | Column<Lead, unknown> // Direct column object (e.g. from cell.column directly)
-    | HeaderContext<Lead, unknown> // Context object passed in header, has a .column property
-    | CellContext<Lead, unknown> // Context object passed in cell, has a .column property
-) {
-  // Safely get the column object from either structure
-  const column = (context as HeaderContext<Lead, unknown> | CellContext<Lead, unknown>).column || (context as Column<Lead, unknown>);
-
+function getColumnStyle(column: Column<Lead, unknown>) {
   const baseStyle: Record<string, string> = {
     "user-select": column.getCanSort() && !isProcessingBatch.value ? "pointer" : "none",
     verticalAlign: "middle",
@@ -1823,7 +1815,7 @@ async function updateLeadTab(
     console.error(`Error updating lead ${leadId} tab:`, error);
     return { success: false, leadId, newTab, error };
   } finally {
-    if (!isBatchOperation) isProcessingBatch.value = false;
+    if (!isProcessingBatch.value) isProcessingBatch.value = false;
   }
 }
 
@@ -2047,21 +2039,21 @@ function getFieldLabel(type: FilterTag["type"]): string {
 }
 function addAdvancedInputsAsTags() {
   const i = advancedFilterInputs;
-  if (i.jobTitle.trim()) addTag("jobTitle", i.jobTitle.trim());
-  if (i.industry)
+  if (typeof i.jobTitle === 'string' && i.jobTitle.trim()) addTag("jobTitle", i.jobTitle.trim());
+  if (typeof i.industry === 'string' && i.industry)
     addTag(
       "industry",
       i.industry,
       languageStore.industries?.find((o) => o.value === i.industry)?.text
     );
-  if (i.location.trim()) addTag("location", i.location.trim());
-  if (i.companySize) addTag("companySize", i.companySize);
-  if (i.otherKeywords.trim())
+  if (typeof i.location === 'string' && i.location.trim()) addTag("location", i.location.trim());
+  if (typeof i.companySize === 'string' && i.companySize) addTag("companySize", i.companySize);
+  if (typeof i.otherKeywords === 'string' && i.otherKeywords.trim())
     i.otherKeywords
       .trim()
       .split(",")
       .forEach((k) => {
-        if (k.trim()) addTag("otherKeywords", k.trim());
+        if (typeof k === 'string' && k.trim()) addTag("otherKeywords", k.trim());
       });
   Object.keys(i).forEach((k) => (i[k as keyof typeof i] = ""));
 }
@@ -2094,7 +2086,7 @@ function removeFilterTag(tagId: string) {
 function validateSearchCriteria(): boolean {
   searchMessage.value = null;
   searchStatus.value = null;
-  const nq = !!naturalLanguageQuery.value.trim();
+  const nq = typeof naturalLanguageQuery.value === 'string' && naturalLanguageQuery.value.trim();
   const tags = filterTags.value.length > 0;
   // Make sure advanced inputs are trimmed before checking if they are non-empty
   const untagged = Object.values(advancedFilterInputs).some(
@@ -2105,13 +2097,13 @@ function validateSearchCriteria(): boolean {
   if (!nq && !tags && (showAdvancedFilters.value || untagged)) {
     // If showAdvancedFilters is active, and jobTitle or industry are required, check them
     // This logic relies on `isAdvancedCriteriaActive` which checks both `showAdvancedFilters` and `filterTags.length`
-    if (showAdvancedFilters.value && naturalLanguageQuery.value.trim() === "") { // Only strict validation if NLP is empty AND advanced is shown
-        if (!advancedFilterInputs.jobTitle.trim()) {
+    if (showAdvancedFilters.value && (!naturalLanguageQuery.value || naturalLanguageQuery.value.trim() === "")) { // Only strict validation if NLP is empty AND advanced is shown
+        if (typeof advancedFilterInputs.jobTitle === 'string' && !advancedFilterInputs.jobTitle.trim()) {
             searchMessage.value = texts.value.errorRequired(getFieldLabel("jobTitle"));
             searchStatus.value = "error";
             return false;
         }
-        if (!advancedFilterInputs.industry) { // Industry select will be empty string if not selected
+        if (typeof advancedFilterInputs.industry === 'string' && !advancedFilterInputs.industry) { // Industry select will be empty string if not selected
             searchMessage.value = texts.value.errorRequired(getFieldLabel("industry"));
             searchStatus.value = "error";
             return false;
@@ -2147,17 +2139,21 @@ async function submitLeadSearchCriteria() {
   }
 
   const payload: { mainQuery?: string; filters?: Record<string, any> } = {};
-  if (naturalLanguageQuery.value.trim())
+  if (typeof naturalLanguageQuery.value === 'string' && naturalLanguageQuery.value.trim())
     payload.mainQuery = naturalLanguageQuery.value.trim();
   if (filterTags.value.length > 0) {
     payload.filters = {};
     filterTags.value.forEach((t) => {
       // For JSONB array filters, the backend expects an array even if it's a single value from a select
       if (t.type === "otherKeywords" || t.type === "industry" || t.type === "companySize") {
-        payload.filters![t.type] = [...(payload.filters![t.type] || []), t.value];
-        // Note: For industry/companySize (single select), the previous `[t.value]` was simpler,
-        // but this allows collecting multiple 'otherKeywords' from different tags into one array.
-        // If industry/companySize filters from the panel are always single, they will effectively be `[value]`.
+        // Ensure that we create an array. If `payload.filters![t.type]` already exists and is an array, concatenate.
+        // If it's single-valued or doesn't exist, create a new array with `t.value`.
+        const currentFilterValue = payload.filters![t.type];
+        if (Array.isArray(currentFilterValue)) {
+            currentFilterValue.push(t.value);
+        } else {
+            payload.filters![t.type] = [t.value];
+        }
       } else {
         payload.filters![t.type] = t.value;
       }
@@ -2300,20 +2296,20 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       .eq("tab", currentTab.value);
 
     Object.entries(activeClientFilters.value).forEach(([key, values]) => {
-      if (values && values.length > 0) {
+      if (Array.isArray(values) && values.length > 0) { // Ensure values is a non-empty array
         const filterKey = key as keyof Lead;
 
-        // Unified handling for JSONB array columns
+        // Unified handling for JSONB array columns: keywords, industry, company_size
         if (filterKey === "keywords" || filterKey === "industry" || filterKey === "company_size") {
-          // Supabase 'ov' operator takes a Postgrest literal array '{val1,val2}'
           // Map values to ensure they are strings and correctly quoted/escaped for the literal array
-          const filterValue = `{${values.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')}}`;
-          query = query.filter(filterKey, 'ov', filterValue);
+          const cleanedValues = values.map(v => `"${String(v).replace(/"/g, '""')}"`);
+          const filterValue = `{${cleanedValues.join(',')}}`;
+          query = query.filter(filterKey, 'ov', filterValue); // 'overlaps' operator
         } else if (filterKey === "lead_status") {
-          // lead_status is likely a single text column
+          // lead_status is likely a single text column or an enum
           if (values.length === 1) {
             query = query.eq(filterKey, values[0]);
-          } else if (values.length > 1) {
+          } else { // Multiple values
             query = query.in(filterKey, values);
           }
         } else if (
