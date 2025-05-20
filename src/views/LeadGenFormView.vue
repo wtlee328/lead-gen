@@ -521,23 +521,6 @@
                             :render="header.column.columnDef.header"
                             :props="header.getContext()"
                           />
-                          <div class="ms-1 sort-indicator">
-                            <i
-                              v-if="header.column.getIsSorted() === 'asc'"
-                              class="bi bi-sort-up"
-                            ></i>
-                            <i
-                              v-if="header.column.getIsSorted() === 'desc'"
-                              class="bi bi-sort-down"
-                            ></i>
-                            <i
-                              v-if="
-                                !header.column.getIsSorted() &&
-                                header.column.getCanSort()
-                              "
-                              class="bi bi-filter"
-                            ></i>
-                          </div>
                         </div>
                       </th>
                     </tr>

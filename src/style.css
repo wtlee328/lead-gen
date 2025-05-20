@@ -1420,7 +1420,7 @@ html[data-bs-theme="dark"] .landing-footer {
   padding: 0.75rem 1rem;
   font-weight: 600;
   color: var(--text-color-base-current);
-  text-align: left;
+  text-align: center;
   vertical-align: middle;
   background-color: var(
     --table-header-bg-current
@@ -1519,6 +1519,12 @@ html[data-bs-theme="dark"] .landing-footer {
   background-color: var(--card-bg-current);
   z-index: 5; /* Above table body but below table header if they overlap */
   position: relative;
+}
+
+.d-flex.align-items-center {
+      display: flex;
+      align-items: center;
+      justify-content: center; /* Add this line */
 }
 
 /* --- Utility & Animation Styles (can be global) --- */
