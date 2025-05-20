@@ -399,7 +399,7 @@
                       <hr class="dropdown-divider" />
                     </li>
 
-                    <!-- New Export CSV Action -->
+                    <!-- Export CSV Action -->
                     <li>
                       <a
                         class="dropdown-item"
@@ -648,8 +648,8 @@ import FilterPanelView, {
 import { useLanguageStore } from "@/stores/languageStore";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/services/supabaseClient";
-import type { Session } from "@supabase/supabase-js"; // Removed PostgrestFilterBuilder
-import { v4 as uuidv4 } from "uuid"; // Standard import for v4
+import type { Session } from "@supabase/supabase-js"; // Removed PostgrestError
+import { v4 as uuidv4 } from "uuid";
 import {
   useVueTable,
   getCoreRowModel,
@@ -661,30 +661,26 @@ import {
   type SortingState,
   type PaginationState,
   type RowSelectionState,
-  type Column, // Import Column type (column.columnDef)
-  type Row, // Added Row type
-  type CellContext, // Added CellContext type
-  type HeaderContext, // Added HeaderContext for header props
-  type Updater, // Added Updater type
-  // type RowData // If needed for augmentation, ensure it's imported
+  type Column,
+  type Row,
+  type CellContext,
+  type HeaderContext,
+  type Updater,
 } from "@tanstack/vue-table";
 import type { LeadTab } from "@/types/tabs";
 import { Dropdown } from "bootstrap";
-import type { Translations } from "@/types/language"; // Assuming this holds all translation keys
+import type { Translations } from "@/types/language";
 
-// This augmentation should ideally be in a .d.ts file (e.g., src/tanstack-table.d.ts or src/env.d.ts)
-// and that file should be included in your tsconfig.app.json's "include" array.
+// IMPORTANT: This module augmentation block MUST be in a global .d.ts file
+// (e.g., src/types/tanstack-table.d.ts or env.d.ts) and included in your tsconfig.json.
+// Placing it here will cause TypeScript errors during compilation.
+/*
 declare module "@tanstack/vue-table" {
-  // Or '@tanstack/table-core' if you augment core types
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData, TValue> {
-    // TData was RowData, changed to TData for consistency with TanStack's generic
     style?: Record<string, string>;
-    // Add any other custom meta properties you use, e.g.:
-    // headerClass?: string;
-    // cellClass?: string;
   }
 }
+*/
 
 interface Lead {
   id: string;
@@ -695,18 +691,18 @@ interface Lead {
   last_name?: string | null;
   name?: string | null;
   job_title?: string | null;
-  industry?: string[] | null;
+  industry?: string[] | null; // Changed to string[] | null for JSONB array
   location?: string | null;
   company_name?: string | null;
-  company_size?: string[] | null;
+  company_size?: string[] | null; // Changed to string[] | null for JSONB array
   phone?: string | null;
   linkedIn_url?: string | null;
-  keywords?: any | null; // Consider a more specific type if possible, e.g., string[] or Record<string, any>
+  keywords?: string[] | Record<string, any> | string | null; // Flexible for JSONB keywords
   email?: string | null;
   notes?: string | null;
   lead_status?: string | null;
   icebreaker?: string | null;
-  source_query_criteria?: any | null; // Consider a more specific type
+  source_query_criteria?: Record<string, any> | null;
 }
 interface FilterTag {
   id: string;
@@ -719,13 +715,19 @@ interface FilterTag {
 const languageStore = useLanguageStore();
 const authStore = useAuthStore();
 
+// New: State to manage expanded keywords per row
+const expandedKeywords = ref<Record<string, boolean>>({});
+const MAX_VISIBLE_KEYWORDS = 3; // Number of keywords to show initially
+
+function toggleKeywordsExpansion(rowId: string) {
+  expandedKeywords.value[rowId] = !expandedKeywords.value[rowId];
+}
+
 const sidebarCollapsed = ref(false);
 const showSearchForm = ref(true);
-
 const currentTab = ref<LeadTab>("new");
 const tabCounts = ref<TabCounts>({ new: 0, saved: 0, archived: 0 });
 const activeClientFilters = ref<ActiveClientFilters>({});
-
 const naturalLanguageQuery = ref("");
 const showAdvancedFilters = ref(false);
 const advancedFilterInputs = reactive({
@@ -751,7 +753,6 @@ const isProcessingBatch = ref(false);
 const batchActionsDropdownToggleRef = ref<HTMLButtonElement | null>(null);
 const columnHelper = createColumnHelper<Lead>();
 
-// Default texts for this component
 const defaultTexts = {
   mainQueryLabel: "Briefly describe the type of prospects you're looking for:",
   mainQueryPlaceholder:
@@ -768,7 +769,7 @@ const defaultTexts = {
   tagAreaLabel: "Selected Filters:",
   removeFilterTooltip: "Remove filter",
   searchLeadsButton: "Find Prospects",
-  dashboardTitle: "Prospects Dashboard", // Included for completeness if ever used directly
+  dashboardTitle: "Prospects Dashboard",
   formDescription: "Define Your Prospect Persona",
   industryPlaceholder: "Select Industry",
   companySizePlaceholder: "Select Company Size",
@@ -833,10 +834,10 @@ const defaultTexts = {
   autoArchiveError: "Failed to auto-archive unsaved leads.",
   filtersTitle: "Filters",
   tabsTitle: "Lead Categories",
-  addFilterPlaceholder: "Add", // Used in FilterPanelView
-  selectFilterPlaceholder: "Select", // Used in FilterPanelView
-  clearAllFiltersButton: "Clear All Filters", // Used in FilterPanelView
-  clearFilterSectionTooltip: "Clear section", // Used in FilterPanelView
+  addFilterPlaceholder: "Add",
+  selectFilterPlaceholder: "Select",
+  clearAllFiltersButton: "Clear All Filters",
+  clearFilterSectionTooltip: "Clear section",
   selectAllPageButton: "Select Page",
   deselectAllButton: "Deselect All",
   batchActionsDropdownTitle: "Actions for Selected",
@@ -867,20 +868,23 @@ const defaultTexts = {
   statusContacted: "Contacted",
   statusFollowUp: "Follow-up",
   statusReplied: "Replied",
-  batchExportCSVButton: "Export Selected to CSV", // New text
+  batchExportCSVButton: "Export Selected to CSV",
+  // New localization keys for keywords expansion
+  showLessButton: "Show less",
+  showMoreButtonText: (count: number) => `... (${count} more)`,
 };
 
 const texts = computed((): Translations & typeof defaultTexts => {
   if (
     languageStore &&
     typeof languageStore.texts === "object" &&
-    languageStore.texts !== null && // Added null check
+    languageStore.texts !== null &&
     Object.keys(languageStore.texts).length > 0
   ) {
-    // @ts-ignore - Acknowledging potential for missing keys if Translations is not exhaustive
+    // @ts-ignore
     return { ...defaultTexts, ...languageStore.texts };
   }
-  return defaultTexts as Translations & typeof defaultTexts; // Asserting the type for the default case
+  return defaultTexts as Translations & typeof defaultTexts;
 });
 
 const companySizeOptionsForFilter = computed(() => [
@@ -917,9 +921,7 @@ const noLeadsMessageForTab = computed(() => {
 const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.display({
     id: "select",
-    header: (
-      { table }: HeaderContext<Lead, unknown> // Typed HeaderContext
-    ) =>
+    header: ({ table }: HeaderContext<Lead, unknown>) =>
       h("input", {
         type: "checkbox",
         class: "form-check-input",
@@ -931,9 +933,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         onChange: table.getToggleAllPageRowsSelectedHandler(),
         title: texts.value.selectAllPageTooltip,
       }),
-    cell: (
-      { row }: CellContext<Lead, unknown> // Typed CellContext
-    ) =>
+    cell: ({ row }: CellContext<Lead, unknown>) =>
       h("input", {
         type: "checkbox",
         class: "form-check-input",
@@ -961,7 +961,6 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
     id: "actions",
     header: () => texts.value.colActions,
     cell: (info: CellContext<Lead, unknown>) => {
-      // Typed info
       const lead = info.row.original;
       const buttons = [];
       if (currentTab.value === "new" && lead.tab === "new") {
@@ -1078,9 +1077,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("name", {
     id: "name",
     header: () => texts.value.colName,
-    cell: (
-      info: CellContext<Lead, Lead["name"]> // Typed info and TValue
-    ) =>
+    cell: (info: CellContext<Lead, Lead["name"]>) =>
       info.getValue() ||
       `${info.row.original.first_name || ""} ${
         info.row.original.last_name || ""
@@ -1114,20 +1111,35 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
     header: () => texts.value.colIndustry,
     cell: (info: CellContext<Lead, Lead["industry"]>) => {
       const industries = info.getValue();
+      // Handle both string[] and single string for robustness
       if (Array.isArray(industries) && industries.length > 0) {
         return h(
           "div",
           { style: "max-width: 200px; white-space: normal;" },
           industries.map((ind) =>
-            h("span", { class: "badge bg-info text-dark me-1 mb-1" }, ind)
+            h(
+              "span",
+              { class: "badge bg-info text-dark me-1 mb-1" },
+              String(ind)
+            )
           )
         );
       }
-      return Array.isArray(industries) ? "N/A" : industries || "N/A";
+      // Fallback for unexpected single string values
+      if (typeof industries === "string" && industries.trim() !== "") {
+        return h(
+          "span",
+          { class: "badge bg-info text-dark me-1 mb-1" },
+          industries
+        );
+      }
+      return "N/A";
     },
     enableSorting: true,
     size: 160,
-    meta: { style: { minWidth: "160px", width: "160px" } },
+    meta: {
+      style: { minWidth: "160px", width: "160px", whiteSpace: "normal" },
+    },
   }),
   columnHelper.accessor("location", {
     id: "location",
@@ -1152,20 +1164,27 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
     header: () => texts.value.colCompanySize,
     cell: (info: CellContext<Lead, Lead["company_size"]>) => {
       const sizes = info.getValue();
+      // Handle both string[] and single string for robustness
       if (Array.isArray(sizes) && sizes.length > 0) {
         return h(
           "div",
           { style: "max-width: 150px; white-space: normal;" },
           sizes.map((size) =>
-            h("span", { class: "badge bg-secondary me-1 mb-1" }, size)
+            h("span", { class: "badge bg-secondary me-1 mb-1" }, String(size))
           )
         );
       }
-      return Array.isArray(sizes) ? "N/A" : sizes || "N/A";
+      // Fallback for unexpected single string values
+      if (typeof sizes === "string" && sizes.trim() !== "") {
+        return h("span", { class: "badge bg-secondary me-1 mb-1" }, sizes);
+      }
+      return "N/A";
     },
     enableSorting: true,
     size: 110,
-    meta: { style: { minWidth: "110px", width: "110px" } },
+    meta: {
+      style: { minWidth: "110px", width: "110px", whiteSpace: "normal" },
+    },
   }),
   columnHelper.accessor("phone", {
     id: "phone",
@@ -1201,38 +1220,82 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("keywords", {
     id: "keywords",
     header: () => texts.value.colKeywords,
-    cell: (info: CellContext<Lead, Lead["keywords"]>) => {
-      // Typed info, TValue is Lead["keywords"]
-      const keywords = info.getValue();
-      let kwsArray: string[] = [];
-      if (Array.isArray(keywords)) {
-        kwsArray = keywords.filter(Boolean).map(String);
-      } else if (typeof keywords === "string" && keywords.trim() !== "") {
-        kwsArray = keywords
+    cell: ({ row }: CellContext<Lead, Lead["keywords"]>) => {
+      const leadRawKeywords = row.original.keywords;
+      const rowId = row.id;
+      let actualKeywordsArray: string[] = [];
+
+      if (Array.isArray(leadRawKeywords)) {
+        actualKeywordsArray = leadRawKeywords
+          .map((kw) => String(kw).trim())
+          .filter(Boolean);
+      } else if (
+        typeof leadRawKeywords === "string" &&
+        leadRawKeywords.trim() !== ""
+      ) {
+        actualKeywordsArray = leadRawKeywords
           .split(",")
           .map((kw) => kw.trim())
           .filter(Boolean);
       } else if (
-        keywords &&
-        typeof keywords === "object" &&
-        !Array.isArray(keywords)
+        leadRawKeywords &&
+        typeof leadRawKeywords === "object" &&
+        !Array.isArray(leadRawKeywords)
       ) {
-        kwsArray = Object.values(keywords).filter(Boolean).map(String);
+        actualKeywordsArray = Object.values(leadRawKeywords)
+          .map((kw) => String(kw).trim())
+          .filter(Boolean);
       }
-      if (kwsArray.length > 0) {
-        return h(
-          "div",
-          { style: "max-width: 250px; white-space: normal;" },
-          kwsArray.map((kw) =>
-            h("span", { class: "badge bg-secondary me-1 mb-1" }, kw)
+
+      if (actualKeywordsArray.length === 0) {
+        return "N/A";
+      }
+
+      const isExpanded = !!expandedKeywords.value[rowId];
+      const keywordsToDisplay = isExpanded
+        ? actualKeywordsArray
+        : actualKeywordsArray.slice(0, MAX_VISIBLE_KEYWORDS);
+      const hasMoreKeywords = actualKeywordsArray.length > MAX_VISIBLE_KEYWORDS;
+
+      const keywordElements = keywordsToDisplay.map((keyword) =>
+        h(
+          "span",
+          { class: "badge bg-secondary me-1 mb-1 keyword-tag" },
+          keyword
+        )
+      );
+
+      const toggleButton = hasMoreKeywords
+        ? h(
+            "button",
+            {
+              class: "btn btn-link btn-sm p-0 ms-1 show-more-keywords-btn",
+              type: "button",
+              onClick: (event: MouseEvent) => {
+                event.stopPropagation(); // Prevent row selection if clicking button
+                toggleKeywordsExpansion(rowId);
+              },
+            },
+            isExpanded
+              ? texts.value.showLessButton
+              : texts.value.showMoreButtonText(
+                  actualKeywordsArray.length - MAX_VISIBLE_KEYWORDS
+                )
           )
-        );
-      }
-      return "N/A";
+        : null;
+
+      // Filter(Boolean) removes the null toggleButton if it's not needed, preventing an empty node
+      return h(
+        "div",
+        { class: "keywords-cell-container" },
+        [...keywordElements, toggleButton].filter(Boolean)
+      );
     },
     enableSorting: false,
     size: 250,
-    meta: { style: { minWidth: "250px", width: "250px" } },
+    meta: {
+      style: { minWidth: "250px", width: "250px", whiteSpace: "normal" },
+    },
   }),
   columnHelper.accessor("email", {
     id: "email",
@@ -1284,26 +1347,22 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   }),
 ]);
 
-// Define a common interface for what getColumnStyle needs
-interface ColumnStylingContext {
-  column: Column<Lead, unknown>; // Both Header and Cell have a 'column' property
-}
-function getColumnStyle(context: ColumnStylingContext) {
+function getColumnStyle(
+  context: HeaderContext<Lead, unknown> | CellContext<Lead, unknown>
+) {
+  const column = context.column;
   const baseStyle: Record<string, string> = {
     "user-select":
-      context.column.getCanSort() && !isProcessingBatch.value // Use context.column
-        ? "pointer"
-        : "none",
+      column.getCanSort() && !isProcessingBatch.value ? "pointer" : "none",
     verticalAlign: "middle",
   };
-  // Access properties via context.column
-  if (!context.column.columnDef.meta?.style?.width) {
-    baseStyle.width = `${context.column.columnDef.size}px`;
+  if (!column.columnDef.meta?.style?.width) {
+    baseStyle.width = `${column.columnDef.size}px`;
   }
-  if (!context.column.columnDef.meta?.style?.minWidth) {
-    baseStyle.minWidth = `${context.column.columnDef.size}px`;
+  if (!column.columnDef.meta?.style?.minWidth) {
+    baseStyle.minWidth = `${column.columnDef.size}px`;
   }
-  const metaStyle = context.column.columnDef.meta?.style || {};
+  const metaStyle = column.columnDef.meta?.style || {};
   return { ...baseStyle, ...metaStyle };
 }
 
@@ -1325,18 +1384,15 @@ const table = useVueTable({
   },
   enableRowSelection: true,
   onRowSelectionChange: (updater: Updater<RowSelectionState>) => {
-    // Typed updater
     if (isProcessingBatch.value) return;
     rowSelection.value =
       typeof updater === "function" ? updater(rowSelection.value) : updater;
   },
   onSortingChange: (updater: Updater<SortingState>) => {
     if (isProcessingBatch.value) return;
-    const oldSortingString = JSON.stringify(sorting.value); // Compare stringified versions
-
+    const oldSortingString = JSON.stringify(sorting.value);
     const newSortingState =
       typeof updater === "function" ? updater(sorting.value) : updater;
-
     if (JSON.stringify(newSortingState) !== oldSortingString) {
       sorting.value = newSortingState;
       console.log(
@@ -1348,7 +1404,7 @@ const table = useVueTable({
       console.count("LeadGenFormView: onSortingChange (fetch triggered)");
       fetchLeadsForCurrentUser(true);
     } else {
-      sorting.value = newSortingState; // Keep state in sync
+      sorting.value = newSortingState;
       console.log(
         `%cLeadGenFormView: SORTING state updated by table (ref changed, values same). Current: ${JSON.stringify(
           sorting.value
@@ -1358,32 +1414,24 @@ const table = useVueTable({
       console.count("LeadGenFormView: onSortingChange (ref updated, no fetch)");
     }
   },
-  // Inside useVueTable configuration
   onPaginationChange: (updater: Updater<PaginationState>) => {
     if (isProcessingBatch.value) return;
-
     const oldPageIndex = pagination.value.pageIndex;
     const oldPageSize = pagination.value.pageSize;
-
-    // Apply the updater to get the potential new state
     const newPaginationState =
       typeof updater === "function" ? updater(pagination.value) : updater;
-
-    // Check if the actual values have changed before updating the ref and fetching
     if (
       newPaginationState.pageIndex !== oldPageIndex ||
       newPaginationState.pageSize !== oldPageSize
     ) {
-      pagination.value = newPaginationState; // Update the reactive ref
+      pagination.value = newPaginationState;
       console.log(
         `%cLeadGenFormView: PAGINATION CHANGED (Values Differ). From Index: ${oldPageIndex}, Size: ${oldPageSize} -> To Index: ${pagination.value.pageIndex}, Size: ${pagination.value.pageSize}`,
         "color: orange; font-weight: bold;"
       );
       console.count("LeadGenFormView: onPaginationChange (fetch triggered)");
-      fetchLeadsForCurrentUser(true); // Only fetch if values actually changed
+      fetchLeadsForCurrentUser(true);
     } else {
-      // If only the reference changed but values are the same, still update the ref
-      // for consistency with the table's internal state, but DON'T fetch.
       pagination.value = newPaginationState;
       console.log(
         `%cLeadGenFormView: PAGINATION state updated by table (ref changed, values same). Index: ${pagination.value.pageIndex}, Size: ${pagination.value.pageSize}. NO FETCH.`,
@@ -1485,8 +1533,8 @@ const batchProcessLeads = async (
   const selectedRows = table.getSelectedRowModel().rows;
   if (selectedRows.length === 0) return;
 
-  const leadsToProcess: Lead[] = selectedRows // Explicitly type leadsToProcess
-    .map((row: Row<Lead>) => row.original) // Explicitly type row
+  const leadsToProcess: Lead[] = selectedRows
+    .map((row: Row<Lead>) => row.original)
     .filter(filterFn);
 
   const actionNameForNoLeadsMsg = actionNameKey
@@ -1501,7 +1549,7 @@ const batchProcessLeads = async (
   }
   const confirmMessageFn = texts.value[actionNameKey] as (
     count: number
-  ) => string; // Assert type
+  ) => string;
   if (!confirm(confirmMessageFn(leadsToProcess.length))) return;
 
   isProcessingBatch.value = true;
@@ -1518,7 +1566,7 @@ const batchProcessLeads = async (
           lead.id,
           targetTabOrAction !== "delete" ? targetTabOrAction : undefined
         )
-      ) // Type lead
+      )
     );
 
   results.forEach(
@@ -1526,8 +1574,7 @@ const batchProcessLeads = async (
       result: PromiseSettledResult<{ success: boolean; error?: any }>,
       index: number
     ) => {
-      // Type result
-      const leadProcessed = leadsToProcess[index]; // Get corresponding lead for context in error logging
+      const leadProcessed = leadsToProcess[index];
       if (
         result.status === "fulfilled" &&
         result.value &&
@@ -1565,24 +1612,21 @@ const batchSaveSelected = () =>
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );
 const batchArchiveSelected = () =>
-  // This handler is called by both 'new' and 'saved' tab archive buttons
   batchProcessLeads(
     "archived",
     "confirmBatchArchive",
     (lead) =>
-      currentTab.value === "new" ? lead.tab === "new" : lead.tab === "saved", // Filter based on current tab context
+      currentTab.value === "new" ? lead.tab === "new" : lead.tab === "saved",
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );
 const batchRestoreSelected = () =>
-  // This is for 'saved' tab -> 'new'
   batchProcessLeads(
     "new",
     "confirmBatchRestore",
-    (lead) => lead.tab === "saved", // Filter for saved leads
+    (lead) => lead.tab === "saved",
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );
 const batchMoveToSavedSelected = () =>
-  // New handler for 'archived' -> 'saved'
   batchProcessLeads(
     "saved",
     "confirmBatchMoveToSaved",
@@ -1593,57 +1637,75 @@ const batchDeleteSelected = () =>
   batchProcessLeads(
     "delete",
     "confirmBatchDelete",
-    (lead) => lead.tab === "archived", // Ensure we only delete from archived in this context
+    (lead) => lead.tab === "archived",
     (leadId) => deleteLead(leadId, true)
   );
 
-// New Export CSV Method
 const exportSelectedToCSV = () => {
   if (isProcessingBatch.value || selectedRowCount.value === 0) {
-    return; // Should be disabled by button, but good to double-check
+    return;
   }
 
   const selectedRows = table.getSelectedRowModel().rows;
-  const leadsToExport: Lead[] = selectedRows.map(row => row.original);
+  const leadsToExport: Lead[] = selectedRows.map((row) => row.original);
 
   if (leadsToExport.length === 0) {
     return;
   }
 
   const headers = [
-    "ID", "Date Added", "Tab", "Status",
-    "First Name", "Last Name", "Full Name", "Job Title",
-    "Industry", "Location", "Company Name", "Company Size",
-    "Phone", "LinkedIn URL", "Keywords", "Email", "Notes",
-    "Icebreaker", "Source Query Criteria"
+    "ID",
+    "Date Added",
+    "Tab",
+    "Status",
+    "First Name",
+    "Last Name",
+    "Full Name",
+    "Job Title",
+    "Industry",
+    "Location",
+    "Company Name",
+    "Company Size",
+    "Phone",
+    "LinkedIn URL",
+    "Keywords",
+    "Email",
+    "Notes",
+    "Icebreaker",
+    "Source Query Criteria",
   ];
 
   const csvRows: string[] = [];
-  csvRows.push(headers.join(",")); 
+  csvRows.push(headers.join(","));
 
   const formatCSVCell = (value: any): string => {
-    if (value === null || typeof value === 'undefined') {
+    if (value === null || typeof value === "undefined") {
       return "";
     }
     let stringValue = String(value);
 
     if (Array.isArray(value)) {
-      stringValue = value.map(item => String(item).replace(/"/g, '""')).join("; ");
-    } else if (typeof value === 'object' && value !== null) {
+      stringValue = value.map((item) => String(item).replace(/"/g, '""')).join("; ");
+    } else if (typeof value === "object" && value !== null) {
       try {
         stringValue = JSON.stringify(value);
       } catch (e) {
-        stringValue = "[Object]"; 
+        stringValue = "[Object]";
       }
     }
-    
-    if (stringValue.includes('"') || stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('\r')) {
+
+    if (
+      stringValue.includes('"') ||
+      stringValue.includes(',') ||
+      stringValue.includes('\n') ||
+      stringValue.includes('\r')
+    ) {
       return `"${stringValue.replace(/"/g, '""')}"`;
     }
     return stringValue;
   };
 
-  leadsToExport.forEach(lead => {
+  leadsToExport.forEach((lead) => {
     const row = [
       formatCSVCell(lead.id),
       formatCSVCell(lead.created_at ? new Date(lead.created_at).toISOString() : ""),
@@ -1651,7 +1713,9 @@ const exportSelectedToCSV = () => {
       formatCSVCell(lead.lead_status),
       formatCSVCell(lead.first_name),
       formatCSVCell(lead.last_name),
-      formatCSVCell(lead.name || `${lead.first_name || ""} ${lead.last_name || ""}`.trim()),
+      formatCSVCell(
+        lead.name || `${lead.first_name || ""} ${lead.last_name || ""}`.trim()
+      ),
       formatCSVCell(lead.job_title),
       formatCSVCell(lead.industry),
       formatCSVCell(lead.location),
@@ -1663,39 +1727,38 @@ const exportSelectedToCSV = () => {
       formatCSVCell(lead.email),
       formatCSVCell(lead.notes),
       formatCSVCell(lead.icebreaker),
-      formatCSVCell(lead.source_query_criteria)
+      formatCSVCell(lead.source_query_criteria),
     ];
     csvRows.push(row.join(","));
   });
 
   const csvString = csvRows.join("\r\n");
-  const blob = new Blob([`\uFEFF${csvString}`], { type: 'text/csv;charset=utf-8;' }); 
+  const blob = new Blob([`\uFEFF${csvString}`], { type: "text/csv;charset=utf-8;" });
 
   const link = document.createElement("a");
   if (link.download !== undefined) {
     const url = URL.createObjectURL(blob);
-    const timestamp = new Date().toISOString().slice(0,19).replace(/[-:T]/g,"");
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
     link.setAttribute("href", url);
     link.setAttribute("download", `leads_export_${timestamp}.csv`);
-    link.style.visibility = 'hidden';
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } else {
-    alert("CSV export initiated. Your browser may handle the download differently or require manual saving.");
+    alert(
+      "CSV export initiated. Your browser may handle the download differently or require manual saving."
+    );
     const encodedUri = encodeURI("data:text/csv;charset=utf-8," + `\uFEFF${csvString}`);
     const newWindow = window.open(encodedUri);
     if (!newWindow) {
-        alert("Could not open a new window for CSV download. Please check your popup blocker settings.");
+      alert(
+        "Could not open a new window for CSV download. Please check your popup blocker settings."
+      );
     }
   }
-  // Optional: User feedback
-  // searchMessage.value = `${leadsToExport.length} lead(s) prepared for CSV export.`;
-  // searchStatus.value = "success";
-  // setTimeout(() => { searchMessage.value = null; searchStatus.value = null; }, 3000);
 };
-
 
 async function updateLeadTab(
   leadId: string,
@@ -1876,7 +1939,7 @@ function handleClientFiltersUpdate(updatedFilters: ActiveClientFilters) {
     "color: green; font-weight: bold;",
     JSON.stringify(updatedFilters)
   );
-  console.count("LeadGenFormView: handleClientFiltersUpdate called"); // CRITICAL: Watch this count
+  console.count("LeadGenFormView: handleClientFiltersUpdate called");
   activeClientFilters.value = updatedFilters;
   pagination.value.pageIndex = 0;
   rowSelection.value = {};
@@ -2176,7 +2239,6 @@ async function getSupabaseSession(): Promise<Session | null> {
 }
 
 async function fetchLeadsForCurrentUser(forceRefresh = false) {
-  // --- START: Logging (existing) ---
   console.log(
     `%cLeadGenFormView: fetchLeadsForCurrentUser CALLED. forceRefresh: ${forceRefresh}`,
     "color: red; font-weight: bold;",
@@ -2186,7 +2248,6 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
     `\n  Active Client Filters: ${JSON.stringify(activeClientFilters.value)}`
   );
   console.count("LeadGenFormView: fetchLeadsForCurrentUser execution count");
-  // --- END: Logging (existing) ---
 
   if (
     (isLoadingLeads.value && !forceRefresh) ||
@@ -2223,59 +2284,54 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       .eq("user_id", user.id)
       .eq("tab", currentTab.value);
 
-    // --- START: MODIFIED FILTER APPLICATION LOGIC ---
     Object.entries(activeClientFilters.value).forEach(([key, values]) => {
       if (values && values.length > 0) {
-        const filterKey = key as keyof Lead; // Or a more specific type if Lead has all these keys
+        const filterKey = key as keyof Lead;
 
-        if (filterKey === "keywords") { // keywords is JSONB array of strings
-          if (values.length > 0) {
-            // We want to find leads where the JSONB keywords array contains *any* of these values.
-            // Build OR conditions like: (keywords.cs.["value1"],keywords.cs.["value2"])
-            const orConditions = values.map(val =>
-              // Ensure `val` is properly handled if it can contain double quotes.
-              // A simple replace should work for most keyword scenarios.
-              `${filterKey}.cs.["${val.replace(/"/g, '""')}"]`
-            ).join(',');
-            if (orConditions) {
-              query = query.or(orConditions);
-            }
-          }
-        } else if (filterKey === "industry" || filterKey === "company_size" || filterKey === "lead_status") {
-          // These are TEXT columns. FilterPanel sends an array, usually with one item for select.
-          // If it's possible to have multiple values (e.g., from a multi-select in future), use .in()
-          // For now, assuming single selection from FilterPanel, so values[0] is taken.
+        // Unified handling for JSONB array columns
+        if (filterKey === "keywords" || filterKey === "industry" || filterKey === "company_size") {
+          // values is an array from the filter panel (e.g., ['Software', 'Fintech'])
+          // We want to check if the database JSONB array column overlaps with any of these values.
+          // Supabase 'ov' operator takes a Postgrest literal array '{val1,val2}'
+          const filterValue = `{${values.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')}}`;
+          query = query.filter(filterKey, 'ov', filterValue);
+        } else if (filterKey === "lead_status") {
+          // lead_status is likely a single text column
           if (values.length === 1) {
             query = query.eq(filterKey, values[0]);
           } else if (values.length > 1) {
-            // This handles if your FilterPanel ever sends multiple selected values for these
             query = query.in(filterKey, values);
           }
-        } else if (["job_title", "location", "company_name"].includes(filterKey)) {
-          // These are TEXT columns where we want to do a case-insensitive partial match for any of the terms.
-          // Build OR conditions like: (job_title.ilike.%term1%,job_title.ilike.%term2%)
+        } else if (
+          ["job_title", "location", "company_name"].includes(filterKey)
+        ) {
           const orConditions = values
             .map((val) => `${filterKey}.ilike.%${val}%`)
             .join(",");
           if (orConditions) query = query.or(orConditions);
         }
-        // Add other specific filterKey handlers if needed
       }
     });
-    // --- END: MODIFIED FILTER APPLICATION LOGIC ---
 
     if (sorting.value.length > 0) {
       const sortColumn = sorting.value[0];
       const dbSortColumn = sortColumn.id;
       const allowedSort = [
-        "name", "job_title", "company_name", "email", "created_at", "lead_status",
+        "name",
+        "job_title",
+        "company_name",
+        "email",
+        "created_at",
+        "lead_status",
       ];
       if (allowedSort.includes(dbSortColumn)) {
         query = query.order(dbSortColumn, { ascending: !sortColumn.desc });
       } else {
         query = query.order("created_at", { ascending: false });
         if (dbSortColumn !== "created_at") {
-          console.warn(`Unmapped/array sort attempt: ${dbSortColumn}. Defaulting to sort by created_at.`);
+          console.warn(
+            `Unmapped/array sort attempt: ${dbSortColumn}. Defaulting to sort by created_at.`
+          );
         }
       }
     } else {
@@ -2302,15 +2358,13 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       error ? `Error: ${error.message}` : "No Supabase error."
     );
 
-    if (error && status !== 406) { // 406 is 'Not Acceptable', often related to resource not existing with filters
+    if (error && status !== 406) {
       if (error.message.includes("JWT")) {
         searchMessage.value = texts.value.accessDeniedMessage;
         searchStatus.value = "error";
         await authStore.signOut();
       } else {
-        console.error("Supabase fetch error:", error); // Changed log slightly
-        // Consider not throwing here to let finally block run, but set tableData to []
-        // throw error; // This was the original, might prevent UI updates in finally
+        console.error("Supabase fetch error:", error);
       }
       tableData.value = [];
       // @ts-ignore
@@ -2339,7 +2393,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       } else if (
         currentPageIndex > 0 &&
         totalCount === 0 &&
-        currentTab.value !== "new" // Only correct to page 0 if not on 'new' tab and page is empty
+        currentTab.value !== "new"
       ) {
         console.log(
           `%cLeadGenFormView: Correcting pagination. Current page (${currentPageIndex}) has no items on non-'new' tab. Setting to page 0.`,
@@ -2355,7 +2409,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       e
     );
     if (!searchMessage.value) {
-      searchMessage.value = texts.value.alertError + (e.message || 'Unknown error');
+      searchMessage.value = texts.value.alertError + (e.message || "Unknown error");
       searchStatus.value = "error";
     }
     tableData.value = [];

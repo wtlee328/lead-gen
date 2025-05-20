@@ -1602,4 +1602,34 @@ html[data-bs-theme="dark"] .landing-footer {
     border-color: var(--primary-color-hover-current, var(--bs-primary-hover));
 }
 
+/* Styles for keywords column expansion */
+.keywords-cell-container {
+  display: flex;
+  flex-wrap: wrap; /* Allows badges to wrap */
+  align-items: center;
+  gap: 0.25rem; /* Small gap between badges and button */
+}
+
+.keyword-tag {
+  white-space: nowrap; /* Ensures each badge doesn't break its text */
+  flex-shrink: 0; /* Prevents badges from shrinking */
+}
+
+.show-more-keywords-btn {
+  /* Inherits .btn-link styles */
+  font-size: 0.8em; /* Smaller font for the button */
+  padding: 0; /* Remove default button padding */
+  text-decoration: underline;
+  color: var(--primary-color-current); /* Match primary color */
+  background-color: transparent; /* No background */
+  border: none; /* No border */
+  line-height: 1.2; /* Adjust line height to align better with badges */
+  cursor: pointer;
+  white-space: nowrap; /* Prevent button text from wrapping */
+}
+
+.show-more-keywords-btn:hover {
+  color: var(--primary-dark-current); /* Darker on hover */
+  text-decoration: none; /* Remove underline on hover */
+}
 /* === End of file === */
