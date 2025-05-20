@@ -1127,7 +1127,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         );
       }
       // Fallback for unexpected single string values
-      if (typeof industries === "string" && industries.trim() !== "") {
+      if (typeof industries === "string" && (industries as string).trim() !== "") {
         return h(
           "span",
           { class: "badge bg-info text-dark me-1 mb-1" },
@@ -1176,7 +1176,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         );
       }
       // Fallback for unexpected single string values
-      if (typeof sizes === "string" && sizes.trim() !== "") {
+      if (typeof sizes === "string" && (sizes as string).trim() !== "") {
         return h("span", { class: "badge bg-secondary me-1 mb-1" }, sizes);
       }
       return "N/A";
