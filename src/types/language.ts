@@ -232,7 +232,7 @@ export interface Translations {
 }
 
 export const industriesData: Industry[] = [
-    { value: "information technology & services", zh: "資訊科技與服務", en: "Information Technology & Services" },
+    { value: "information technology", zh: "資訊科技與服務", en: "Information Technology" },
     { value: "construction", zh: "建築業", en: "Construction" },
     { value: "marketing & advertising", zh: "行銷與廣告", en: "Marketing & Advertising" },
     { value: "real estate", zh: "房地產", en: "Real Estate" },

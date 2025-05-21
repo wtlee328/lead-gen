@@ -445,6 +445,7 @@ button:focus-visible {
   background-color: var(--card-bg-current);
   color: var(--text-color-base-current);
   border: none;
+  box-shadow: none;
   padding: 0; /* Remove general card padding for filter panel if card-body handles it */
 }
 .filter-panel .card-body {
