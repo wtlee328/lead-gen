@@ -19,10 +19,10 @@
         <div class="col-lg-7 text-center text-lg-start product-info-section mb-5 mb-lg-0">
           <h1 class="display-4 fw-bold lh-1 mb-3">{{ texts.landingHeadline || 'Supercharge Your Outreach with AI' }}</h1>
           <p class="col-lg-10 fs-5 lead mb-4">
-            {{ texts.landingSubheadline || 'Discover, qualify, and engage prospects like never before. Legen.io uses cutting-edge AI to find your ideal customers and personalize communication, saving you time and boosting conversions.' }}
+            {{ texts.landingSubheadline || 'Discover, qualify, and engage prospects like never before. Prospec uses cutting-edge AI to find your ideal customers and personalize communication, saving you time and boosting conversions.' }}
           </p>
           <div class="features-list text-start mb-4 mx-auto mx-lg-0" style="max-width: 500px;">
-            <h4 class="mb-3 text-center text-lg-start">{{ texts.landingFeaturesTitle || 'Why Choose Legen.io?' }}</h4>
+            <h4 class="mb-3 text-center text-lg-start">{{ texts.landingFeaturesTitle || 'Why Choose Prospec?' }}</h4>
             <ul class="list-unstyled">
               <li class="d-flex align-items-start mb-2">
                 <i class="bi bi-magic text-primary me-2 mt-1 fs-5"></i>
@@ -131,7 +131,7 @@
 
     <footer class="landing-footer text-center py-4">
       <div class="container">
-        <p class="mb-0 text-muted small">© {{ new Date().getFullYear() }} Legen.io. All rights reserved.</p>
+        <p class="mb-0 text-muted small">© {{ new Date().getFullYear() }} Prospec. All rights reserved.</p>
       </div>
     </footer>
   </div>
@@ -145,14 +145,13 @@ import { useRouter } from 'vue-router'; // Import useRouter
 
 const authStore = useAuthStore();
 const languageStore = useLanguageStore();
-const router = useRouter(); // Initialize useRouter
 
 const texts = computed(() => {
   const defaultTexts = {
-    productName: 'Legen.io',
+    productName: 'Prospec',
     landingHeadline: 'Supercharge Your Outreach with AI',
-    landingSubheadline: 'Discover, qualify, and engage prospects like never before. Legen.io uses cutting-edge AI to find your ideal customers and personalize communication, saving you time and boosting conversions.',
-    landingFeaturesTitle: 'Why Choose Legen.io?',
+    landingSubheadline: 'Discover, qualify, and engage prospects like never before. Prospec uses cutting-edge AI to find your ideal customers and personalize communication, saving you time and boosting conversions.',
+    landingFeaturesTitle: 'Why Choose Prospec?',
     landingFeature1Title: 'AI-Powered Prospecting:',
     landingFeature1Desc: 'Uncover hidden gems and high-intent leads.',
     landingFeature2Title: 'Intelligent Qualification:',
