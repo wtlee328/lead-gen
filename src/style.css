@@ -1474,6 +1474,10 @@ html[data-bs-theme="dark"] .landing-footer {
   text-overflow: clip !important;
   overflow: visible !important;
 }
+/* Style for status pill */
+span.badge.bg-primary.text-white {
+  background-color: var(--primary-color-current) !important; /* Replace with your desired color */
+}
 .content-area-view .table-action-buttons .btn {
   /* Style for action buttons in table */
   padding: 0.25rem 0.5rem; /* Smaller padding for table action buttons */
