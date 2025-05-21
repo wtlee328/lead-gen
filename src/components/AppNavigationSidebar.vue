@@ -8,7 +8,7 @@
   >
     <div class="logo-area">
       <img
-        :src="isSidebarCollapsed ? '/ldgn.svg' : '/legen.io.svg'"
+        :src="isSidebarCollapsed ? '/Pwithdot.svg' : '/Prospecwithdot.svg'"
         alt="App Logo"
         class="app-logo"
         :class="{ 'app-logo-collapsed': isSidebarCollapsed }"
