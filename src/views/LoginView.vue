@@ -141,7 +141,6 @@
 import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useLanguageStore } from '@/stores/languageStore';
-import { useRouter } from 'vue-router'; // Import useRouter
 
 const authStore = useAuthStore();
 const languageStore = useLanguageStore();
