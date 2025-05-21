@@ -40,6 +40,19 @@
   --table-action-btn-secondary-hover-bg-light: rgb(102, 145, 210);
   --table-action-btn-text-hover-light: white;
 
+  /* --- NEW: Social Button Theme Variables (Light Mode) --- */
+  --google-btn-color-light: #3C4043;
+  --google-btn-border-light: #DADCE0;
+  --google-btn-bg-light: #FFFFFF;
+  --google-btn-hover-bg-light: #F8F9FA;
+
+  --linkedin-btn-color-light: #283E4A;
+  --linkedin-btn-border-light: #DCE6EB;
+  --linkedin-btn-bg-light: #FFFFFF;
+  --linkedin-btn-hover-bg-light: #EAF0F4;
+  /* --- END NEW Social Button Theme Variables --- */
+
+
   /* --- DEFAULT TO LIGHT THEME (Current Variables) --- */
   --primary-color-current: rgb(102, 145, 210);
   --primary-dark-current: var(--primary-dark);
@@ -97,6 +110,19 @@
   --table-action-btn-text-hover-current: var(
     --table-action-btn-text-hover-light
   );
+
+  /* --- NEW: Current Social Button Theme Variables --- */
+  --google-btn-color-current: var(--google-btn-color-light);
+  --google-btn-border-current: var(--google-btn-border-light);
+  --google-btn-bg-current: var(--google-btn-bg-light);
+  --google-btn-hover-bg-current: var(--google-btn-hover-bg-light);
+
+  --linkedin-btn-color-current: var(--linkedin-btn-color-light);
+  --linkedin-btn-border-current: var(--linkedin-btn-border-light);
+  --linkedin-btn-bg-current: var(--linkedin-btn-bg-light);
+  --linkedin-btn-hover-bg-current: var(--linkedin-btn-hover-bg-light);
+  /* --- END NEW Current Social Button Theme Variables --- */
+
 
   /* ---- Bootstrap Core Color Variable Overrides ---- */
   --bs-body-color: var(--text-color-base-current);
@@ -164,6 +190,18 @@ html[data-bs-theme="dark"] {
   --table-action-btn-secondary-color-current: var(--text-muted-current);
   --table-action-btn-secondary-hover-bg-current: var(--border-color-current);
   --table-action-btn-text-hover-current: var(--text-color-base-current);
+
+  /* --- NEW: Dark Theme Social Button Overrides --- */
+  --google-btn-color-current: #E8EAED;
+  --google-btn-border-current: #5F6368;
+  --google-btn-bg-current: #1E293B;
+  --google-btn-hover-bg-current: #333639;
+
+  --linkedin-btn-color-current: #E8EAED;
+  --linkedin-btn-border-current: #5F6368;
+  --linkedin-btn-bg-current: #1E293B;
+  --linkedin-btn-hover-bg-current: #333639;
+  /* --- END NEW Dark Theme Social Button Overrides --- */
 
   /* ---- Bootstrap Core Color Variable Overrides for Dark Theme ---- */
   --bs-body-color: var(--text-color-base-current);
@@ -1140,15 +1178,90 @@ html[data-bs-theme="dark"] .landing-footer {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 }
-.btn-google {
+/* Basic social login button styling (applies to both Google and LinkedIn) */
+.social-login-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-width: 1px; /* Subtle border for closer brand match */
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out;
+
+  /* Use Bootstrap CSS variables for default/hover/active states, referencing our custom vars */
+  background-color: var(--bs-btn-bg);
+  border-color: var(--bs-btn-border-color);
+  color: var(--bs-btn-color);
 }
-.btn-google .google-logo {
+
+.social-login-btn:hover {
+  background-color: var(--bs-btn-hover-bg);
+  border-color: var(--bs-btn-hover-border-color);
+  color: var(--bs-btn-hover-color);
+}
+
+.social-login-btn:active,
+.social-login-btn:focus {
+  background-color: var(--bs-btn-active-bg);
+  border-color: var(--bs-btn-active-border-color);
+  color: var(--bs-btn-active-color);
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), .25); /* Keep generic focus ring */
+}
+
+/* Google-specific styling */
+.google-login-btn {
+  --bs-btn-color: var(--google-btn-color-current);
+  --bs-btn-border-color: var(--google-btn-border-current);
+  --bs-btn-bg: var(--google-btn-bg-current);
+
+  --bs-btn-hover-bg: var(--google-btn-hover-bg-current);
+  --bs-btn-hover-border-color: var(--google-btn-border-current); /* Often same as default */
+  --bs-btn-hover-color: var(--google-btn-color-current);
+
+  --bs-btn-active-bg: var(--google-btn-hover-bg-current); /* Active matches hover */
+  --bs-btn-active-border-color: var(--google-btn-border-current);
+  --bs-btn-active-color: var(--google-btn-color-current);
+}
+
+/* Google icon color */
+.google-login-btn i.bi-google {
+  color: #4285F4; /* Specific Google Blue for icon */
+  font-size: 1.2em;
+}
+
+/* LinkedIn-specific styling */
+.linkedin-login-btn {
+  --bs-btn-color: var(--linkedin-btn-color-current);
+  --bs-btn-border-color: var(--linkedin-btn-border-current);
+  --bs-btn-bg: var(--linkedin-btn-bg-current);
+
+  --bs-btn-hover-bg: var(--linkedin-btn-hover-bg-current);
+  --bs-btn-hover-border-color: var(--linkedin-btn-border-current); /* Often same as default */
+  --bs-btn-hover-color: var(--linkedin-btn-color-current);
+
+  --bs-btn-active-bg: var(--linkedin-btn-hover-bg-current); /* Active matches hover */
+  --bs-btn-active-border-color: var(--linkedin-btn-border-current);
+  --bs-btn-active-color: var(--linkedin-btn-color-current);
+}
+
+/* LinkedIn icon color */
+.linkedin-login-btn i.bi-linkedin {
+  color: #0A66C2; /* Specific LinkedIn Blue for icon */
+  font-size: 1.2em;
+}
+
+/* Specific styling for the old .btn-google class if still used elsewhere */
+/* .btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} */
+/* .btn-google .google-logo {
   width: 18px;
   height: 18px;
-}
+} */
+
+
 @media (max-width: 575.98px) {
   .login-card-wrapper .card-body {
     padding: 1.5rem !important;
