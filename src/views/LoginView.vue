@@ -3,7 +3,7 @@
     <header class="landing-header py-3 sticky-top">
       <div class="container d-flex justify-content-between align-items-center">
         <div class="logo-area-landing">
-          <img src="@/assets/legen.io.svg" alt="Legen.io Logo" class="landing-logo-img" />
+          <img src="@/assets/prospecwithdot.svg" alt="prospecwithdot Logo" class="landing-logo-img" />
         </div>
         <div class="language-toggle" v-if="languageStore && texts">
           <button @click="languageStore.toggleLanguage" class="btn btn-sm btn-outline-secondary py-1 px-2">
