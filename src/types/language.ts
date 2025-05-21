@@ -201,6 +201,7 @@ export interface Translations {
     passwordLabel?: string;
     loginButton?: string;
     signInWithGoogleButton?: string;
+    signInWithLinkedInButton?: string; // NEW
     orDivider?: string;
     noAccountPrompt?: string;
     signUpLink?: string;
@@ -445,6 +446,7 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         passwordLabel: '密碼',
         loginButton: '登入',
         signInWithGoogleButton: '使用 Google 帳戶登入',
+        signInWithLinkedInButton: '使用 LinkedIn 帳戶登入',
         orDivider: '或',
         noAccountPrompt: '還沒有帳戶？',
         signUpLink: '在此註冊',
@@ -635,6 +637,7 @@ export const uiTexts: Record<LanguageCode, Translations> = {
         passwordLabel: 'Password',
         loginButton: 'Log In',
         signInWithGoogleButton: 'Sign in with Google',
+        signInWithLinkedInButton: 'Sign in with LinkedIn',
         orDivider: 'OR',
         noAccountPrompt: "Don't have an account?",
         signUpLink: 'Sign up here',

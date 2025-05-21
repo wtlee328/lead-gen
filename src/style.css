@@ -368,17 +368,17 @@ button:focus-visible {
 
 .table-action-buttons .btn-outline-warning,
 .btn-group > .btn-outline-warning {
-  --bs-btn-color: var(--table-action-btn-secondary-color-current);
-  --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
-  --bs-btn-hover-color: var(--text-color-base-current);
+  --bs-btn-color: var(--table-action-btn-secondary-color-current); /* Changed to warning var */
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current); /* Changed to warning var */
+  --bs-btn-hover-color: var(--text-color-base-current); /* Or var(--table-action-btn-text-hover-current) if it contrasts */
   --bs-btn-hover-bg: var(--table-action-btn-warning-hover-bg-current);
   --bs-btn-hover-border-color: var(--table-action-btn-warning-hover-bg-current);
 }
 
 .table-action-buttons .btn-outline-secondary,
 .btn-group > .btn-outline-secondary:not(:disabled):not(.disabled) {
-  --bs-btn-color: var(--table-action-btn-secondary-color-current);
-  --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
+  --bs-btn-color: var(--table-action-btn-secondary-color-current); /* Changed to secondary var */
+  --bs-btn-border-color: var(--table-action-btn-secondary-color-current); /* Changed to secondary var */
   --bs-btn-hover-color: var(--table-action-btn-text-hover-current);
   --bs-btn-hover-bg: var(--table-action-btn-secondary-hover-bg-current);
   --bs-btn-hover-border-color: var(

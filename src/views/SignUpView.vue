@@ -1,7 +1,7 @@
 <template>
-  <div class="signup-view"> <!-- Removed container here for full-width background if desired -->
+  <div class="signup-view">
     <div class="container d-flex justify-content-center align-items-center min-vh-100">
-      <div class="row w-100" style="max-width: 450px;"> <!-- Slightly wider for more fields -->
+      <div class="row w-100" style="max-width: 450px;">
         <div class="col-12">
           <div class="card shadow-lg">
             <div class="card-body p-4 p-sm-5">
@@ -11,6 +11,8 @@
                   </button>
               </div>
               <h3 class="card-title text-center fw-bold mb-4">{{ texts.signUpTitle || 'Create Account' }}</h3>
+
+              <!-- Email/Password Sign Up Form -->
               <form @submit.prevent="handleSignUp">
                 <div class="mb-3">
                   <label for="signUpEmail" class="form-label">{{ texts.emailLabel || 'Email Address' }}</label>
@@ -34,7 +36,7 @@
                     :placeholder="texts.passwordPlaceholder || 'Create a password'"
                   >
                 </div>
-                <div class="mb-4"> <!-- Increased margin bottom -->
+                <div class="mb-4">
                   <label for="confirmPassword" class="form-label">{{ texts.confirmPasswordLabel || 'Confirm Password' }}</label>
                   <input
                     type="password"
@@ -43,7 +45,7 @@
                     v-model="confirmPassword"
                     required
                     :placeholder="texts.confirmPasswordPlaceholder || 'Confirm your password'"
-                  > <!-- Moved comment here, or remove it -->
+                  >
                 </div>
                 <button
                   type="submit"
@@ -54,6 +56,36 @@
                   <span>{{ texts.signUpButton || 'Sign Up' }}</span>
                 </button>
               </form>
+
+              <!-- Social Sign Up Section -->
+              <div class="d-flex align-items-center my-4">
+                <hr class="flex-grow-1">
+                <span class="px-3 text-muted">{{ texts.orDivider || 'OR' }}</span>
+                <hr class="flex-grow-1">
+              </div>
+
+              <div class="d-grid gap-3">
+                <button
+                  type="button"
+                  class="btn btn-lg btn-outline-secondary social-login-btn google-login-btn"
+                  @click="handleGoogleSignIn"
+                  :disabled="authStore.loading"
+                >
+                  <i class="bi bi-google me-2"></i>
+                  <span>{{ texts.signInWithGoogleButton || 'Sign up with Google' }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-lg btn-outline-secondary social-login-btn linkedin-login-btn"
+                  @click="handleLinkedInSignIn"
+                  :disabled="authStore.loading"
+                >
+                  <i class="bi bi-linkedin me-2"></i>
+                  <span>{{ texts.signInWithLinkedInButton || 'Sign up with LinkedIn' }}</span>
+                </button>
+              </div>
+
+              <!-- Messages and Login Prompt -->
               <div v-if="signUpMessage" class="alert alert-info mt-4" role="alert">
                 {{ signUpMessage }}
               </div>
@@ -76,12 +108,11 @@
 import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useLanguageStore } from '@/stores/languageStore';
-import router from '@/router'; // Needed for router.push('/')
+import router from '@/router';
 
 const authStore = useAuthStore();
 const languageStore = useLanguageStore();
 
-// More robust computed for texts with proper fallback structure
 const texts = computed(() => {
   const defaultTexts = {
     signUpTitle: 'Create Account',
@@ -89,6 +120,9 @@ const texts = computed(() => {
     passwordLabel: 'Password',
     confirmPasswordLabel: 'Confirm Password',
     signUpButton: 'Sign Up',
+    orDivider: 'OR', // Re-use from LoginView
+    signInWithGoogleButton: 'Sign up with Google', // Adapted for signup
+    signInWithLinkedInButton: 'Sign up with LinkedIn', // Adapted for signup
     alreadyAccountPrompt: 'Already have an account?',
     loginLink: 'Log In',
     emailPlaceholder: 'Enter your email',
@@ -97,23 +131,20 @@ const texts = computed(() => {
     passwordMismatchError: 'Passwords do not match.',
     signUpSuccessConfirmEmail: 'Sign up successful! Please check your email for a confirmation link.',
     generalSignUpError: 'An error occurred during sign up. Please try again.',
-    // Add other keys from your language.ts Translations interface if needed as fallback
-    errorRequired: (fieldName: string) => `${fieldName} is required.`, // Fallback for errorRequired
+    errorRequired: (fieldName: string) => `${fieldName} is required.`,
   };
   if (languageStore && languageStore.texts) {
     return { ...defaultTexts, ...languageStore.texts };
   }
-  console.warn("SignUpView: languageStore.texts not available, using fallback texts.");
   return defaultTexts;
 });
 
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
-const signUpMessage = ref<string | null>(null); // For success/info messages specifically from sign-up process
+const signUpMessage = ref<string | null>(null);
 
 const handleSignUp = async () => {
-  // Clear previous messages
   authStore.error = null;
   signUpMessage.value = null;
 
@@ -127,49 +158,35 @@ const handleSignUp = async () => {
     return;
   }
 
+  // Use the signUp method from your authStore
   const result = await authStore.signUp(email.value, password.value);
 
   if (result && result.user) {
-    // User object exists, sign up was successful with Supabase
     if (result.session) {
-      // Session also exists, meaning user is immediately logged in (e.g., email confirmation disabled)
-      router.push('/'); // Navigate to dashboard
+      router.push('/');
     } else {
-      // No session, but user object exists: Email confirmation likely required
       signUpMessage.value = texts.value.signUpSuccessConfirmEmail;
-      // Clear form for good UX after successful submission awaiting confirmation
       email.value = '';
       password.value = '';
       confirmPassword.value = '';
     }
   } else if (!authStore.error) {
-    // This case means authStore.signUp didn't throw an error captured by its try/catch,
-    // but also didn't return a user (which is unusual for Supabase signUp).
-    // Set a generic error message.
     authStore.error = { name: 'SignUpFailed', message: texts.value.generalSignUpError };
   }
-  // If authStore.signUp itself set an error (e.g., email already taken), it will be displayed by `v-if="authStore.error"`
 };
 
-// Ensure these keys are in your language.ts:
-// signUpTitle, emailLabel, passwordLabel, confirmPasswordLabel, signUpButton,
-// alreadyAccountPrompt, loginLink, emailPlaceholder, passwordPlaceholder, confirmPasswordPlaceholder,
-// passwordMismatchError, signUpSuccessConfirmEmail, generalSignUpError
+// --- NEW Social Sign-Up Methods ---
+const handleGoogleSignIn = async () => {
+  // Use the signInWithOAuth method from your authStore
+  // Ensure the redirect URLs are configured in Supabase.
+  await authStore.signInWithOAuth('google');
+};
+
+const handleLinkedInSignIn = async () => {
+  // Use the signInWithOAuth method from your authStore
+  // Ensure the redirect URLs are configured in Supabase.
+  await authStore.signInWithOAuth('linkedin_oidc');
+};
+// --- END NEW Social Sign-Up Methods ---
+
 </script>
-
-<style scoped>
-/* signup-view can be empty if global body styles and container centering is enough */
-/* .signup-view {} */
-
-.card {
-  border: none;
-}
-
-.language-toggle button {
-    font-size: 0.8rem;
-}
-
-.btn .spinner-border {
-    vertical-align: middle;
-}
-</style>

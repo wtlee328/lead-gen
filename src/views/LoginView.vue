@@ -4,8 +4,6 @@
       <div class="container d-flex justify-content-between align-items-center">
         <div class="logo-area-landing">
           <img src="@/assets/legen.io.svg" alt="Legen.io Logo" class="landing-logo-img" />
-          <!-- You can add a product name next to the logo if desired -->
-          <!-- <span class="fw-bold fs-5 ms-2">{{ texts.productName || 'Our Product' }}</span> -->
         </div>
         <div class="language-toggle" v-if="languageStore && texts">
           <button @click="languageStore.toggleLanguage" class="btn btn-sm btn-outline-secondary py-1 px-2">
@@ -17,13 +15,12 @@
 
     <main class="landing-content container my-4 my-lg-5">
       <div class="row align-items-center g-lg-5 py-5">
-        <!-- Product Info Column -->
+        <!-- Product Info Column (remains the same) -->
         <div class="col-lg-7 text-center text-lg-start product-info-section mb-5 mb-lg-0">
           <h1 class="display-4 fw-bold lh-1 mb-3">{{ texts.landingHeadline || 'Supercharge Your Outreach with AI' }}</h1>
           <p class="col-lg-10 fs-5 lead mb-4">
             {{ texts.landingSubheadline || 'Discover, qualify, and engage prospects like never before. Legen.io uses cutting-edge AI to find your ideal customers and personalize communication, saving you time and boosting conversions.' }}
           </p>
-
           <div class="features-list text-start mb-4 mx-auto mx-lg-0" style="max-width: 500px;">
             <h4 class="mb-3 text-center text-lg-start">{{ texts.landingFeaturesTitle || 'Why Choose Legen.io?' }}</h4>
             <ul class="list-unstyled">
@@ -47,7 +44,6 @@
           </div>
           <div class="d-grid gap-2 d-lg-flex justify-content-lg-start">
             <router-link to="/signup" class="btn btn-primary btn-lg px-4 me-lg-2">{{ texts.signUpNowButton || 'Get Started Free' }}</router-link>
-            <!-- <a href="#learn-more" class="btn btn-outline-secondary btn-lg px-4">{{ texts.learnMoreButton || 'Learn More' }}</a> -->
           </div>
         </div>
 
@@ -56,6 +52,8 @@
           <div class="card shadow-lg login-card-wrapper">
             <div class="card-body p-4 p-md-5">
               <h3 class="card-title text-center fw-bold mb-4">{{ texts.loginTitle || 'Welcome Back!' }}</h3>
+
+              <!-- Email/Password Form -->
               <form @submit.prevent="handleLogin" class="login-form-fields">
                 <div class="mb-3">
                   <label for="loginEmail" class="form-label">{{ texts.emailLabel || 'Email Address' }}</label>
@@ -68,7 +66,7 @@
                     :placeholder="texts.emailPlaceholder || 'you@example.com'"
                   >
                 </div>
-                <div class="mb-3"> <!-- Changed mb-4 to mb-3 for consistency -->
+                <div class="mb-3">
                   <label for="loginPassword" class="form-label">{{ texts.passwordLabel || 'Password' }}</label>
                   <input
                     type="password"
@@ -88,6 +86,36 @@
                   <span>{{ texts.loginButton || 'Log In' }}</span>
                 </button>
               </form>
+
+              <!-- Social Login Section -->
+              <div class="d-flex align-items-center my-4">
+                <hr class="flex-grow-1">
+                <span class="px-3 text-muted">{{ texts.orDivider || 'OR' }}</span>
+                <hr class="flex-grow-1">
+              </div>
+
+              <div class="d-grid gap-3">
+                <button
+                  type="button"
+                  class="btn btn-lg btn-outline-secondary social-login-btn google-login-btn"
+                  @click="handleGoogleSignIn"
+                  :disabled="authStore.loading"
+                >
+                  <i class="bi bi-google me-2"></i>
+                  <span>{{ texts.signInWithGoogleButton || 'Sign in with Google' }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-lg btn-outline-secondary social-login-btn linkedin-login-btn"
+                  @click="handleLinkedInSignIn"
+                  :disabled="authStore.loading"
+                >
+                  <i class="bi bi-linkedin me-2"></i>
+                  <span>{{ texts.signInWithLinkedInButton || 'Sign in with LinkedIn' }}</span>
+                </button>
+              </div>
+
+              <!-- Error and Signup Prompt -->
               <div v-if="authStore.error" class="alert alert-danger mt-4" role="alert">
                 {{ authStore.error && (typeof authStore.error === 'string' ? authStore.error : authStore.error.message) || (texts.loginErrorDefault || 'An error occurred.') }}
               </div>
@@ -113,11 +141,11 @@
 import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useLanguageStore } from '@/stores/languageStore';
-// import { useRouter } from 'vue-router'; // Not strictly needed if only navigating via <router-link>
+import { useRouter } from 'vue-router'; // Import useRouter
 
 const authStore = useAuthStore();
 const languageStore = useLanguageStore();
-// const router = useRouter(); // Only if programmatic navigation is needed from script
+const router = useRouter(); // Initialize useRouter
 
 const texts = computed(() => {
   const defaultTexts = {
@@ -134,23 +162,23 @@ const texts = computed(() => {
     landingFeature4Title: 'Boost Conversions:',
     landingFeature4Desc: 'Turn more prospects into loyal customers.',
     signUpNowButton: 'Get Started Free',
-    // learnMoreButton: 'Learn More', // Uncomment if you add a learn more link/section
-
-    loginTitle: 'Welcome Back!', // Updated for landing page context
+    loginTitle: 'Welcome Back!',
     emailLabel: 'Email Address',
     passwordLabel: 'Password',
     loginButton: 'Log In',
+    orDivider: 'OR', // NEW
+    signInWithGoogleButton: 'Sign in with Google', // NEW
+    signInWithLinkedInButton: 'Sign in with LinkedIn', // NEW
     noAccountPrompt: "Don't have an account?",
     signUpLink: 'Sign up here',
     emailPlaceholder: 'you@example.com',
     passwordPlaceholder: 'Enter your password',
     loginErrorDefault: 'An unknown error occurred during login.',
-    errorRequired: (fields: string) => `${fields} are required.`, // Example for dynamic error
+    errorRequired: (fields: string) => `${fields} are required.`,
   };
   if (languageStore && languageStore.texts) {
     return { ...defaultTexts, ...languageStore.texts };
   }
-  // console.warn("LoginView: languageStore.texts not available, using fallback texts.");
   return defaultTexts;
 });
 
@@ -164,8 +192,20 @@ const handleLogin = async () => {
   }
   await authStore.signIn(email.value, password.value);
 };
-</script>
 
-<!-- <style scoped>
-  /* All styles moved to global.css */
-</style> -->
+// --- NEW Social Sign-In Methods ---
+const handleGoogleSignIn = async () => {
+  // Ensure the redirect URL is correctly configured in your Supabase Auth settings
+  // (typically your app's base URL, e.g., https://lead-gen-vwb1.vercel.app/)
+  // And that Google provider is enabled in Supabase.
+  await authStore.signInWithOAuth('google');
+};
+
+const handleLinkedInSignIn = async () => {
+  // Ensure the redirect URL is correctly configured in your Supabase Auth settings
+  // And that LinkedIn OIDC provider is enabled in Supabase.
+  await authStore.signInWithOAuth('linkedin_oidc'); // Use 'linkedin_oidc' for LinkedIn
+};
+// --- END NEW Social Sign-In Methods ---
+
+</script>

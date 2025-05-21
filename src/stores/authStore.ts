@@ -38,6 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
             loading.value = false;
         }
 
+        // --- onAuthStateChange listener (already handles routing after sign-in/out) ---
         supabase.auth.onAuthStateChange((event: AuthChangeEvent, activeSession: Session | null) => {
             console.log('AuthStore: Auth state changed:', event, activeSession ? 'Session present' : 'No session');
             session.value = activeSession;
@@ -52,7 +53,17 @@ export const useAuthStore = defineStore('auth', () => {
                     console.log('AuthStore: User is on a guest-only page, redirecting.');
                     const redirectPath = router.currentRoute.value.query.redirect as string | undefined;
                     if (redirectPath) {
-                        router.push(redirectPath);
+                        // Check if redirectPath is an absolute URL or relative path
+                        // If it's an absolute URL, ensure it's on your domain to prevent open redirect vulnerabilities
+                        const isAbsolute = redirectPath.startsWith('http://') || redirectPath.startsWith('https://');
+                        const isSameOrigin = isAbsolute ? new URL(redirectPath).origin === window.location.origin : true;
+
+                        if (isAbsolute && !isSameOrigin) {
+                            console.warn('AuthStore: Redirect to external origin detected, redirecting to LeadProspecting instead.');
+                            router.push({ name: 'LeadProspecting' });
+                        } else {
+                            router.push(redirectPath);
+                        }
                     } else {
                         router.push({ name: 'LeadProspecting' }); // Your main dashboard route name
                     }
@@ -94,7 +105,15 @@ export const useAuthStore = defineStore('auth', () => {
             const redirectPath = router.currentRoute.value.query.redirect as string | undefined;
             if (redirectPath) {
                 console.log('AuthStore: Redirecting to originally intended path:', redirectPath);
-                await router.push(redirectPath);
+                const isAbsolute = redirectPath.startsWith('http://') || redirectPath.startsWith('https://');
+                const isSameOrigin = isAbsolute ? new URL(redirectPath).origin === window.location.origin : true;
+
+                if (isAbsolute && !isSameOrigin) {
+                    console.warn('AuthStore: Redirect to external origin detected, redirecting to LeadProspecting instead.');
+                    await router.push({ name: 'LeadProspecting' });
+                } else {
+                    await router.push(redirectPath);
+                }
             } else {
                 console.log('AuthStore: Redirecting to dashboard (LeadProspecting).');
                 await router.push({ name: 'LeadProspecting' }); // Your main dashboard route name
@@ -109,54 +128,77 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    // --- MODIFIED signOut ACTION ---
+    // --- NEW: signInWithOAuth action ---
+    const signInWithOAuth = async (provider: 'google' | 'linkedin_oidc') => {
+        loading.value = true;
+        error.value = null;
+        try {
+            const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+                provider: provider,
+                options: {
+                    // Supabase will redirect to this URL after successful authentication with the provider.
+                    // This URL must be configured in your Supabase Dashboard -> Authentication -> URL Configuration
+                    // under "Site URL" and "Redirect URLs".
+                    redirectTo: window.location.origin, // Dynamically redirects back to your app's current origin
+                },
+            });
+
+            if (oauthError) {
+                error.value = oauthError;
+                console.error(`AuthStore: OAuth sign-in error with ${provider}:`, oauthError);
+            } else {
+                // For OAuth, data.url will contain the URL to redirect the user to the provider's login page.
+                // Supabase.js handles this redirect automatically if `data.url` is present.
+                // The user state will then be updated by the onAuthStateChange listener when they are redirected back.
+                console.log(`AuthStore: Redirecting to ${provider} for sign-in...`, data);
+            }
+        } catch (e: any) {
+            // Catch any unexpected client-side errors during the process
+            error.value = { name: e.name || "OAuthError", message: e.message || `An unexpected OAuth sign-in error occurred with ${provider}.` };
+            console.error(`AuthStore: Unexpected OAuth sign-in error with ${provider}:`, e);
+        } finally {
+            // Note: In case of a successful OAuth redirect, this `finally` block might not be fully executed
+            // before the browser leaves the page. It's more relevant for immediate errors.
+            loading.value = false;
+        }
+    };
+    // --- END NEW: signInWithOAuth action ---
+
+
     const signOut = async () => {
         loading.value = true;
         error.value = null;
-        // const currentSessionForArchive = session.value; // Capture session before it's cleared by signOut
 
-        // It's better to get a fresh session token specifically for this call,
-        // as the one in store might be just about to be invalidated by signOut() itself.
-        // However, supabase.functions.invoke automatically uses the current client's auth header.
-        // The key is that the user IS STILL AUTHENTICATED when this invoke call is made.
-
-        if (isAuthenticated.value) { // Check if user is authenticated before trying to call the function
-            console.log('AuthStore: Attempting to archive new leads before sign out for user:', user.value?.id);
+        if (isAuthenticated.value && user.value?.id) { // Ensure user is authenticated and has an ID
+            console.log('AuthStore: Attempting to archive new leads before sign out for user:', user.value.id);
             try {
                 const { data: archiveResult, error: archiveError } = await supabase.functions.invoke(
                     'archive-new-leads-on-logout', // Your Edge Function name
                     {
                         // No body is needed if the Edge Function gets the user_id from the JWT context
-                        // The Authorization header with the user's JWT is automatically included by
-                        // the Supabase client when invoking a function if the user is authenticated.
                     }
                 );
 
                 if (archiveError) {
-                    // Log this error but don't let it block the sign-out process
                     console.error('AuthStore: Error invoking archive-new-leads-on-logout Edge Function:', archiveError.message, archiveResult);
-                    // You might want to set a non-critical error message here for the user if needed
                 } else {
                     console.log('AuthStore: archive-new-leads-on-logout Edge Function invoked successfully:', archiveResult);
                 }
             } catch (e: any) {
-                // Catch any unexpected errors during the function invocation
                 console.error('AuthStore: Exception while invoking archive-new-leads-on-logout:', e.message);
             }
         } else {
-            console.warn('AuthStore: User not authenticated, skipping archive new leads call on sign out.');
+            console.warn('AuthStore: User not authenticated or ID missing, skipping archive new leads call on sign out.');
         }
 
-        // Now, proceed with the actual Supabase sign out
         try {
             const { error: signOutError } = await supabase.auth.signOut();
             if (signOutError) {
-                // This error is more critical for the sign-out process itself
                 throw signOutError;
             }
+            console.log('AuthStore: Supabase signOut call successful.');
             // user.value and session.value will be set to null by onAuthStateChange,
             // and onAuthStateChange will also handle the redirect to /login.
-            console.log('AuthStore: Supabase signOut call successful.');
         } catch (e: any) {
             console.error("AuthStore: Supabase signOut call error:", e.message);
             error.value = { name: e.name || "SignOutError", message: e.message };
@@ -174,6 +216,7 @@ export const useAuthStore = defineStore('auth', () => {
         initializeAuth,
         signUp,
         signIn,
+        signInWithOAuth, // Make the new action available
         signOut,
     };
 });
