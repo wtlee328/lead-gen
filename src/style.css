@@ -566,7 +566,7 @@ html:not([data-bs-theme="dark"])
 }
 .filter-panel .filter-tag.badge {
   background-color: var(--primary-light-current) !important;
-  color: var(--primary-dark) !important;
+  color: rgb(#fff) !important;
   border: 1px solid var(--primary-color-current);
   font-size: 0.8em;
   padding: 0.3em 0.6em;
