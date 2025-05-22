@@ -248,7 +248,6 @@ export const industriesData: Industry[] = [
     { value: "restaurants", zh: "餐飲業", en: "Restaurants" },
     { value: "education management", zh: "教育管理", en: "Education Management" },
     { value: "food & beverages", zh: "食品與飲料", en: "Food & Beverages" },
-    { value: "retail", zh: "零售", en: "retail" },
     { value: "design", zh: "設計", en: "Design" },
     { value: "apparel & fashion", zh: "服飾與時尚", en: "apparel & fashion" },
     { value: "import & export", zh: "進出口", en: "import & export" },
