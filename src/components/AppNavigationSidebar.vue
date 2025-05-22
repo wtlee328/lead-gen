@@ -16,9 +16,9 @@
     </div>
     <ul class="nav-links">
       <li class="nav-item">
-        <router-link to="/" class="nav-link-item" :title="isSidebarCollapsed ? 'Prospects' : undefined">
+        <router-link to="/" class="nav-link-item" :title="isSidebarCollapsed ? 'Prospect Search' : undefined"> <!-- UPDATED TITLE -->
           <i class="bi bi-people-fill"></i>
-          <span class="nav-link-text">Prospects</span>
+          <span class="nav-link-text">Prospect Search</span> <!-- UPDATED TEXT -->
         </router-link>
       </li>
 
