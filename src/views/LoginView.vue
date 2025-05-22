@@ -15,7 +15,7 @@
 
     <main class="landing-content container my-4 my-lg-5">
       <div class="row align-items-center g-lg-5 py-5">
-        <!-- Product Info Column (remains the same) -->
+        <!-- Product Info Column -->
         <div class="col-lg-7 text-center text-lg-start product-info-section mb-5 mb-lg-0">
           <h1 class="display-4 fw-bold lh-1 mb-3">{{ texts.landingHeadline || 'Supercharge Your Outreach with AI' }}</h1>
           <p class="col-lg-10 fs-5 lead mb-4">
@@ -23,24 +23,20 @@
           </p>
           <div class="features-list text-start mb-4 mx-auto mx-lg-0" style="max-width: 500px;">
             <h4 class="mb-3 text-center text-lg-start">{{ texts.landingFeaturesTitle || 'Why Choose Prospec?' }}</h4>
-            <ul class="list-unstyled">
-              <li class="d-flex align-items-start mb-2">
-                <i class="bi bi-magic text-primary me-2 mt-1 fs-5"></i>
-                <span><strong>{{ texts.landingFeature1Title || 'AI-Powered Prospecting:' }}</strong> {{ texts.landingFeature1Desc || 'Uncover hidden gems and high-intent leads.' }}</span>
-              </li>
-              <li class="d-flex align-items-start mb-2">
-                <i class="bi bi-person-check-fill text-primary me-2 mt-1 fs-5"></i>
-                <span><strong>{{ texts.landingFeature2Title || 'Intelligent Qualification:' }}</strong> {{ texts.landingFeature2Desc || 'Focus on leads that matter with smart scoring.' }}</span>
-              </li>
-              <li class="d-flex align-items-start mb-2">
-                <i class="bi bi-envelope-paper-heart-fill text-primary me-2 mt-1 fs-5"></i>
-                <span><strong>{{ texts.landingFeature3Title || 'Personalized Engagement:' }}</strong> {{ texts.landingFeature3Desc || 'Craft compelling outreach that resonates.' }}</span>
-              </li>
-               <li class="d-flex align-items-start">
-                <i class="bi bi-graph-up-arrow text-primary me-2 mt-1 fs-5"></i>
-                <span><strong>{{ texts.landingFeature4Title || 'Boost Conversions:' }}</strong> {{ texts.landingFeature4Desc || 'Turn more prospects into loyal customers.' }}</span>
-              </li>
-            </ul>
+
+            <!-- Feature Ticker Wrapper -->
+            <div class="feature-ticker-wrapper">
+              <Transition name="feature-slide" mode="out-in">
+                <div :key="currentFeatureIndex" class="feature-ticker-item d-flex align-items-start">
+                  <i :class="['text-primary me-2 mt-1 fs-5', currentFeature.icon]"></i>
+                  <span>
+                    <strong>{{ currentFeature.title || '' }}</strong> {{ currentFeature.desc || '' }}
+                  </span>
+                </div>
+              </Transition>
+            </div>
+            <!-- End Feature Ticker Wrapper -->
+
           </div>
           <div class="d-grid gap-2 d-lg-flex justify-content-lg-start">
             <router-link to="/signup" class="btn btn-primary btn-lg px-4 me-lg-2">{{ texts.signUpNowButton || 'Get Started Free' }}</router-link>
@@ -49,7 +45,7 @@
 
         <!-- Login Form Column -->
         <div class="col-lg-5 mx-auto">
-          <div class="card shadow-lg login-card-wrapper">
+          <div class="card shadow-lg login-card-wrapper rounded-4">
             <div class="card-body p-4 p-md-5">
               <h3 class="card-title text-center fw-bold mb-4">{{ texts.loginTitle || 'Welcome Back!' }}</h3>
 
@@ -154,13 +150,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useLanguageStore } from '@/stores/languageStore';
 
 const authStore = useAuthStore();
 const languageStore = useLanguageStore();
 
+// Reactive properties for email and password input
+const email = ref('');
+const password = ref('');
+
+// Computed property for localized texts
 const texts = computed(() => {
   const defaultTexts = {
     productName: 'Prospec',
@@ -180,9 +181,9 @@ const texts = computed(() => {
     emailLabel: 'Email Address',
     passwordLabel: 'Password',
     loginButton: 'Log In',
-    orDivider: 'OR', // NEW
-    signInWithGoogleButton: 'Sign in with Google', // NEW
-    signInWithLinkedInButton: 'Sign in with LinkedIn', // NEW
+    orDivider: 'OR',
+    signInWithGoogleButton: 'Sign in with Google',
+    signInWithLinkedInButton: 'Sign in with LinkedIn',
     noAccountPrompt: "Don't have an account?",
     signUpLink: 'Sign up here',
     emailPlaceholder: 'you@example.com',
@@ -196,8 +197,34 @@ const texts = computed(() => {
   return defaultTexts;
 });
 
-const email = ref('');
-const password = ref('');
+// --- Feature Ticker Logic ---
+const featuresList = computed(() => [
+  { icon: 'bi-magic', title: texts.value.landingFeature1Title, desc: texts.value.landingFeature1Desc },
+  { icon: 'bi-person-check-fill', title: texts.value.landingFeature2Title, desc: texts.value.landingFeature2Desc },
+  { icon: 'bi-envelope-paper-heart-fill', title: texts.value.landingFeature3Title, desc: texts.value.landingFeature3Desc },
+  { icon: 'bi-graph-up-arrow', title: texts.value.landingFeature4Title, desc: texts.value.landingFeature4Desc },
+]);
+
+const currentFeatureIndex = ref(0);
+let tickerInterval: number | null = null; // Use `let` for reassignment with `null`
+
+onMounted(() => {
+  // Start the ticker animation when the component mounts
+  tickerInterval = window.setInterval(() => {
+    currentFeatureIndex.value = (currentFeatureIndex.value + 1) % featuresList.value.length;
+  }, 4000); // Change feature every 4 seconds
+});
+
+onUnmounted(() => {
+  // Clear the interval when the component is unmounted to prevent memory leaks
+  if (tickerInterval !== null) { // Check if interval was set
+    clearInterval(tickerInterval);
+  }
+});
+
+const currentFeature = computed(() => featuresList.value[currentFeatureIndex.value]);
+// --- End Feature Ticker Logic ---
+
 
 const handleLogin = async () => {
   if (!email.value || !password.value) {
@@ -207,19 +234,11 @@ const handleLogin = async () => {
   await authStore.signIn(email.value, password.value);
 };
 
-// --- NEW Social Sign-In Methods ---
 const handleGoogleSignIn = async () => {
-  // Ensure the redirect URL is correctly configured in your Supabase Auth settings
-  // (typically your app's base URL, e.g., https://lead-gen-vwb1.vercel.app/)
-  // And that Google provider is enabled in Supabase.
   await authStore.signInWithOAuth('google');
 };
 
 const handleLinkedInSignIn = async () => {
-  // Ensure the redirect URL is correctly configured in your Supabase Auth settings
-  // And that LinkedIn OIDC provider is enabled in Supabase.
-  await authStore.signInWithOAuth('linkedin_oidc'); // Use 'linkedin_oidc' for LinkedIn
+  await authStore.signInWithOAuth('linkedin_oidc');
 };
-// --- END NEW Social Sign-In Methods ---
-
 </script>

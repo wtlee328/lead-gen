@@ -218,7 +218,7 @@ body {
   background-color: var(--content-bg-current);
   height: 100%;
   width: 100%;
-font-size: 90%; 
+  font-size: 90%; /* Keeping this as requested for 10% smaller view */
   margin: 0;
   padding: 0;
   overflow: hidden; /* Global overflow hidden, individual areas manage their scroll */
@@ -289,7 +289,7 @@ button:focus-visible {
   --bs-btn-font-weight: 500;
   --bs-btn-padding-y: 0.45em;
   --bs-btn-padding-x: 1em;
-  --bs-btn-border-radius: 8px;
+  --bs-btn-border-radius: 8px; /* Default for all buttons */
   --bs-btn-transition: color 0.15s ease-in-out,
     background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out;
@@ -306,7 +306,7 @@ button:focus-visible {
   --bs-btn-padding-y: 0.6rem;
   --bs-btn-padding-x: 1.2rem;
   --bs-btn-font-size: 1.125em;
-  --bs-btn-border-radius: 10px;
+  --bs-btn-border-radius: 0.5rem; /* Adjusted for modern look */
 }
 
 .btn-primary {
@@ -435,6 +435,7 @@ button:focus-visible {
   background-color: var(--card-bg-current);
   color: var(--text-color-base-current);
   border: 1px solid var(--border-color-current);
+  border-radius: 0.5rem; /* Adjusted for modern look */
 }
 .form-control:focus,
 .form-select:focus {
@@ -1112,6 +1113,7 @@ html[data-bs-theme="dark"] .app-navigation-sidebar .user-profile-toggle:focus {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* body background is handled by --content-bg-current in html, body */
 }
 .landing-header {
   background-color: var(--card-bg-current);
@@ -1127,6 +1129,8 @@ html[data-bs-theme="dark"] .logo-area-landing .landing-logo-img {
 }
 .landing-content {
   flex-grow: 1;
+  display: flex; /* Added for vertical centering */
+  align-items: center; /* Vertically center content */
 }
 .product-info-section h1 {
   color: var(--text-color-base-current);
@@ -1135,13 +1139,16 @@ html[data-bs-theme="dark"] .logo-area-landing .landing-logo-img {
   color: var(--text-muted-current);
 }
 .features-list .bi {
-  font-size: 1.25rem;
-  min-width: 28px;
+  font-size: 1.25rem; /* Existing size */
+  min-width: 28px; /* Existing width */
+  color: var(--bs-primary); /* Ensure it uses Bootstrap primary color */
 }
 .login-card-wrapper.card {
   border: none;
   background-color: var(--card-bg-current);
   padding: 0; /* Remove general card padding if card-body handles it */
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08); /* Softer shadow for modern look */
+  /* Bootstrap's rounded-4 class handles the border-radius for modern look */
 }
 .login-card-wrapper .card-body {
   padding: 2.5rem; /* Specific padding for login card */
@@ -1154,7 +1161,7 @@ html[data-bs-theme="dark"] .logo-area-landing .landing-logo-img {
   vertical-align: middle;
 }
 .landing-footer {
-  background-color: var(--card-bg-light);
+  background-color: var(--card-bg-light); /* Assuming footer stays light/dark based on theme */
   border-top: 1px solid var(--border-color-light);
   padding: 1rem 0;
 }
@@ -1162,6 +1169,7 @@ html[data-bs-theme="dark"] .landing-footer {
   background-color: var(--card-bg-current);
   border-top: 1px solid var(--border-color-current);
 }
+
 /* Login View Specific Enhancements */
 .divider-or {
   position: relative;
@@ -1225,9 +1233,10 @@ html[data-bs-theme="dark"] .landing-footer {
 }
 
 /* Google icon color */
-.google-login-btn i.bi-google {
-  color: #4285F4; /* Specific Google Blue for icon */
-  font-size: 1.2em;
+.google-login-btn .google-icon { /* Changed to use .google-icon class for SVG */
+  /* SVG path fills are already defined in the SVG itself, so no direct color needed here unless you want to override */
+  font-size: 1.2em; /* Ensure icon size scales with text */
+  vertical-align: middle; /* Align SVG with text */
 }
 
 /* LinkedIn-specific styling */
@@ -1251,16 +1260,55 @@ html[data-bs-theme="dark"] .landing-footer {
   font-size: 1.2em;
 }
 
-/* Specific styling for the old .btn-google class if still used elsewhere */
-/* .btn-google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-} */
-/* .btn-google .google-logo {
-  width: 18px;
-  height: 18px;
-} */
+/* --- Feature Ticker Styles --- */
+.feature-ticker-wrapper {
+  max-width: 500px; /* Constrain width as per original features-list */
+  height: 60px; /* Adjusted height for a single line of text with some padding */
+  overflow: hidden; /* Hide content outside the fixed height */
+  position: relative; /* Needed for absolute positioning of children */
+  margin-left: auto; /* Center the wrapper */
+  margin-right: auto; /* Center the wrapper */
+  padding-top: 5px; /* Small padding at the top for spacing */
+  padding-bottom: 5px; /* Small padding at the bottom for spacing */
+  display: flex; /* Use flex to help align content */
+  align-items: center; /* Vertically align items within the ticker window */
+  color: var(--text-muted-current); /* Inherit muted text color for features */
+}
+
+.feature-ticker-item {
+  position: absolute; /* Allows elements to stack and animate */
+  top: 0;
+  left: 0;
+  width: 100%;
+  font-size: 1rem; /* Font size for feature text */
+  padding-top: 5px; /* Match wrapper padding */
+  padding-bottom: 5px; /* Match wrapper padding */
+}
+
+/* Vue Transition Classes for Slide Up/Down Animation */
+.feature-slide-enter-active,
+.feature-slide-leave-active {
+  transition: all 0.7s ease-in-out; /* Smooth transition for both entering and leaving */
+}
+
+.feature-slide-enter-from {
+  opacity: 0;
+  transform: translateY(100%); /* New item starts from below the container */
+}
+.feature-slide-enter-to {
+  opacity: 1;
+  transform: translateY(0); /* New item moves to its final visible position */
+}
+
+.feature-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0); /* Old item starts from its current visible position */
+}
+.feature-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-100%); /* Old item moves up and out of the container */
+}
+/* --- End Feature Ticker Styles --- */
 
 
 @media (max-width: 575.98px) {
