@@ -2267,9 +2267,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
         "company_name",
         "email",
         "created_at",
-        // No lead_status in the DB query sorting if it's not displayed
-        // but if it's still in the DB, it can be sorted by
-        "lead_status", // Keep this if 'lead_status' is still a sortable column in DB
+        "lead_status", 
       ];
       if (allowedSort.includes(dbSortColumn)) {
         query = query.order(dbSortColumn, { ascending: !sortColumn.desc });
@@ -2372,26 +2370,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
   }
 }
 
-function getStatusBadgeClass(status?: string | null): string {
-  // This function is still present but the column that used it is removed.
-  // No harm in keeping it if it might be used elsewhere or in the future.
-  if (!status) return "bg-secondary text-white";
-  switch (status.toLowerCase().replace(/\s+/g, "")) {
-    case "newprospect":
-      return "bg-primary text-white";
-    case "icebreakersent":
-    case "contacted":
-      return "bg-success text-white";
-    case "follow-up":
-      return "bg-warning text-dark";
-    case "replied":
-      return "bg-info text-dark";
-    case "archived":
-      return "bg-secondary text-white";
-    default:
-      return "bg-light text-dark border";
-  }
-}
+// getStatusBadgeClass removed as it was no longer used after removing the 'lead_status' column.
 
 onMounted(async () => {
   const session = authStore.session || (await getSupabaseSession());
