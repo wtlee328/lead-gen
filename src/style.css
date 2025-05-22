@@ -520,8 +520,8 @@ button:focus-visible {
 }
 .filter-panel .filter-tabs .nav-link.active {
   color: var(--bs-light);
-  background-color: var(--sidebar-active-bg-current);
-  border-color: var(--sidebar-active-bg-current);
+  background-color: var(--primary-color-current);
+  border-color: var(--primary-color-current);
   font-weight: 500;
   border-radius: 1.1rem;
 }
