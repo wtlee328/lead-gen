@@ -665,7 +665,7 @@ interface Lead {
   industry?: string[] | null; // Confirmed as JSONB array (remains array)
   location?: string | null;
   company_name?: string | null;
-  company_size?: string | null; // <-- UPDATED: Now a single string (was string[] | null)
+  company_size?: string | null; // UPDATED: Now a single string (was string[] | null)
   phone?: string | null;
   linkedIn_url?: string | null;
   keywords?: string[] | Record<string, any> | string | null; // Flexible for JSONB keywords
@@ -704,7 +704,7 @@ const advancedFilterInputs = reactive({
   jobTitle: "",
   industry: "",
   location: "",
-  companySize: "", // This remains string for select binding
+  companySize: "",
   otherKeywords: "",
 });
 const filterTags = ref<FilterTag[]>([]);
@@ -1093,7 +1093,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
           )
         );
       }
-      return "N/A"; // Should not be a single string now if DB is JSONB array
+      return "N/A";
     },
     enableSorting: true,
     size: 160,
@@ -1123,7 +1123,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
     id: "company_size",
     header: () => texts.value.colCompanySize,
     cell:  (info: CellContext<Lead, Lead["company_size"]>) =>
-      info.getValue() || "N/A",
+      info.getValue() || "N/A", // This directly renders the string value
     enableSorting: true,
     size: 180,
     meta: {
@@ -1540,7 +1540,7 @@ const batchProcessLeads = async (
   rowSelection.value = {};
   await fetchLeadsForCurrentUser(true);
   await fetchTabCounts(authStore.user?.id);
-  isProcessingBatch.value = false;
+  isProcessingBatch.value = false; // Reset batch processing flag here after all is done
 };
 
 const batchSaveSelected = () =>
@@ -1623,7 +1623,6 @@ const exportSelectedToCSV = () => {
     }
     let stringValue = String(value);
 
-    // This block is correct for Array types (like industry, keywords)
     if (Array.isArray(value)) {
       stringValue = value.map((item) => String(item).replace(/"/g, '""')).join("; ");
     } else if (typeof value === "object" && value !== null) {
@@ -1659,13 +1658,13 @@ const exportSelectedToCSV = () => {
           (typeof lead.last_name === 'string' ? " " + lead.last_name : "")
       ),
       formatCSVCell(lead.job_title),
-      formatCSVCell(lead.industry), // Will be handled by Array.isArray in formatCSVCell
+      formatCSVCell(lead.industry),
       formatCSVCell(lead.location),
       formatCSVCell(lead.company_name),
-      formatCSVCell(lead.company_size), // Will be handled as string in formatCSVCell
+      formatCSVCell(lead.company_size),
       formatCSVCell(lead.phone),
       formatCSVCell(lead.linkedIn_url),
-      formatCSVCell(lead.keywords), // Will be handled by Array.isArray in formatCSVCell
+      formatCSVCell(lead.keywords),
       formatCSVCell(lead.email),
       formatCSVCell(lead.notes),
       formatCSVCell(lead.icebreaker),
@@ -1747,7 +1746,7 @@ async function updateLeadTab(
       await fetchLeadsForCurrentUser(true);
       await fetchTabCounts(authStore.user?.id);
     }
-    return { success: true, leadId, newTab, error: undefined }; // Explicitly set error to undefined
+    return { success: true, leadId, newTab, error: undefined };
   } catch (error: any) {
     if (!isBatchOperation) {
       searchMessage.value = texts.value.leadUpdateError + ` (${error.message})`;
@@ -1756,7 +1755,10 @@ async function updateLeadTab(
     console.error(`Error updating lead ${leadId} tab:`, error);
     return { success: false, leadId, newTab, error };
   } finally {
-    if (!isProcessingBatch.value) isProcessingBatch.value = false;
+    // FIX applied here: Ensure isProcessingBatch is reset for single ops
+    if (!isBatchOperation) {
+      isProcessingBatch.value = false;
+    }
   }
 }
 
@@ -1789,7 +1791,7 @@ async function deleteLead(
       await fetchLeadsForCurrentUser(true);
       await fetchTabCounts(authStore.user?.id);
     }
-    return { success: true, error: undefined }; // Explicitly set error to undefined
+    return { success: true, error: undefined };
   } catch (error: any) {
     if (!isBatchOperation) {
       searchMessage.value = texts.value.leadDeleteError + ` (${error.message})`;
@@ -1798,7 +1800,10 @@ async function deleteLead(
     console.error(`Error deleting lead ${leadId}:`, error);
     return { success: false, error };
   } finally {
-    if (!isProcessingBatch.value) isProcessingBatch.value = false;
+    // FIX applied here: Ensure isProcessingBatch is reset for single ops
+    if (!isBatchOperation) {
+      isProcessingBatch.value = false;
+    }
   }
 }
 
@@ -1988,7 +1993,7 @@ function addAdvancedInputsAsTags() {
       languageStore.industries?.find((o) => o.value === i.industry)?.text
     );
   if (typeof i.location === 'string' && i.location.trim()) addTag("location", i.location.trim());
-  if (typeof i.companySize === 'string' && i.companySize) addTag("companySize", i.companySize); // No change needed here, value is already string
+  if (typeof i.companySize === 'string' && i.companySize) addTag("companySize", i.companySize);
   if (typeof i.otherKeywords === 'string' && i.otherKeywords.trim())
     i.otherKeywords
       .trim()
@@ -2080,17 +2085,12 @@ async function submitLeadSearchCriteria() {
   if (filterTags.value.length > 0) {
     payload.filters = {};
     filterTags.value.forEach((t) => {
-      // For JSONB array filters (keywords, industry) and companySize (which is a select filter that sends a string)
-      // `companySize` filter value is sent as a string, but the Supabase function expects it as a string.
-      // The `payload.filters![t.type] = [t.value];` part will create an array if `t.type` is companySize.
-      // This is OK because `fetchLeadsForCurrentUser` will now handle company_size with .eq()
-      // so it will just take the first element from the array anyway if it gets it.
-      if (t.type === "otherKeywords" || t.type === "industry" || t.type === "companySize") { // `companySize` remains in this group
+      if (t.type === "otherKeywords" || t.type === "industry" || t.type === "companySize") {
         const currentFilterValue = payload.filters![t.type];
         if (Array.isArray(currentFilterValue)) {
             currentFilterValue.push(t.value);
         } else {
-            payload.filters![t.type] = [t.value]; // Ensure it's an array for consistency when sending to n8n
+            payload.filters![t.type] = [t.value];
         }
       } else {
         payload.filters![t.type] = t.value;
@@ -2237,18 +2237,13 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       if (Array.isArray(values) && values.length > 0) {
         const filterKey = key as keyof Lead;
 
-        // --- UPDATED: Handle company_size separately as it's now TEXT in DB ---
         if (filterKey === "company_size") {
-          // Since company_size is a select filter, 'values' array will always have one element.
-          // Use .eq() for single exact match for TEXT column.
           query = query.eq(filterKey, values[0]);
         }
-        // --- END UPDATED ---
-        // Handle JSONB array columns: keywords, industry (still JSONB arrays)
         else if (filterKey === "keywords" || filterKey === "industry") {
           const cleanedValues = values.map(v => `"${String(v).replace(/"/g, '""')}"`);
           const filterValue = `{${cleanedValues.join(',')}}`;
-          query = query.filter(filterKey, 'ov', filterValue); // 'overlaps' operator
+          query = query.filter(filterKey, 'ov', filterValue);
         } else if (filterKey === "lead_status") {
           if (values.length === 1) {
             query = query.eq(filterKey, values[0]);
