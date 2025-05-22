@@ -218,6 +218,7 @@ body {
   background-color: var(--content-bg-current);
   height: 100%;
   width: 100%;
+font-size: 90%; 
   margin: 0;
   padding: 0;
   overflow: hidden; /* Global overflow hidden, individual areas manage their scroll */
