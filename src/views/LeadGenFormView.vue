@@ -926,123 +926,6 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
       },
     },
   }),
-  columnHelper.display({
-    id: "actions",
-    header: () => texts.value.colActions,
-    cell: (info: CellContext<Lead, unknown>) => {
-      const lead = info.row.original;
-      const buttons = [];
-      if (currentTab.value === "new" && lead.tab === "new") {
-        buttons.push(
-          h(
-            "button",
-            {
-              class: "btn btn-sm btn-outline-success",
-              title: texts.value.tooltipSave,
-              disabled: isProcessingBatch.value,
-              onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "saved"),
-            },
-            [h("i", { class: "bi bi-bookmark-check" })]
-          )
-        );
-        buttons.push(
-          h(
-            "button",
-            {
-              onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "archived"),
-              class: `btn btn-sm btn-outline-warning ${
-                buttons.length > 0 ? "ms-1" : ""
-              }`,
-              disabled: isProcessingBatch.value,
-              title: texts.value.tooltipArchive,
-            },
-            [h("i", { class: "bi bi-archive" })]
-          )
-        );
-      } else if (currentTab.value === "saved" && lead.tab === "saved") {
-        buttons.push(
-          h(
-            "button",
-            {
-              onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "new"),
-              class: "btn btn-sm btn-outline-secondary",
-              disabled: isProcessingBatch.value,
-              title: texts.value.tooltipRestore,
-            },
-            [h("i", { class: "bi bi-arrow-counterclockwise" })]
-          )
-        );
-        buttons.push(
-          h(
-            "button",
-            {
-              onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "archived"),
-              class: `btn btn-sm btn-outline-warning ${
-                buttons.length > 0 ? "ms-1" : ""
-              }`,
-              disabled: isProcessingBatch.value,
-              title: texts.value.tooltipArchive,
-            },
-            [h("i", { class: "bi bi-archive" })]
-          )
-        );
-      } else if (currentTab.value === "archived" && lead.tab === "archived") {
-        buttons.push(
-          h(
-            "button",
-            {
-              onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "saved"),
-              class: "btn btn-sm btn-outline-secondary",
-              disabled: isProcessingBatch.value,
-              title: texts.value.tooltipMoveToSaved,
-            },
-            [h("i", { class: "bi bi-bookmark-plus" })]
-          )
-        );
-        buttons.push(
-          h(
-            "button",
-            {
-              onClick: () => !isProcessingBatch.value && deleteLead(lead.id),
-              class: `btn btn-sm btn-outline-danger ${
-                buttons.length > 0 ? "ms-1" : ""
-              }`,
-              disabled: isProcessingBatch.value,
-              title: texts.value.tooltipDelete,
-            },
-            [h("i", { class: "bi bi-trash" })]
-          )
-        );
-      }
-      return h(
-        "div",
-        {
-          class:
-            "btn-group btn-group-sm table-action-buttons d-flex justify-content-center",
-        },
-        buttons
-      );
-    },
-    size: 150,
-    meta: {
-      style: {
-        position: "sticky",
-        left: "60px",
-        width: "150px",
-        minWidth: "150px",
-        textAlign: "center",
-        verticalAlign: "middle",
-        zIndex: "17",
-        backgroundColor: "var(--card-bg-current)",
-        borderRight: "1px solid var(--border-color-current)",
-      },
-    },
-  }),
   columnHelper.accessor("name", {
     id: "name",
     header: () => texts.value.colName,
@@ -1053,14 +936,14 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
       }`.trim() ||
       "N/A",
     enableSorting: true,
-    size: 180,
+    size: 144, // 80% of 180 (180 * 0.8 = 144)
     meta: {
       style: {
         position: "sticky",
-        left: "210px",
-        minWidth: "180px",
-        width: "180px",
-        zIndex: "16",
+        left: "60px", // Positioned after the 'select' column (60px)
+        minWidth: "144px",
+        width: "144px",
+        zIndex: "17", // Needs to be lower than 'select' (18) but higher than regular columns
         backgroundColor: "var(--card-bg-current)",
         borderRight: "1px solid var(--border-color-current)",
       },
@@ -1265,26 +1148,121 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
     size: 100,
     meta: { style: { minWidth: "100px", width: "100px" } },
   }),
-  columnHelper.accessor("lead_status", {
-    id: "lead_status",
-    header: () => texts.value.colStatus,
-    cell: (info: CellContext<Lead, Lead["lead_status"]>) => {
-      const status = info.getValue();
-      return status
-        ? h("span", { class: `badge ${getStatusBadgeClass(status)}` }, status)
-        : "N/A";
+  // lead_status column removed as requested
+  columnHelper.display({
+    id: "actions",
+    header: () => texts.value.colActions,
+    cell: (info: CellContext<Lead, unknown>) => {
+      const lead = info.row.original;
+      const buttons = [];
+      if (currentTab.value === "new" && lead.tab === "new") {
+        buttons.push(
+          h(
+            "button",
+            {
+              class: "btn btn-sm btn-outline-success",
+              title: texts.value.tooltipSave,
+              disabled: isProcessingBatch.value,
+              onClick: () =>
+                !isProcessingBatch.value && updateLeadTab(lead.id, "saved"),
+            },
+            [h("i", { class: "bi bi-bookmark-check" })]
+          )
+        );
+        buttons.push(
+          h(
+            "button",
+            {
+              onClick: () =>
+                !isProcessingBatch.value && updateLeadTab(lead.id, "archived"),
+              class: `btn btn-sm btn-outline-warning ${
+                buttons.length > 0 ? "ms-1" : ""
+              }`,
+              disabled: isProcessingBatch.value,
+              title: texts.value.tooltipArchive,
+            },
+            [h("i", { class: "bi bi-archive" })]
+          )
+        );
+      } else if (currentTab.value === "saved" && lead.tab === "saved") {
+        buttons.push(
+          h(
+            "button",
+            {
+              onClick: () =>
+                !isProcessingBatch.value && updateLeadTab(lead.id, "new"),
+              class: "btn btn-sm btn-outline-secondary",
+              disabled: isProcessingBatch.value,
+              title: texts.value.tooltipRestore,
+            },
+            [h("i", { class: "bi bi-arrow-counterclockwise" })]
+          )
+        );
+        buttons.push(
+          h(
+            "button",
+            {
+              onClick: () =>
+                !isProcessingBatch.value && updateLeadTab(lead.id, "archived"),
+              class: `btn btn-sm btn-outline-warning ${
+                buttons.length > 0 ? "ms-1" : ""
+              }`,
+              disabled: isProcessingBatch.value,
+              title: texts.value.tooltipArchive,
+            },
+            [h("i", { class: "bi bi-archive" })]
+          )
+        );
+      } else if (currentTab.value === "archived" && lead.tab === "archived") {
+        buttons.push(
+          h(
+            "button",
+            {
+              onClick: () =>
+                !isProcessingBatch.value && updateLeadTab(lead.id, "saved"),
+              class: "btn btn-sm btn-outline-secondary",
+              disabled: isProcessingBatch.value,
+              title: texts.value.tooltipMoveToSaved,
+            },
+            [h("i", { class: "bi bi-bookmark-plus" })]
+          )
+        );
+        buttons.push(
+          h(
+            "button",
+            {
+              onClick: () => !isProcessingBatch.value && deleteLead(lead.id),
+              class: `btn btn-sm btn-outline-danger ${
+                buttons.length > 0 ? "ms-1" : ""
+              }`,
+              disabled: isProcessingBatch.value,
+              title: texts.value.tooltipDelete,
+            },
+            [h("i", { class: "bi bi-trash" })]
+          )
+        );
+      }
+      return h(
+        "div",
+        {
+          class:
+            "btn-group btn-group-sm table-action-buttons d-flex justify-content-center",
+        },
+        buttons
+      );
     },
-    enableSorting: true,
-    size: 130,
+    size: 150,
     meta: {
       style: {
         position: "sticky",
-        right: "0px",
-        minWidth: "130px",
-        width: "130px",
-        zIndex: "16",
+        right: "0px", // Sticky to the right as the "footer column"
+        width: "150px",
+        minWidth: "150px",
+        textAlign: "center",
+        verticalAlign: "middle",
+        zIndex: "18", // Highest z-index to appear on top of other scrolling content
         backgroundColor: "var(--card-bg-current)",
-        borderLeft: "1px solid var(--border-color-current)",
+        borderLeft: "1px solid var(--border-color-current)", // Border on the left to separate from scrolling content
       },
     },
   }),
@@ -1642,7 +1620,7 @@ const exportSelectedToCSV = () => {
       return `"${stringValue.replace(/"/g, '""')}"`;
     }
     return stringValue;
-  };
+  }
 
   leadsToExport.forEach((lead) => {
     const row = [
@@ -2029,46 +2007,61 @@ function addTag(
 function removeFilterTag(tagId: string) {
   filterTags.value = filterTags.value.filter((t) => t.id !== tagId);
 }
+
 function validateSearchCriteria(): boolean {
   searchMessage.value = null;
   searchStatus.value = null;
-  const nq = typeof naturalLanguageQuery.value === 'string' && naturalLanguageQuery.value.trim();
-  const tags = filterTags.value.length > 0;
-  const untagged = Object.values(advancedFilterInputs).some(
+
+  const nqHasContent = typeof naturalLanguageQuery.value === 'string' && naturalLanguageQuery.value.trim() !== "";
+  const advInputsHaveContent = Object.values(advancedFilterInputs).some(
     (v) => typeof v === 'string' && v.trim() !== ""
   );
+  // Also check if any filter tags have been applied, as these are also part of the search criteria
+  const hasAppliedFilterTags = filterTags.value.length > 0;
 
-  if (!nq && !tags && (showAdvancedFilters.value || untagged)) {
-    if (showAdvancedFilters.value && (!naturalLanguageQuery.value || (typeof naturalLanguageQuery.value === 'string' && naturalLanguageQuery.value.trim() === ""))) {
-        if (typeof advancedFilterInputs.jobTitle === 'string' && !advancedFilterInputs.jobTitle.trim()) {
-            searchMessage.value = texts.value.errorRequired(getFieldLabel("jobTitle"));
-            searchStatus.value = "error";
-            return false;
-        }
-        if (typeof advancedFilterInputs.industry === 'string' && !advancedFilterInputs.industry) {
-            searchMessage.value = texts.value.errorRequired(getFieldLabel("industry"));
-            searchStatus.value = "error";
-            return false;
-        }
-    }
-  }
-  if (!nq && !tags && !untagged) {
+  // If no main query, no advanced inputs with content, and no applied tags, then it's an empty search
+  if (!nqHasContent && !advInputsHaveContent && !hasAppliedFilterTags) {
     searchMessage.value = texts.value.noSearchCriteria;
     searchStatus.value = "error";
     return false;
   }
+
+  // Specific validation for jobTitle and industry if advanced filters are shown and main query is empty
+  // This logic seems intentional from your original code.
+  if (showAdvancedFilters.value && !nqHasContent && !hasAppliedFilterTags) {
+    if (typeof advancedFilterInputs.jobTitle === 'string' && !advancedFilterInputs.jobTitle.trim()) {
+        searchMessage.value = texts.value.errorRequired(getFieldLabel("jobTitle"));
+        searchStatus.value = "error";
+        return false;
+    }
+    if (typeof advancedFilterInputs.industry === 'string' && !advancedFilterInputs.industry) {
+        searchMessage.value = texts.value.errorRequired(getFieldLabel("industry"));
+        searchStatus.value = "error";
+        return false;
+    }
+  }
+
   return true;
 }
 
 async function submitLeadSearchCriteria() {
   if (isProcessingBatch.value || isSearchingLeads.value) return;
+
+  // Add any current advanced input fields as tags before validation,
+  // so `filterTags` are up-to-date for the search criteria.
+  // Note: This only affects `filterTags` for the *display* and *database filtering* within this app,
+  // while the N8N payload should reflect the raw input values from the form fields.
   if (
     showAdvancedFilters.value &&
     Object.values(advancedFilterInputs).some((v) => typeof v === 'string' && v.trim())
-  )
+  ) {
     addAdvancedInputsAsTags();
+  }
 
-  if (!validateSearchCriteria()) return;
+  // Validate the overall search criteria
+  if (!validateSearchCriteria()) {
+    return;
+  }
 
   const user = authStore.user;
   if (user && (await hasUnsavedLeads(user.id))) {
@@ -2079,33 +2072,31 @@ async function submitLeadSearchCriteria() {
     await fetchTabCounts(user.id);
   }
 
-  const payload: { mainQuery?: string; filters?: Record<string, any> } = {};
-  if (typeof naturalLanguageQuery.value === 'string' && naturalLanguageQuery.value.trim())
-    payload.mainQuery = naturalLanguageQuery.value.trim();
-  if (filterTags.value.length > 0) {
-    payload.filters = {};
-    filterTags.value.forEach((t) => {
-      if (t.type === "otherKeywords" || t.type === "industry" || t.type === "companySize") {
-        const currentFilterValue = payload.filters![t.type];
-        if (Array.isArray(currentFilterValue)) {
-            currentFilterValue.push(t.value);
-        } else {
-            payload.filters![t.type] = [t.value];
-        }
-      } else {
-        payload.filters![t.type] = t.value;
-      }
-    });
+  // Construct the payload for n8n to include ALL fields, even if empty.
+  const payloadForN8n: { mainQuery: string; filters: Record<string, any> } = {
+    mainQuery: naturalLanguageQuery.value, // Pass naturalLanguageQuery as is (empty string if nothing entered)
+    filters: {
+      jobTitle: advancedFilterInputs.jobTitle, // Pass as is (empty string if nothing entered)
+      industry: advancedFilterInputs.industry, // Pass as is (empty string if 'Select Industry' or nothing selected)
+      location: advancedFilterInputs.location, // Pass as is (empty string if nothing entered)
+      companySize: advancedFilterInputs.companySize, // Pass as is (empty string if 'Select Company Size' or nothing selected)
+      // Convert 'otherKeywords' string to an array of trimmed strings.
+      // Filter out empty strings resulting from split (e.g., ",," or leading/trailing commas).
+      keywords: advancedFilterInputs.otherKeywords
+        .split(',')
+        .map(k => k.trim())
+        .filter(k => k !== ''),
+    }
+  };
+
+  // If the 'keywords' array ends up empty, explicitly set it to an empty array
+  // instead of potentially leaving it undefined or `[]` that might be omitted
+  // by some JSON stringifiers if it's `{}`.
+  if (payloadForN8n.filters.keywords.length === 0) {
+    payloadForN8n.filters.keywords = []; // Ensure it's an empty array if no keywords.
   }
-  if (
-    !payload.mainQuery &&
-    (!payload.filters || Object.keys(payload.filters).length === 0)
-  ) {
-    searchMessage.value = texts.value.noSearchCriteria;
-    searchStatus.value = "error";
-    return;
-  }
-  await handleTriggerN8nLeadSearch(payload);
+
+  await handleTriggerN8nLeadSearch(payloadForN8n); // Pass the newly constructed payload
 }
 async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
   isSearchingLeads.value = true;
@@ -2150,6 +2141,12 @@ async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
 
     naturalLanguageQuery.value = "";
     filterTags.value = [];
+    // Clear advanced inputs after submission to reflect empty state in form
+    advancedFilterInputs.jobTitle = "";
+    advancedFilterInputs.industry = "";
+    advancedFilterInputs.location = "";
+    advancedFilterInputs.companySize = "";
+    advancedFilterInputs.otherKeywords = "";
 
     if (currentTab.value !== "new") {
       changeTab("new");
@@ -2270,7 +2267,9 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
         "company_name",
         "email",
         "created_at",
-        "lead_status",
+        // No lead_status in the DB query sorting if it's not displayed
+        // but if it's still in the DB, it can be sorted by
+        "lead_status", // Keep this if 'lead_status' is still a sortable column in DB
       ];
       if (allowedSort.includes(dbSortColumn)) {
         query = query.order(dbSortColumn, { ascending: !sortColumn.desc });
@@ -2374,6 +2373,8 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
 }
 
 function getStatusBadgeClass(status?: string | null): string {
+  // This function is still present but the column that used it is removed.
+  // No harm in keeping it if it might be used elsewhere or in the future.
   if (!status) return "bg-secondary text-white";
   switch (status.toLowerCase().replace(/\s+/g, "")) {
     case "newprospect":
