@@ -251,24 +251,29 @@
               class="d-flex justify-content-between align-items-center w-100"
             >
               <div class="d-flex align-items-center">
+                <!-- EXTERNAL "SELECT ALL" BUTTON (renamed from "Select Page") -->
                 <button
                   class="btn btn-sm btn-outline-secondary me-2"
-                  @click="selectAllOnPage"
+                  @click="selectAllMatchingLeads"
                   :disabled="
-                    table.getRowModel().rows.length === 0 ||
-                    table.getIsAllPageRowsSelected() ||
-                    isProcessingBatch
+                    totalRowCount === 0 || allFilteredLeadsSelected || isProcessingBatch || isSelectingAllLeads
                   "
-                  :title="texts.selectAllPageTooltip"
+                  :title="texts.selectAllTooltip"
                 >
-                  <i class="bi bi-check2-square me-1"></i>
-                  {{ texts.selectAllPageButton }}
+                  <span
+                    v-if="isSelectingAllLeads"
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                  ></span>
+                  <i v-else class="bi bi-check2-square me-1"></i>
+                  {{ texts.selectAllButton }}
                 </button>
+                <!-- EXTERNAL "DESELECT ALL" BUTTON -->
                 <button
                   class="btn btn-sm btn-outline-secondary me-2"
-                  @click="deselectAllOnPage"
-                  :disabled="selectedRowCount === 0 || isProcessingBatch"
-                  :title="texts.deselectAllPageTooltip"
+                  @click="deselectAllGlobalLeads"
+                  :disabled="selectedRowCount === 0 || isProcessingBatch || isSelectingAllLeads"
+                  :title="texts.deselectAllButton"
                 >
                   <i class="bi bi-square me-1"></i>
                   {{ texts.deselectAllButton }}
@@ -282,7 +287,7 @@
                     class="btn btn-sm btn-primary dropdown-toggle"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
-                    :disabled="isProcessingBatch"
+                    :disabled="isProcessingBatch || isSelectingAllLeads"
                   >
                     <span
                       v-if="isProcessingBatch"
@@ -300,10 +305,10 @@
                           class="dropdown-item"
                           href="#"
                           :class="{
-                            disabled: !canBatchSave || isProcessingBatch,
+                            disabled: !canBatchSave || isProcessingBatch || isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchSave || isProcessingBatch) &&
+                            !(!canBatchSave || isProcessingBatch || isSelectingAllLeads) &&
                               batchSaveSelected()
                           "
                           >{{ texts.batchSaveButton }}</a
@@ -314,10 +319,10 @@
                           class="dropdown-item"
                           href="#"
                           :class="{
-                            disabled: !canBatchArchiveNew || isProcessingBatch,
+                            disabled: !canBatchArchiveNew || isProcessingBatch || isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchArchiveNew || isProcessingBatch) &&
+                            !(!canBatchArchiveNew || isProcessingBatch || isSelectingAllLeads) &&
                               batchArchiveSelected()
                           "
                           >{{ texts.batchArchiveButton }}</a
@@ -333,12 +338,12 @@
                           :class="{
                             disabled:
                               !canBatchRestoreToNewFromSaved ||
-                              isProcessingBatch,
+                              isProcessingBatch || isSelectingAllLeads,
                           }"
                           @click.prevent="
                             !(
                               !canBatchRestoreToNewFromSaved ||
-                              isProcessingBatch
+                              isProcessingBatch || isSelectingAllLeads
                             ) && batchRestoreSelected()
                           "
                           >{{ texts.batchRestoreButton }}</a
@@ -350,10 +355,10 @@
                           href="#"
                           :class="{
                             disabled:
-                              !canBatchArchiveSaved || isProcessingBatch,
+                              !canBatchArchiveSaved || isProcessingBatch || isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchArchiveSaved || isProcessingBatch) &&
+                            !(!canBatchArchiveSaved || isProcessingBatch || isSelectingAllLeads) &&
                               batchArchiveSelected()
                           "
                           >{{ texts.batchArchiveButton }}</a
@@ -367,10 +372,10 @@
                           class="dropdown-item"
                           href="#"
                           :class="{
-                            disabled: !canBatchMoveToSaved || isProcessingBatch,
+                            disabled: !canBatchMoveToSaved || isProcessingBatch || isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchMoveToSaved || isProcessingBatch) &&
+                            !(!canBatchMoveToSaved || isProcessingBatch || isSelectingAllLeads) &&
                               batchMoveToSavedSelected()
                           "
                           >{{ texts.batchMoveToSavedButton }}</a
@@ -383,10 +388,10 @@
                           href="#"
                           :class="{
                             disabled:
-                              !canBatchDeleteArchived || isProcessingBatch,
+                              !canBatchDeleteArchived || isProcessingBatch || isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchDeleteArchived || isProcessingBatch) &&
+                            !(!canBatchDeleteArchived || isProcessingBatch || isSelectingAllLeads) &&
                               batchDeleteSelected()
                           "
                           >{{ texts.batchDeleteButton }}</a
@@ -403,8 +408,8 @@
                       <a
                         class="dropdown-item"
                         href="#"
-                        :class="{ disabled: isProcessingBatch || selectedRowCount === 0 }"
-                        @click.prevent="!(isProcessingBatch || selectedRowCount === 0) && exportSelectedToCSV()"
+                        :class="{ disabled: isProcessingBatch || selectedRowCount === 0 || isSelectingAllLeads }"
+                        @click.prevent="!(isProcessingBatch || selectedRowCount === 0 || isSelectingAllLeads) && exportSelectedToCSV()"
                       >
                         <i class="bi bi-file-earmark-spreadsheet me-1"></i>
                         {{ texts.batchExportCSVButton }}
@@ -436,13 +441,13 @@
                 <button
                   class="btn btn-sm btn-outline-secondary"
                   @click="fetchLeadsForCurrentUser(true)"
-                  :disabled="isLoadingLeads || isProcessingBatch"
+                  :disabled="isLoadingLeads || isProcessingBatch || isSelectingAllLeads"
                   :title="texts.refreshButton"
                 >
                   <i
                     :class="[
                       'bi',
-                      isLoadingLeads || isProcessingBatch
+                      isLoadingLeads || isProcessingBatch || isSelectingAllLeads
                         ? 'bi-arrow-clockwise spin-animation'
                         : 'bi-arrow-clockwise',
                     ]"
@@ -499,13 +504,13 @@
                         :key="header.id"
                         :colSpan="header.colSpan"
                         @click="
-                          header.column.getCanSort() && !isProcessingBatch
+                          header.column.getCanSort() && !isProcessingBatch && !isSelectingAllLeads
                             ? header.column.getToggleSortingHandler()?.($event)
                             : undefined
                         "
                         :class="{
                           'cursor-pointer':
-                            header.column.getCanSort() && !isProcessingBatch,
+                            header.column.getCanSort() && !isProcessingBatch && !isSelectingAllLeads,
                           'sorting-asc': header.column.getIsSorted() === 'asc',
                           'sorting-desc':
                             header.column.getIsSorted() === 'desc',
@@ -531,7 +536,7 @@
                       :key="row.id"
                       :class="{
                         'table-active': row.getIsSelected(),
-                        'processing-row-disabled': isProcessingBatch,
+                        'processing-row-disabled': isProcessingBatch || isSelectingAllLeads,
                       }"
                     >
                       <td
@@ -560,33 +565,33 @@
               <div class="btn-group">
                 <button
                   class="btn btn-sm btn-outline-secondary"
-                  @click="!isProcessingBatch && table.setPageIndex(0)"
-                  :disabled="!table.getCanPreviousPage() || isProcessingBatch"
+                  @click="!isProcessingBatch && !isSelectingAllLeads && table.setPageIndex(0)"
+                  :disabled="!table.getCanPreviousPage() || isProcessingBatch || isSelectingAllLeads"
                 >
                   <i class="bi bi-chevron-bar-left"></i>
                 </button>
                 <button
                   class="btn btn-sm btn-outline-secondary"
-                  @click="!isProcessingBatch && table.previousPage()"
-                  :disabled="!table.getCanPreviousPage() || isProcessingBatch"
+                  @click="!isProcessingBatch && !isSelectingAllLeads && table.previousPage()"
+                  :disabled="!table.getCanPreviousPage() || isProcessingBatch || isSelectingAllLeads"
                 >
                   <i class="bi bi-chevron-left me-1"></i
                   >{{ texts.previousPage }}
                 </button>
                 <button
                   class="btn btn-sm btn-outline-secondary"
-                  @click="!isProcessingBatch && table.nextPage()"
-                  :disabled="!table.getCanNextPage() || isProcessingBatch"
+                  @click="!isProcessingBatch && !isSelectingAllLeads && table.nextPage()"
+                  :disabled="!table.getCanNextPage() || isProcessingBatch || isSelectingAllLeads"
                 >
                   {{ texts.nextPage }}<i class="bi bi-chevron-right ms-1"></i>
                 </button>
                 <button
                   class="btn btn-sm btn-outline-secondary"
                   @click="
-                    !isProcessingBatch &&
+                    !isProcessingBatch && !isSelectingAllLeads &&
                       table.setPageIndex(table.getPageCount() - 1)
                   "
-                  :disabled="!table.getCanNextPage() || isProcessingBatch"
+                  :disabled="!table.getCanNextPage() || isProcessingBatch || isSelectingAllLeads"
                 >
                   <i class="bi bi-chevron-bar-right"></i>
                 </button>
@@ -601,8 +606,8 @@
                   class="form-select form-select-sm"
                   style="width: auto"
                   :value="table.getState().pagination.pageSize"
-                  @change="e => !isProcessingBatch && table.setPageSize(Number((e.target as HTMLSelectElement).value))"
-                  :disabled="isProcessingBatch"
+                  @change="e => !isProcessingBatch && !isSelectingAllLeads && table.setPageSize(Number((e.target as HTMLSelectElement).value))"
+                  :disabled="isProcessingBatch || isSelectingAllLeads"
                 >
                   <option
                     v-for="size in [10, 15, 25, 50, 100]"
@@ -635,7 +640,6 @@ import { v4 as uuidv4 } from "uuid";
 import {
   useVueTable,
   getCoreRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   createColumnHelper,
   FlexRender,
@@ -723,6 +727,10 @@ const isProcessingBatch = ref(false);
 const batchActionsDropdownToggleRef = ref<HTMLButtonElement | null>(null);
 const columnHelper = createColumnHelper<Lead>();
 
+// Added for server-side pagination: Keep track of total row count from the backend
+const totalRowCount = ref(0);
+const isSelectingAllLeads = ref(false); // REINSTATED: State for global select all operation
+
 const defaultTexts = {
   mainQueryLabel: "Briefly describe the type of prospects you're looking for:",
   mainQueryPlaceholder:
@@ -808,11 +816,13 @@ const defaultTexts = {
   selectFilterPlaceholder: "Select",
   clearAllFiltersButton: "Clear All Filters",
   clearFilterSectionTooltip: "Clear section",
-  selectAllPageButton: "Select Page",
+  selectAllPageButton: "Select Page", // REVERTED for header checkbox
+  selectAllPageTooltip: "Select all leads on current page", // REVERTED for header checkbox
+  selectAllButton: "Select All", // NEW for external button
+  selectAllTooltip: "Select all matching leads across all pages", // NEW for external button
   deselectAllButton: "Deselect All",
-  batchActionsDropdownTitle: "Actions for Selected",
-  selectAllPageTooltip: "Select all leads on current page",
   deselectAllPageTooltip: "Deselect all leads on current page",
+  batchActionsDropdownTitle: "Actions for Selected",
   batchSaveButton: "Save Selected",
   batchArchiveButton: "Archive Selected",
   batchRestoreButton: "Restore Selected to New",
@@ -895,10 +905,11 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         type: "checkbox",
         class: "form-check-input",
         style: "cursor: pointer;",
+        // HEADER CHECKBOX: SELECT PAGE BEHAVIOR
         checked: table.getIsAllPageRowsSelected(),
         indeterminate: table.getIsSomePageRowsSelected(),
         disabled:
-          isProcessingBatch.value || table.getRowModel().rows.length === 0,
+          isProcessingBatch.value || isSelectingAllLeads.value || table.getRowModel().rows.length === 0,
         onChange: table.getToggleAllPageRowsSelectedHandler(),
         title: texts.value.selectAllPageTooltip,
       }),
@@ -908,7 +919,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         class: "form-check-input",
         style: "cursor: pointer;",
         checked: row.getIsSelected(),
-        disabled: !row.getCanSelect() || isProcessingBatch.value,
+        disabled: !row.getCanSelect() || isProcessingBatch.value || isSelectingAllLeads.value,
         onChange: row.getToggleSelectedHandler(),
       }),
     size: 60,
@@ -1162,9 +1173,9 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
             {
               class: "btn btn-sm btn-outline-success",
               title: texts.value.tooltipSave,
-              disabled: isProcessingBatch.value,
+              disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "saved"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "saved"),
             },
             [h("i", { class: "bi bi-bookmark-check" })]
           )
@@ -1174,11 +1185,11 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
             "button",
             {
               onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "archived"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "archived"),
               class: `btn btn-sm btn-outline-warning ${
                 buttons.length > 0 ? "ms-1" : ""
               }`,
-              disabled: isProcessingBatch.value,
+              disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipArchive,
             },
             [h("i", { class: "bi bi-archive" })]
@@ -1190,9 +1201,9 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
             "button",
             {
               onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "new"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "new"),
               class: "btn btn-sm btn-outline-secondary",
-              disabled: isProcessingBatch.value,
+              disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipRestore,
             },
             [h("i", { class: "bi bi-arrow-counterclockwise" })]
@@ -1203,11 +1214,11 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
             "button",
             {
               onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "archived"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "archived"),
               class: `btn btn-sm btn-outline-warning ${
                 buttons.length > 0 ? "ms-1" : ""
               }`,
-              disabled: isProcessingBatch.value,
+              disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipArchive,
             },
             [h("i", { class: "bi bi-archive" })]
@@ -1219,9 +1230,9 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
             "button",
             {
               onClick: () =>
-                !isProcessingBatch.value && updateLeadTab(lead.id, "saved"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "saved"),
               class: "btn btn-sm btn-outline-secondary",
-              disabled: isProcessingBatch.value,
+              disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipMoveToSaved,
             },
             [h("i", { class: "bi bi-bookmark-plus" })]
@@ -1231,11 +1242,11 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
           h(
             "button",
             {
-              onClick: () => !isProcessingBatch.value && deleteLead(lead.id),
+              onClick: () => !(isProcessingBatch.value || isSelectingAllLeads.value) && deleteLead(lead.id),
               class: `btn btn-sm btn-outline-danger ${
                 buttons.length > 0 ? "ms-1" : ""
               }`,
-              disabled: isProcessingBatch.value,
+              disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipDelete,
             },
             [h("i", { class: "bi bi-trash" })]
@@ -1270,7 +1281,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
 
 function getColumnStyle(column: Column<Lead, unknown>) {
   const baseStyle: Record<string, string> = {
-    "user-select": column.getCanSort() && !isProcessingBatch.value ? "pointer" : "none",
+    "user-select": column.getCanSort() && !isProcessingBatch.value && !isSelectingAllLeads.value ? "pointer" : "none",
     verticalAlign: "middle",
   };
   if (!column.columnDef.meta?.style?.width) {
@@ -1301,12 +1312,12 @@ const table = useVueTable({
   },
   enableRowSelection: true,
   onRowSelectionChange: (updater: Updater<RowSelectionState>) => {
-    if (isProcessingBatch.value) return;
+    if (isProcessingBatch.value || isSelectingAllLeads.value) return;
     rowSelection.value =
       typeof updater === "function" ? updater(rowSelection.value) : updater;
   },
   onSortingChange: (updater: Updater<SortingState>) => {
-    if (isProcessingBatch.value) return;
+    if (isProcessingBatch.value || isSelectingAllLeads.value) return;
     const oldSortingString = JSON.stringify(sorting.value);
     const newSortingState =
       typeof updater === "function" ? updater(sorting.value) : updater;
@@ -1332,7 +1343,7 @@ const table = useVueTable({
     }
   },
   onPaginationChange: (updater: Updater<PaginationState>) => {
-    if (isProcessingBatch.value) return;
+    if (isProcessingBatch.value || isSelectingAllLeads.value) return;
     const oldPageIndex = pagination.value.pageIndex;
     const oldPageSize = pagination.value.pageSize;
     const newPaginationState =
@@ -1361,72 +1372,181 @@ const table = useVueTable({
   },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
   manualPagination: true,
   manualSorting: true,
+  // Add rowCount to inform the table of the total number of rows for pagination
+  get rowCount() {
+    return totalRowCount.value;
+  }
 });
 
+// "Select Page" for the header checkbox - applies to current page only
 const selectAllOnPage = () => {
-  if (isProcessingBatch.value) return;
+  if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   table.toggleAllPageRowsSelected(true);
 };
+// "Deselect All on Page" for the header checkbox
 const deselectAllOnPage = () => {
-  if (isProcessingBatch.value) return;
+  if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   table.toggleAllPageRowsSelected(false);
 };
+
+// GLOBAL "Select All" for the external button
+const selectAllMatchingLeads = async () => {
+  if (isProcessingBatch.value || isSelectingAllLeads.value) return;
+
+  isSelectingAllLeads.value = true;
+  searchMessage.value = "Selecting all matching leads...";
+  searchStatus.value = "info";
+
+  try {
+    const user = authStore.user;
+    if (!user) {
+      searchMessage.value = texts.value.userNotAuthMessage;
+      searchStatus.value = "error";
+      return;
+    }
+
+    let query = supabase
+      .from("leads")
+      .select("id") // Only fetch IDs
+      .eq("user_id", user.id)
+      .eq("tab", currentTab.value);
+
+    // Apply active client filters (same logic as in fetchLeadsForCurrentUser)
+    Object.entries(activeClientFilters.value).forEach(([key, values]) => {
+      if (Array.isArray(values) && values.length > 0) {
+        const filterKey = key as keyof Lead;
+
+        if (filterKey === "company_size") {
+          query = query.eq(filterKey, values[0]);
+        }
+        else if (filterKey === "keywords" || filterKey === "industry") {
+          const cleanedValues = values.map(v => `"${String(v).replace(/"/g, '""')}"`);
+          const filterValue = `{${cleanedValues.join(',')}}`;
+          query = query.filter(filterKey, 'ov', filterValue);
+        } else if (filterKey === "lead_status") {
+          if (values.length === 1) {
+            query = query.eq(filterKey, values[0]);
+          } else {
+            query = query.in(filterKey, values);
+          }
+        } else if (
+          ["job_title", "location", "company_name"].includes(filterKey)
+        ) {
+          const orConditions = values
+            .map((val) => `${filterKey}.ilike.%${String(val).trim()}%`)
+            .join(",");
+          if (orConditions) query = query.or(orConditions);
+        }
+      }
+    });
+
+    const { data: leadIds, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    const newSelection: RowSelectionState = {};
+    if (leadIds) {
+      leadIds.forEach(lead => {
+        newSelection[lead.id] = true;
+      });
+    }
+    rowSelection.value = newSelection;
+    searchMessage.value = `Selected ${leadIds?.length || 0} leads.`;
+    searchStatus.value = "success";
+
+  } catch (error: any) {
+    console.error("Error selecting all filtered leads:", error);
+    searchMessage.value = `Error selecting all leads: ${error.message}`;
+    searchStatus.value = "error";
+  } finally {
+    isSelectingAllLeads.value = false;
+  }
+};
+
+// GLOBAL "Deselect All" for the external button
+const deselectAllGlobalLeads = () => {
+  if (isProcessingBatch.value || isSelectingAllLeads.value) return;
+  rowSelection.value = {}; // Clear ALL selections
+  searchMessage.value = "All leads deselected.";
+  searchStatus.value = "info";
+};
+
+
+// selectedRowCount now correctly counts all globally selected leads
 const selectedRowCount = computed(
-  () => table.getSelectedRowModel().rows.length
+  () => Object.keys(rowSelection.value).length
 );
+
+// New computed property to check if all filtered leads are selected
+const allFilteredLeadsSelected = computed(() =>
+    totalRowCount.value > 0 && selectedRowCount.value === totalRowCount.value
+);
+
 
 const canBatchSave = computed(
   () =>
     currentTab.value === "new" &&
     !isProcessingBatch.value &&
+    !isSelectingAllLeads.value && // Add this to disabled condition
     selectedRowCount.value > 0 &&
-    table
-      .getSelectedRowModel()
-      .rows.some((row: Row<Lead>) => row.original.tab === "new")
+    // Check if at least one selected lead is in the 'new' tab
+    Object.keys(rowSelection.value).some(id => 
+      tableData.value.some(lead => lead.id === id && lead.tab === "new") // Check if any *current page* lead matches selection and tab
+    )
 );
 const canBatchArchiveNew = computed(
   () =>
     currentTab.value === "new" &&
     !isProcessingBatch.value &&
+    !isSelectingAllLeads.value && // Add this to disabled condition
     selectedRowCount.value > 0 &&
-    table
-      .getSelectedRowModel()
-      .rows.some((row: Row<Lead>) => row.original.tab === "new")
+    // Check if at least one selected lead is in the 'new' tab
+    Object.keys(rowSelection.value).some(id => 
+      tableData.value.some(lead => lead.id === id && lead.tab === "new")
+    )
 );
 const canBatchRestoreToNewFromSaved = computed(
   () =>
     currentTab.value === "saved" &&
     !isProcessingBatch.value &&
+    !isSelectingAllLeads.value && // Add this to disabled condition
     selectedRowCount.value > 0 &&
-    table
-      .getSelectedRowModel()
-      .rows.some((row: Row<Lead>) => row.original.tab === "saved")
+    // Check if at least one selected lead is in the 'saved' tab
+    Object.keys(rowSelection.value).some(id => 
+      tableData.value.some(lead => lead.id === id && lead.tab === "saved")
+    )
 );
 const canBatchArchiveSaved = computed(
   () =>
     currentTab.value === "saved" &&
     !isProcessingBatch.value &&
+    !isSelectingAllLeads.value && // Add this to disabled condition
     selectedRowCount.value > 0 &&
-    table
-      .getSelectedRowModel()
-      .rows.some((row: Row<Lead>) => row.original.tab === "saved")
+    // Check if at least one selected lead is in the 'saved' tab
+    Object.keys(rowSelection.value).some(id => 
+      tableData.value.some(lead => lead.id === id && lead.tab === "saved")
+    )
 );
 const canBatchMoveToSaved = computed(
   () =>
     currentTab.value === "archived" &&
     !isProcessingBatch.value &&
+    !isSelectingAllLeads.value && // Add this to disabled condition
     selectedRowCount.value > 0 &&
-    table
-      .getSelectedRowModel()
-      .rows.some((row: Row<Lead>) => row.original.tab === "archived")
+    // Check if at least one selected lead is in the 'archived' tab
+    Object.keys(rowSelection.value).some(id => 
+      tableData.value.some(lead => lead.id === id && lead.tab === "archived")
+    )
 );
 const canBatchDeleteArchived = computed(
   () =>
     currentTab.value === "archived" &&
     !isProcessingBatch.value &&
+    !isSelectingAllLeads.value && // Add this to disabled condition
     selectedRowCount.value > 0
 );
 
@@ -1440,19 +1560,42 @@ const batchProcessLeads = async (
     | "confirmBatchDelete"
     | "confirmBatchMoveToSaved"
   >,
+  // filterFn is now optional as we might process all selected, not just those on current page
   filterFn: (lead: Lead) => boolean,
   operationFn: (
     leadId: string,
     target?: LeadTab
   ) => Promise<{ success: boolean; error?: any }>
 ) => {
-  if (isProcessingBatch.value) return;
-  const selectedRows = table.getSelectedRowModel().rows;
-  if (selectedRows.length === 0) return;
+  if (isProcessingBatch.value || isSelectingAllLeads.value) return;
 
-  const leadsToProcess: Lead[] = selectedRows
-    .map((row: Row<Lead>) => row.original)
-    .filter(filterFn);
+  // Get all selected lead IDs regardless of page
+  const selectedLeadIds = Object.keys(rowSelection.value);
+  if (selectedLeadIds.length === 0) return;
+
+  // Fetch full lead objects for the selected IDs to apply specific filters if needed
+  // This is crucial because `table.getSelectedRowModel().rows` only contains the current page's selected rows.
+  // We need to fetch all selected leads from Supabase to correctly filter them.
+  let leadsToProcess: Lead[] = [];
+  if (selectedLeadIds.length > 0) {
+    const { data, error } = await supabase
+      .from('leads')
+      .select(selectFields) // Use existing selectFields from fetchLeadsForCurrentUser
+      .in('id', selectedLeadIds)
+      .eq('user_id', authStore.user?.id); // Ensure only user's leads are fetched
+
+    if (error) {
+      console.error("Error fetching selected leads for batch operation:", error);
+      searchMessage.value = texts.value.alertError + `Failed to fetch selected leads for batch: ${error.message}`;
+      searchStatus.value = "error";
+      return;
+    }
+    leadsToProcess = data || [];
+  }
+  
+  if (filterFn) { // Apply specific filters only if a filter function is provided
+    leadsToProcess = leadsToProcess.filter(filterFn);
+  }
 
   const actionNameForNoLeadsMsg = actionNameKey
     .replace("confirmBatch", "")
@@ -1515,7 +1658,7 @@ const batchProcessLeads = async (
   );
   searchStatus.value =
     errorCount > 0 ? (successCount > 0 ? "warning" : "error") : "success";
-  rowSelection.value = {};
+  rowSelection.value = {}; // Clear all selections after batch operation
   await fetchLeadsForCurrentUser(true);
   await fetchTabCounts(authStore.user?.id);
   isProcessingBatch.value = false; // Reset batch processing flag here after all is done
@@ -1559,125 +1702,157 @@ const batchDeleteSelected = () =>
   );
 
 const exportSelectedToCSV = () => {
-  if (isProcessingBatch.value || selectedRowCount.value === 0) {
+  if (isProcessingBatch.value || selectedRowCount.value === 0 || isSelectingAllLeads.value) {
     return;
   }
 
-  const selectedRows = table.getSelectedRowModel().rows;
-  const leadsToExport: Lead[] = selectedRows.map((row) => row.original);
-
-  if (leadsToExport.length === 0) {
+  // Fetch full lead objects for the selected IDs to export
+  const selectedLeadIds = Object.keys(rowSelection.value);
+  if (selectedLeadIds.length === 0) {
     return;
   }
+  
+  // This part needs to fetch ALL selected leads, not just current page
+  const fetchLeadsForExport = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select(selectFields)
+        .in('id', selectedLeadIds)
+        .eq('user_id', authStore.user?.id);
 
-  const headers = [
-    "ID",
-    "Date Added",
-    "Tab",
-    "Status",
-    "First Name",
-    "Last Name",
-    "Full Name",
-    "Job Title",
-    "Industry",
-    "Location",
-    "Company Name",
-    "Company Size",
-    "Phone",
-    "LinkedIn URL",
-    "Keywords",
-    "Email",
-    "Notes",
-    "Icebreaker",
-    "Source Query Criteria",
-  ];
-
-  const csvRows: string[] = [];
-  csvRows.push(headers.join(","));
-
-  const formatCSVCell = (value: any): string => {
-    if (value === null || typeof value === "undefined") {
-      return "";
+      if (error) {
+        console.error("Error fetching leads for CSV export:", error);
+        searchMessage.value = texts.value.alertError + `Failed to fetch leads for CSV export: ${error.message}`;
+        searchStatus.value = "error";
+        return;
+      }
+      return data || [];
+    } catch (e: any) {
+      console.error("Unexpected error during CSV export fetch:", e);
+      searchMessage.value = texts.value.alertError + `CSV export failed: ${e.message}`;
+      searchStatus.value = "error";
+      return [];
     }
-    let stringValue = String(value);
+  };
 
-    if (Array.isArray(value)) {
-      stringValue = value.map((item) => String(item).replace(/"/g, '""')).join("; ");
-    } else if (typeof value === "object" && value !== null) {
-      try {
-        stringValue = JSON.stringify(value);
-      } catch (e) {
-        stringValue = "[Object]";
+  fetchLeadsForExport().then((leadsToExport) => {
+    if (leadsToExport.length === 0) {
+      searchMessage.value = "No leads to export.";
+      searchStatus.value = "warning";
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "Date Added",
+      "Tab",
+      "Status",
+      "First Name",
+      "Last Name",
+      "Full Name",
+      "Job Title",
+      "Industry",
+      "Location",
+      "Company Name",
+      "Company Size",
+      "Phone",
+      "LinkedIn URL",
+      "Keywords",
+      "Email",
+      "Notes",
+      "Icebreaker",
+      "Source Query Criteria",
+    ];
+
+    const csvRows: string[] = [];
+    csvRows.push(headers.join(","));
+
+    const formatCSVCell = (value: any): string => {
+      if (value === null || typeof value === "undefined") {
+        return "";
+      }
+      let stringValue = String(value);
+
+      if (Array.isArray(value)) {
+        stringValue = value.map((item) => String(item).replace(/"/g, '""')).join("; ");
+      } else if (typeof value === "object" && value !== null) {
+        try {
+          stringValue = JSON.stringify(value);
+        } catch (e) {
+          stringValue = "[Object]";
+        }
+      }
+
+      if (
+        stringValue.includes('"') ||
+        stringValue.includes(',') ||
+        stringValue.includes('\n') ||
+        stringValue.includes('\r')
+      ) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+      }
+      return stringValue;
+    }
+
+    leadsToExport.forEach((lead) => {
+      const row = [
+        formatCSVCell(lead.id),
+        formatCSVCell(lead.created_at ? new Date(lead.created_at).toISOString() : ""),
+        formatCSVCell(lead.tab),
+        formatCSVCell(lead.lead_status),
+        formatCSVCell(lead.first_name),
+        formatCSVCell(lead.last_name),
+        formatCSVCell(
+          lead.name ||
+            (typeof lead.first_name === 'string' ? lead.first_name : "") +
+            (typeof lead.last_name === 'string' ? " " + lead.last_name : "")
+        ),
+        formatCSVCell(lead.job_title),
+        formatCSVCell(lead.industry),
+        formatCSVCell(lead.location),
+        formatCSVCell(lead.company_name),
+        formatCSVCell(lead.company_size),
+        formatCSVCell(lead.phone),
+        formatCSVCell(lead.linkedIn_url),
+        formatCSVCell(lead.keywords),
+        formatCSVCell(lead.email),
+        formatCSVCell(lead.notes),
+        formatCSVCell(lead.icebreaker),
+        formatCSVCell(lead.source_query_criteria),
+      ];
+      csvRows.push(row.join(","));
+    });
+
+    const csvString = csvRows.join("\r\n");
+    const blob = new Blob([`\uFEFF${csvString}`], { type: "text/csv;charset=utf-8;" });
+
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `leads_export_${timestamp}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } else {
+      alert(
+        "CSV export initiated. Your browser may handle the download differently or require manual saving."
+      );
+      const encodedUri = encodeURI("data:text/csv;charset=utf-8," + `\uFEFF${csvString}`);
+      const newWindow = window.open(encodedUri);
+      if (!newWindow) {
+        alert(
+          "Could not open a new window for CSV download. Please check your popup blocker settings."
+        );
       }
     }
-
-    if (
-      stringValue.includes('"') ||
-      stringValue.includes(',') ||
-      stringValue.includes('\n') ||
-      stringValue.includes('\r')
-    ) {
-      return `"${stringValue.replace(/"/g, '""')}"`;
-    }
-    return stringValue;
-  }
-
-  leadsToExport.forEach((lead) => {
-    const row = [
-      formatCSVCell(lead.id),
-      formatCSVCell(lead.created_at ? new Date(lead.created_at).toISOString() : ""),
-      formatCSVCell(lead.tab),
-      formatCSVCell(lead.lead_status),
-      formatCSVCell(lead.first_name),
-      formatCSVCell(lead.last_name),
-      formatCSVCell(
-        lead.name ||
-          (typeof lead.first_name === 'string' ? lead.first_name : "") +
-          (typeof lead.last_name === 'string' ? " " + lead.last_name : "")
-      ),
-      formatCSVCell(lead.job_title),
-      formatCSVCell(lead.industry),
-      formatCSVCell(lead.location),
-      formatCSVCell(lead.company_name),
-      formatCSVCell(lead.company_size),
-      formatCSVCell(lead.phone),
-      formatCSVCell(lead.linkedIn_url),
-      formatCSVCell(lead.keywords),
-      formatCSVCell(lead.email),
-      formatCSVCell(lead.notes),
-      formatCSVCell(lead.icebreaker),
-      formatCSVCell(lead.source_query_criteria),
-    ];
-    csvRows.push(row.join(","));
   });
-
-  const csvString = csvRows.join("\r\n");
-  const blob = new Blob([`\uFEFF${csvString}`], { type: "text/csv;charset=utf-8;" });
-
-  const link = document.createElement("a");
-  if (link.download !== undefined) {
-    const url = URL.createObjectURL(blob);
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `leads_export_${timestamp}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  } else {
-    alert(
-      "CSV export initiated. Your browser may handle the download differently or require manual saving."
-    );
-    const encodedUri = encodeURI("data:text/csv;charset=utf-8," + `\uFEFF${csvString}`);
-    const newWindow = window.open(encodedUri);
-    if (!newWindow) {
-      alert(
-        "Could not open a new window for CSV download. Please check your popup blocker settings."
-      );
-    }
-  }
 };
+
 
 async function updateLeadTab(
   leadId: string,
@@ -1716,6 +1891,7 @@ async function updateLeadTab(
           break;
       }
       searchStatus.value = "success";
+      // Manually remove from selection as it's no longer eligible for current tab
       const currentSelection = { ...rowSelection.value };
       if (currentSelection[leadId]) {
         delete currentSelection[leadId];
@@ -1733,7 +1909,6 @@ async function updateLeadTab(
     console.error(`Error updating lead ${leadId} tab:`, error);
     return { success: false, leadId, newTab, error };
   } finally {
-    // FIX applied here: Ensure isProcessingBatch is reset for single ops
     if (!isBatchOperation) {
       isProcessingBatch.value = false;
     }
@@ -1761,6 +1936,7 @@ async function deleteLead(
       searchMessage.value = texts.value.leadDeletedSuccess;
       searchStatus.value = "success";
 
+      // Manually remove from selection
       const currentSelection = { ...rowSelection.value };
       if (currentSelection[leadId]) {
         delete currentSelection[leadId];
@@ -1778,7 +1954,6 @@ async function deleteLead(
     console.error(`Error deleting lead ${leadId}:`, error);
     return { success: false, error };
   } finally {
-    // FIX applied here: Ensure isProcessingBatch is reset for single ops
     if (!isBatchOperation) {
       isProcessingBatch.value = false;
     }
@@ -1809,6 +1984,7 @@ watch(
       sorting.value = [];
       rowSelection.value = {};
       tableData.value = [];
+      totalRowCount.value = 0; // Reset totalRowCount on user change
       initialLoadComplete.value = false;
       activeClientFilters.value = {};
       await fetchTabCounts(newUser.id);
@@ -1817,12 +1993,11 @@ watch(
       await archiveUnsavedLeads(oldUser.id);
       tableData.value = [];
       rowSelection.value = {};
+      totalRowCount.value = 0; // Reset totalRowCount on logout
       initialLoadComplete.value = false;
       pagination.value.pageIndex = 0;
       sorting.value = [];
       currentTab.value = "new";
-      // @ts-ignore
-      table.setPageCount(0);
       searchMessage.value = null;
       searchStatus.value = null;
       tabCounts.value = { new: 0, saved: 0, archived: 0 };
@@ -1866,8 +2041,8 @@ function handleClientFiltersUpdate(updatedFilters: ActiveClientFilters) {
   );
   console.count("LeadGenFormView: handleClientFiltersUpdate called");
   activeClientFilters.value = updatedFilters;
-  pagination.value.pageIndex = 0;
-  rowSelection.value = {};
+  pagination.value.pageIndex = 0; // Reset to first page on filter change
+  rowSelection.value = {}; // Clear selection on filter change
   fetchLeadsForCurrentUser(true);
 }
 
@@ -1905,14 +2080,15 @@ function changeTab(newTab: LeadTab) {
   if (
     isLoadingLeads.value ||
     newTab === currentTab.value ||
-    isProcessingBatch.value
+    isProcessingBatch.value ||
+    isSelectingAllLeads.value
   )
     return;
   currentTab.value = newTab;
-  pagination.value.pageIndex = 0;
+  pagination.value.pageIndex = 0; // Always reset to page 0 when changing tabs
   sorting.value = [];
-  rowSelection.value = {};
-  activeClientFilters.value = {};
+  rowSelection.value = {}; // Clear selection on tab change
+  activeClientFilters.value = {}; // Clear filters on tab change
   fetchLeadsForCurrentUser(true);
 }
 async function archiveUnsavedLeads(
@@ -2045,7 +2221,7 @@ function validateSearchCriteria(): boolean {
 }
 
 async function submitLeadSearchCriteria() {
-  if (isProcessingBatch.value || isSearchingLeads.value) return;
+  if (isProcessingBatch.value || isSearchingLeads.value || isSelectingAllLeads.value) return;
 
   // Add any current advanced input fields as tags before validation,
   // so `filterTags` are up-to-date for the search criteria.
@@ -2151,8 +2327,8 @@ async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
     if (currentTab.value !== "new") {
       changeTab("new");
     } else {
-      pagination.value.pageIndex = 0;
-      rowSelection.value = {};
+      pagination.value.pageIndex = 0; // Reset to first page after new search
+      rowSelection.value = {}; // Clear selection after new search
       await fetchLeadsForCurrentUser(true);
       await fetchTabCounts(authStore.user?.id);
     }
@@ -2184,6 +2360,8 @@ async function getSupabaseSession(): Promise<Session | null> {
   return session;
 }
 
+const selectFields = `id, created_at, user_id, tab, lead_status, icebreaker, source_query_criteria, first_name, last_name, name, job_title, industry, location, company_name, company_size, phone, linkedIn_url, keywords, email, notes`;
+
 async function fetchLeadsForCurrentUser(forceRefresh = false) {
   console.log(
     `%cLeadGenFormView: fetchLeadsForCurrentUser CALLED. forceRefresh: ${forceRefresh}`,
@@ -2197,10 +2375,11 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
 
   if (
     (isLoadingLeads.value && !forceRefresh) ||
-    (isProcessingBatch.value && !forceRefresh)
+    (isProcessingBatch.value && !forceRefresh) ||
+    (isSelectingAllLeads.value && !forceRefresh)
   ) {
     console.log(
-      "%cLeadGenFormView: fetchLeadsForCurrentUser SKIPPED (isLoading or isProcessingBatch)",
+      "%cLeadGenFormView: fetchLeadsForCurrentUser SKIPPED (isLoading or isProcessingBatch or isSelectingAllLeads)",
       "color: gray;"
     );
     return;
@@ -2217,12 +2396,11 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
     rowSelection.value = {};
     isLoadingLeads.value = false;
     initialLoadComplete.value = true;
-    // @ts-ignore
-    table.setPageCount(0);
+    totalRowCount.value = 0; // Set to 0 if no user
     tabCounts.value = { new: 0, saved: 0, archived: 0 };
     return;
   }
-  const selectFields = `id, created_at, user_id, tab, lead_status, icebreaker, source_query_criteria, first_name, last_name, name, job_title, industry, location, company_name, company_size, phone, linkedIn_url, keywords, email, notes`;
+  
   try {
     let query = supabase
       .from("leads")
@@ -2312,22 +2490,22 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
         console.error("Supabase fetch error:", error);
       }
       tableData.value = [];
-      // @ts-ignore
-      table.setPageCount(0);
+      totalRowCount.value = 0; // Set to 0 on error
     } else {
       tableData.value = fetchedData || [];
       const totalCount = count || 0;
-      const newPageCount = Math.ceil(totalCount / pageSize);
-      // @ts-ignore
-      table.setPageCount(newPageCount);
+      totalRowCount.value = totalCount; // Crucial: Update totalRowCount for tanstack table
 
+      const newPageCount = Math.ceil(totalCount / pageSize);
+      
       const currentPageIndex = pagination.value.pageIndex;
       console.log(
         `%cLeadGenFormView: Pagination correction check -> CurrentIndex: ${currentPageIndex}, NewPageCount: ${newPageCount}, TotalCount: ${totalCount}, CurrentTab: ${currentTab.value}`,
         "color: #007bff;"
       );
 
-      if (currentPageIndex >= newPageCount && newPageCount > 0) {
+      // Adjust pageIndex if the current page is beyond the new total page count (e.g., after filter)
+      if (newPageCount > 0 && currentPageIndex >= newPageCount) {
         console.log(
           `%cLeadGenFormView: Correcting pagination. Current page (${currentPageIndex}) is out of new bounds (${
             newPageCount - 1
@@ -2340,11 +2518,18 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
         totalCount === 0 &&
         currentTab.value !== "new"
       ) {
+        // If we are on a non-new tab and no leads, reset to page 0
         console.log(
           `%cLeadGenFormView: Correcting pagination. Current page (${currentPageIndex}) has no items on non-'new' tab. Setting to page 0.`,
           "color: #007bff; font-style: italic;"
         );
         pagination.value.pageIndex = 0;
+      } else if (totalCount > 0 && currentPageIndex === 0 && tableData.value.length === 0) {
+        // Edge case: if totalCount is positive but current page is empty (e.g., deleted last item on page)
+        // Go back to the previous page if possible
+        if (currentPageIndex > 0) {
+             pagination.value.pageIndex = currentPageIndex - 1;
+        }
       }
     }
   } catch (e: any) {
@@ -2358,8 +2543,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       searchStatus.value = "error";
     }
     tableData.value = [];
-    // @ts-ignore
-    table.setPageCount(0);
+    totalRowCount.value = 0; // Set to 0 on general error
   } finally {
     isLoadingLeads.value = false;
     if (!initialLoadComplete.value) initialLoadComplete.value = true;
@@ -2370,8 +2554,6 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
   }
 }
 
-// getStatusBadgeClass removed as it was no longer used after removing the 'lead_status' column.
-
 onMounted(async () => {
   const session = authStore.session || (await getSupabaseSession());
   if (session && authStore.user) {
@@ -2381,6 +2563,7 @@ onMounted(async () => {
     isLoadingLeads.value = false;
     initialLoadComplete.value = true;
     tabCounts.value = { new: 0, saved: 0, archived: 0 };
+    totalRowCount.value = 0; // Ensure totalRowCount is 0 on initial unauthenticated load
   }
 });
 </script>
