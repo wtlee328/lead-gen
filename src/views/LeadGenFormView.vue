@@ -251,7 +251,7 @@
               class="d-flex justify-content-between align-items-center w-100"
             >
               <div class="d-flex align-items-center">
-                <!-- EXTERNAL "SELECT ALL" BUTTON (renamed from "Select Page") -->
+                <!-- EXTERNAL "SELECT ALL" BUTTON -->
                 <button
                   class="btn btn-sm btn-outline-secondary me-2"
                   @click="selectAllMatchingLeads"
@@ -648,7 +648,7 @@ import {
   type PaginationState,
   type RowSelectionState,
   type Column,
-  type Row,
+  type Row, // Row is used in type annotations for `row: Row<Lead>`
   type CellContext,
   type HeaderContext,
   type Updater,
@@ -713,8 +713,9 @@ const advancedFilterInputs = reactive({
 });
 const filterTags = ref<FilterTag[]>([]);
 const isSearchingLeads = ref(false);
+// FIX: Added "info" to searchStatus type
+const searchStatus = ref<"success" | "error" | "warning" | "info" | null>(null);
 const searchMessage = ref<string | null>(null);
-const searchStatus = ref<"success" | "error" | "warning" | null>(null);
 const N8N_WEBHOOK_URL = import.meta.env
   .VITE_N8N_LEAD_INGESTION_WEBHOOK_URL as string;
 const tableData = ref<Lead[]>([]);
@@ -727,9 +728,8 @@ const isProcessingBatch = ref(false);
 const batchActionsDropdownToggleRef = ref<HTMLButtonElement | null>(null);
 const columnHelper = createColumnHelper<Lead>();
 
-// Added for server-side pagination: Keep track of total row count from the backend
 const totalRowCount = ref(0);
-const isSelectingAllLeads = ref(false); // REINSTATED: State for global select all operation
+const isSelectingAllLeads = ref(false); // State for global select all operation
 
 const defaultTexts = {
   mainQueryLabel: "Briefly describe the type of prospects you're looking for:",
@@ -816,12 +816,12 @@ const defaultTexts = {
   selectFilterPlaceholder: "Select",
   clearAllFiltersButton: "Clear All Filters",
   clearFilterSectionTooltip: "Clear section",
-  selectAllPageButton: "Select Page", // REVERTED for header checkbox
-  selectAllPageTooltip: "Select all leads on current page", // REVERTED for header checkbox
-  selectAllButton: "Select All", // NEW for external button
-  selectAllTooltip: "Select all matching leads across all pages", // NEW for external button
-  deselectAllButton: "Deselect All",
-  deselectAllPageTooltip: "Deselect all leads on current page",
+  selectAllPageButton: "Select Page", // FOR TABLE HEADER CHECKBOX
+  selectAllPageTooltip: "Select all leads on current page", // FOR TABLE HEADER CHECKBOX
+  selectAllButton: "Select All", // FOR EXTERNAL BUTTON
+  selectAllTooltip: "Select all matching leads across all pages", // FOR EXTERNAL BUTTON
+  deselectAllButton: "Deselect All", // FOR EXTERNAL BUTTON (global)
+  deselectAllPageTooltip: "Deselect all leads on current page", // Unused, but kept for consistency if needed
   batchActionsDropdownTitle: "Actions for Selected",
   batchSaveButton: "Save Selected",
   batchArchiveButton: "Archive Selected",
@@ -910,7 +910,15 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         indeterminate: table.getIsSomePageRowsSelected(),
         disabled:
           isProcessingBatch.value || isSelectingAllLeads.value || table.getRowModel().rows.length === 0,
-        onChange: table.getToggleAllPageRowsSelectedHandler(),
+        // FIX: Explicitly call local functions for header checkbox
+        onChange: (e: Event) => {
+          if (isProcessingBatch.value || isSelectingAllLeads.value) return;
+          if ((e.target as HTMLInputElement).checked) {
+            selectAllOnPage();
+          } else {
+            deselectAllOnPage();
+          }
+        },
         title: texts.value.selectAllPageTooltip,
       }),
     cell: ({ row }: CellContext<Lead, unknown>) =>
@@ -1374,18 +1382,17 @@ const table = useVueTable({
   getSortedRowModel: getSortedRowModel(),
   manualPagination: true,
   manualSorting: true,
-  // Add rowCount to inform the table of the total number of rows for pagination
   get rowCount() {
     return totalRowCount.value;
   }
 });
 
-// "Select Page" for the header checkbox - applies to current page only
+// FIX: selectAllOnPage now used by header checkbox
 const selectAllOnPage = () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   table.toggleAllPageRowsSelected(true);
 };
-// "Deselect All on Page" for the header checkbox
+// FIX: deselectAllOnPage now used by header checkbox
 const deselectAllOnPage = () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   table.toggleAllPageRowsSelected(false);
@@ -1397,7 +1404,7 @@ const selectAllMatchingLeads = async () => {
 
   isSelectingAllLeads.value = true;
   searchMessage.value = "Selecting all matching leads...";
-  searchStatus.value = "info";
+  searchStatus.value = "info"; // FIX: This is now correctly type-checked
 
   try {
     const user = authStore.user;
@@ -1472,7 +1479,7 @@ const deselectAllGlobalLeads = () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   rowSelection.value = {}; // Clear ALL selections
   searchMessage.value = "All leads deselected.";
-  searchStatus.value = "info";
+  searchStatus.value = "info"; // FIX: This is now correctly type-checked
 };
 
 
@@ -1712,7 +1719,6 @@ const exportSelectedToCSV = () => {
     return;
   }
   
-  // This part needs to fetch ALL selected leads, not just current page
   const fetchLeadsForExport = async () => {
     try {
       const { data, error } = await supabase
@@ -1725,7 +1731,7 @@ const exportSelectedToCSV = () => {
         console.error("Error fetching leads for CSV export:", error);
         searchMessage.value = texts.value.alertError + `Failed to fetch leads for CSV export: ${error.message}`;
         searchStatus.value = "error";
-        return;
+        return [];
       }
       return data || [];
     } catch (e: any) {
@@ -1736,8 +1742,9 @@ const exportSelectedToCSV = () => {
     }
   };
 
-  fetchLeadsForExport().then((leadsToExport) => {
-    if (leadsToExport.length === 0) {
+  fetchLeadsForExport().then((leadsToExportData) => { // Renamed param to avoid shadowing
+    // FIX: Add explicit check for leadsToExportData
+    if (!leadsToExportData || leadsToExportData.length === 0) {
       searchMessage.value = "No leads to export.";
       searchStatus.value = "warning";
       return;
@@ -1795,7 +1802,7 @@ const exportSelectedToCSV = () => {
       return stringValue;
     }
 
-    leadsToExport.forEach((lead) => {
+    leadsToExportData.forEach((lead) => { // Use leadsToExportData
       const row = [
         formatCSVCell(lead.id),
         formatCSVCell(lead.created_at ? new Date(lead.created_at).toISOString() : ""),
