@@ -648,7 +648,6 @@ import {
   type PaginationState,
   type RowSelectionState,
   type Column,
-  type Row, // FIX: Used as type annotation
   type CellContext,
   type HeaderContext,
   type Updater,
