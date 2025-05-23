@@ -648,7 +648,7 @@ import {
   type PaginationState,
   type RowSelectionState,
   type Column,
-  type Row, // Row is used in type annotations for `row: Row<Lead>`
+  type Row, // FIX: Used as type annotation
   type CellContext,
   type HeaderContext,
   type Updater,
@@ -713,7 +713,6 @@ const advancedFilterInputs = reactive({
 });
 const filterTags = ref<FilterTag[]>([]);
 const isSearchingLeads = ref(false);
-// FIX: Added "info" to searchStatus type
 const searchStatus = ref<"success" | "error" | "warning" | "info" | null>(null);
 const searchMessage = ref<string | null>(null);
 const N8N_WEBHOOK_URL = import.meta.env
@@ -1387,12 +1386,12 @@ const table = useVueTable({
   }
 });
 
-// FIX: selectAllOnPage now used by header checkbox
+// "Select Page" for the header checkbox - applies to current page only
 const selectAllOnPage = () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   table.toggleAllPageRowsSelected(true);
 };
-// FIX: deselectAllOnPage now used by header checkbox
+// "Deselect All on Page" for the header checkbox
 const deselectAllOnPage = () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   table.toggleAllPageRowsSelected(false);
@@ -1404,7 +1403,7 @@ const selectAllMatchingLeads = async () => {
 
   isSelectingAllLeads.value = true;
   searchMessage.value = "Selecting all matching leads...";
-  searchStatus.value = "info"; // FIX: This is now correctly type-checked
+  searchStatus.value = "info";
 
   try {
     const user = authStore.user;
@@ -1479,7 +1478,7 @@ const deselectAllGlobalLeads = () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   rowSelection.value = {}; // Clear ALL selections
   searchMessage.value = "All leads deselected.";
-  searchStatus.value = "info"; // FIX: This is now correctly type-checked
+  searchStatus.value = "info";
 };
 
 
@@ -1567,7 +1566,6 @@ const batchProcessLeads = async (
     | "confirmBatchDelete"
     | "confirmBatchMoveToSaved"
   >,
-  // filterFn is now optional as we might process all selected, not just those on current page
   filterFn: (lead: Lead) => boolean,
   operationFn: (
     leadId: string,
@@ -1576,20 +1574,16 @@ const batchProcessLeads = async (
 ) => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
 
-  // Get all selected lead IDs regardless of page
   const selectedLeadIds = Object.keys(rowSelection.value);
   if (selectedLeadIds.length === 0) return;
 
-  // Fetch full lead objects for the selected IDs to apply specific filters if needed
-  // This is crucial because `table.getSelectedRowModel().rows` only contains the current page's selected rows.
-  // We need to fetch all selected leads from Supabase to correctly filter them.
   let leadsToProcess: Lead[] = [];
   if (selectedLeadIds.length > 0) {
     const { data, error } = await supabase
       .from('leads')
-      .select(selectFields) // Use existing selectFields from fetchLeadsForCurrentUser
+      .select(selectFields)
       .in('id', selectedLeadIds)
-      .eq('user_id', authStore.user?.id); // Ensure only user's leads are fetched
+      .eq('user_id', authStore.user?.id);
 
     if (error) {
       console.error("Error fetching selected leads for batch operation:", error);
@@ -1600,7 +1594,7 @@ const batchProcessLeads = async (
     leadsToProcess = data || [];
   }
   
-  if (filterFn) { // Apply specific filters only if a filter function is provided
+  if (filterFn) {
     leadsToProcess = leadsToProcess.filter(filterFn);
   }
 
@@ -1713,7 +1707,6 @@ const exportSelectedToCSV = () => {
     return;
   }
 
-  // Fetch full lead objects for the selected IDs to export
   const selectedLeadIds = Object.keys(rowSelection.value);
   if (selectedLeadIds.length === 0) {
     return;
@@ -1742,8 +1735,7 @@ const exportSelectedToCSV = () => {
     }
   };
 
-  fetchLeadsForExport().then((leadsToExportData) => { // Renamed param to avoid shadowing
-    // FIX: Add explicit check for leadsToExportData
+  fetchLeadsForExport().then((leadsToExportData: Lead[] | undefined) => { // FIX: Explicitly type for safety
     if (!leadsToExportData || leadsToExportData.length === 0) {
       searchMessage.value = "No leads to export.";
       searchStatus.value = "warning";
@@ -1802,7 +1794,7 @@ const exportSelectedToCSV = () => {
       return stringValue;
     }
 
-    leadsToExportData.forEach((lead) => { // Use leadsToExportData
+    leadsToExportData.forEach((lead) => {
       const row = [
         formatCSVCell(lead.id),
         formatCSVCell(lead.created_at ? new Date(lead.created_at).toISOString() : ""),
@@ -2199,18 +2191,14 @@ function validateSearchCriteria(): boolean {
   const advInputsHaveContent = Object.values(advancedFilterInputs).some(
     (v) => typeof v === 'string' && v.trim() !== ""
   );
-  // Also check if any filter tags have been applied, as these are also part of the search criteria
   const hasAppliedFilterTags = filterTags.value.length > 0;
 
-  // If no main query, no advanced inputs with content, and no applied tags, then it's an empty search
   if (!nqHasContent && !advInputsHaveContent && !hasAppliedFilterTags) {
     searchMessage.value = texts.value.noSearchCriteria;
     searchStatus.value = "error";
     return false;
   }
 
-  // Specific validation for jobTitle and industry if advanced filters are shown and main query is empty
-  // This logic seems intentional from your original code.
   if (showAdvancedFilters.value && !nqHasContent && !hasAppliedFilterTags) {
     if (typeof advancedFilterInputs.jobTitle === 'string' && !advancedFilterInputs.jobTitle.trim()) {
         searchMessage.value = texts.value.errorRequired(getFieldLabel("jobTitle"));
@@ -2230,10 +2218,6 @@ function validateSearchCriteria(): boolean {
 async function submitLeadSearchCriteria() {
   if (isProcessingBatch.value || isSearchingLeads.value || isSelectingAllLeads.value) return;
 
-  // Add any current advanced input fields as tags before validation,
-  // so `filterTags` are up-to-date for the search criteria.
-  // Note: This only affects `filterTags` for the *display* and *database filtering* within this app,
-  // while the N8N payload should reflect the raw input values from the form fields.
   if (
     showAdvancedFilters.value &&
     Object.values(advancedFilterInputs).some((v) => typeof v === 'string' && v.trim())
@@ -2241,7 +2225,6 @@ async function submitLeadSearchCriteria() {
     addAdvancedInputsAsTags();
   }
 
-  // Validate the overall search criteria
   if (!validateSearchCriteria()) {
     return;
   }
@@ -2255,16 +2238,13 @@ async function submitLeadSearchCriteria() {
     await fetchTabCounts(user.id);
   }
 
-  // Construct the payload for n8n to include ALL fields, even if empty.
   const payloadForN8n: { mainQuery: string; filters: Record<string, any> } = {
-    mainQuery: naturalLanguageQuery.value, // Pass naturalLanguageQuery as is (empty string if nothing entered)
+    mainQuery: naturalLanguageQuery.value,
     filters: {
-      jobTitle: advancedFilterInputs.jobTitle, // Pass as is (empty string if nothing entered)
-      industry: advancedFilterInputs.industry, // Pass as is (empty string if 'Select Industry' or nothing selected)
-      location: advancedFilterInputs.location, // Pass as is (empty string if nothing entered)
-      companySize: advancedFilterInputs.companySize, // Pass as is (empty string if 'Select Company Size' or nothing selected)
-      // Convert 'otherKeywords' string to an array of trimmed strings.
-      // Filter out empty strings resulting from split (e.g., ",," or leading/trailing commas).
+      jobTitle: advancedFilterInputs.jobTitle,
+      industry: advancedFilterInputs.industry,
+      location: advancedFilterInputs.location,
+      companySize: advancedFilterInputs.companySize,
       keywords: advancedFilterInputs.otherKeywords
         .split(',')
         .map(k => k.trim())
@@ -2272,14 +2252,11 @@ async function submitLeadSearchCriteria() {
     }
   };
 
-  // If the 'keywords' array ends up empty, explicitly set it to an empty array
-  // instead of potentially leaving it undefined or `[]` that might be omitted
-  // by some JSON stringifiers if it's `{}`.
   if (payloadForN8n.filters.keywords.length === 0) {
-    payloadForN8n.filters.keywords = []; // Ensure it's an empty array if no keywords.
+    payloadForN8n.filters.keywords = [];
   }
 
-  await handleTriggerN8nLeadSearch(payloadForN8n); // Pass the newly constructed payload
+  await handleTriggerN8nLeadSearch(payloadForN8n);
 }
 async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
   isSearchingLeads.value = true;
@@ -2324,7 +2301,6 @@ async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
 
     naturalLanguageQuery.value = "";
     filterTags.value = [];
-    // Clear advanced inputs after submission to reflect empty state in form
     advancedFilterInputs.jobTitle = "";
     advancedFilterInputs.industry = "";
     advancedFilterInputs.location = "";
@@ -2334,8 +2310,8 @@ async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
     if (currentTab.value !== "new") {
       changeTab("new");
     } else {
-      pagination.value.pageIndex = 0; // Reset to first page after new search
-      rowSelection.value = {}; // Clear selection after new search
+      pagination.value.pageIndex = 0;
+      rowSelection.value = {};
       await fetchLeadsForCurrentUser(true);
       await fetchTabCounts(authStore.user?.id);
     }
@@ -2403,7 +2379,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
     rowSelection.value = {};
     isLoadingLeads.value = false;
     initialLoadComplete.value = true;
-    totalRowCount.value = 0; // Set to 0 if no user
+    totalRowCount.value = 0;
     tabCounts.value = { new: 0, saved: 0, archived: 0 };
     return;
   }
@@ -2497,11 +2473,11 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
         console.error("Supabase fetch error:", error);
       }
       tableData.value = [];
-      totalRowCount.value = 0; // Set to 0 on error
+      totalRowCount.value = 0;
     } else {
       tableData.value = fetchedData || [];
       const totalCount = count || 0;
-      totalRowCount.value = totalCount; // Crucial: Update totalRowCount for tanstack table
+      totalRowCount.value = totalCount;
 
       const newPageCount = Math.ceil(totalCount / pageSize);
       
@@ -2511,7 +2487,6 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
         "color: #007bff;"
       );
 
-      // Adjust pageIndex if the current page is beyond the new total page count (e.g., after filter)
       if (newPageCount > 0 && currentPageIndex >= newPageCount) {
         console.log(
           `%cLeadGenFormView: Correcting pagination. Current page (${currentPageIndex}) is out of new bounds (${
@@ -2525,15 +2500,12 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
         totalCount === 0 &&
         currentTab.value !== "new"
       ) {
-        // If we are on a non-new tab and no leads, reset to page 0
         console.log(
           `%cLeadGenFormView: Correcting pagination. Current page (${currentPageIndex}) has no items on non-'new' tab. Setting to page 0.`,
           "color: #007bff; font-style: italic;"
         );
         pagination.value.pageIndex = 0;
       } else if (totalCount > 0 && currentPageIndex === 0 && tableData.value.length === 0) {
-        // Edge case: if totalCount is positive but current page is empty (e.g., deleted last item on page)
-        // Go back to the previous page if possible
         if (currentPageIndex > 0) {
              pagination.value.pageIndex = currentPageIndex - 1;
         }
@@ -2550,7 +2522,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       searchStatus.value = "error";
     }
     tableData.value = [];
-    totalRowCount.value = 0; // Set to 0 on general error
+    totalRowCount.value = 0;
   } finally {
     isLoadingLeads.value = false;
     if (!initialLoadComplete.value) initialLoadComplete.value = true;
@@ -2570,7 +2542,7 @@ onMounted(async () => {
     isLoadingLeads.value = false;
     initialLoadComplete.value = true;
     tabCounts.value = { new: 0, saved: 0, archived: 0 };
-    totalRowCount.value = 0; // Ensure totalRowCount is 0 on initial unauthenticated load
+    totalRowCount.value = 0;
   }
 });
 </script>
