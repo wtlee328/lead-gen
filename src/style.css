@@ -1526,6 +1526,8 @@ html[data-bs-theme="dark"] .landing-footer {
 .content-area-view .search-panel-alert.alert {
   border-width: 0px;
   border-left-width: 4px; /* Accent border */
+  background-color: var(--sidebar-bg-current);
+  color: var(--text-muted-current);
 }
 
 /* Table Section Styling (within .lead-gen-view-wrapper .content-area-view) */
