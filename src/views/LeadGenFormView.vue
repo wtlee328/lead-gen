@@ -1382,7 +1382,9 @@ const table = useVueTable({
   manualSorting: true,
   get rowCount() {
     return totalRowCount.value;
-  }
+  },
+  // FIX: Add getRowId to tell TanStack Table to use the actual Lead 'id' (UUID)
+  getRowId: (row: Lead) => row.id,
 });
 
 // "Select Page" for the header checkbox - applies to current page only
@@ -1498,7 +1500,7 @@ const canBatchSave = computed(
     !isProcessingBatch.value &&
     !isSelectingAllLeads.value && // Add this to disabled condition
     selectedRowCount.value > 0 &&
-    // Check if at least one selected lead is in the 'new' tab
+    // Check if at least one selected lead is in the 'new' tab (from tableData for display)
     Object.keys(rowSelection.value).some(id => 
       tableData.value.some(lead => lead.id === id && lead.tab === "new") // Check if any *current page* lead matches selection and tab
     )
@@ -1571,36 +1573,61 @@ const batchProcessLeads = async (
     target?: LeadTab
   ) => Promise<{ success: boolean; error?: any }>
 ) => {
-  if (isProcessingBatch.value || isSelectingAllLeads.value) return;
+  if (isProcessingBatch.value || isSelectingAllLeads.value) {
+    console.log("Batch Process: Skipped due to ongoing operation.");
+    return;
+  }
 
   const selectedLeadIds = Object.keys(rowSelection.value);
-  if (selectedLeadIds.length === 0) return;
+  if (selectedLeadIds.length === 0) {
+    console.warn("Batch Process: No leads selected to process. Aborting.");
+    searchMessage.value = texts.value.noLeadsEligibleForAction("process"); // Generic message if no leads were selected
+    searchStatus.value = "warning";
+    return;
+  }
+
+  const user = authStore.user;
+  if (!user?.id) {
+    console.error("Batch Process: User ID not available for batch operation.");
+    searchMessage.value = texts.value.userNotAuthMessage;
+    searchStatus.value = "error";
+    return;
+  }
 
   let leadsToProcess: Lead[] = [];
-  if (selectedLeadIds.length > 0) {
+  try {
+    console.log("Batch Process: Attempting to fetch selected leads from DB. IDs:", selectedLeadIds);
+    console.log("Batch Process: Current User ID:", user.id);
+
     const { data, error } = await supabase
       .from('leads')
       .select(selectFields)
       .in('id', selectedLeadIds)
-      .eq('user_id', authStore.user?.id);
+      .eq('user_id', user.id); // Ensure leads belong to the current user
+
+    console.log("Batch Process: Supabase fetch response - Data:", data, "Error:", error);
 
     if (error) {
-      console.error("Error fetching selected leads for batch operation:", error);
-      searchMessage.value = texts.value.alertError + `Failed to fetch selected leads for batch: ${error.message}`;
-      searchStatus.value = "error";
-      return;
+      throw error; // Propagate error for catch block
     }
     leadsToProcess = data || [];
+  } catch (e: any) {
+    console.error("Unexpected error during batch operation leads fetch:", e);
+    searchMessage.value = texts.value.alertError + `Batch operation failed during fetch: ${e.message}`;
+    searchStatus.value = "error";
+    return;
   }
   
   if (filterFn) {
+    const leadsBeforeFilter = leadsToProcess.length;
     leadsToProcess = leadsToProcess.filter(filterFn);
+    console.log(`Batch Process: Filtered leads. Before: ${leadsBeforeFilter}, After: ${leadsToProcess.length}`);
   }
 
   const actionNameForNoLeadsMsg = actionNameKey
     .replace("confirmBatch", "")
     .toLowerCase();
-  if (leadsToProcess.length === 0 && targetTabOrAction !== "delete") {
+  if (leadsToProcess.length === 0 && targetTabOrAction !== "delete") { // The original condition
     searchMessage.value = texts.value.noLeadsEligibleForAction(
       actionNameForNoLeadsMsg
     );
@@ -1610,7 +1637,10 @@ const batchProcessLeads = async (
   const confirmMessageFn = texts.value[actionNameKey] as (
     count: number
   ) => string;
-  if (!confirm(confirmMessageFn(leadsToProcess.length))) return;
+  if (!confirm(confirmMessageFn(leadsToProcess.length))) {
+    console.log("Batch Process: User cancelled confirmation.");
+    return;
+  }
 
   isProcessingBatch.value = true;
   const processingActionName = actionNameKey.replace("confirmBatch", "");
@@ -1662,6 +1692,7 @@ const batchProcessLeads = async (
   await fetchLeadsForCurrentUser(true);
   await fetchTabCounts(authStore.user?.id);
   isProcessingBatch.value = false; // Reset batch processing flag here after all is done
+  console.log(`Batch Process: Finished. Success: ${successCount}, Failed: ${errorCount}`);
 };
 
 const batchSaveSelected = () =>
@@ -1703,27 +1734,48 @@ const batchDeleteSelected = () =>
 
 const exportSelectedToCSV = () => {
   if (isProcessingBatch.value || selectedRowCount.value === 0 || isSelectingAllLeads.value) {
+    console.log("Export CSV skipped due to state:", {
+      isProcessingBatch: isProcessingBatch.value,
+      selectedRowCount: selectedRowCount.value,
+      isSelectingAllLeads: isSelectingAllLeads.value
+    });
+    searchMessage.value = "No leads to export."; // Show message explicitly
+    searchStatus.value = "warning";
     return;
   }
 
   const selectedLeadIds = Object.keys(rowSelection.value);
-  if (selectedLeadIds.length === 0) {
+  // This check is partially redundant with selectedRowCount.value === 0, but good for clarity
+  if (selectedLeadIds.length === 0) { 
+    console.warn("Export CSV: No leads selected after `rowSelection` check.");
+    searchMessage.value = "No leads to export.";
+    searchStatus.value = "warning";
     return;
   }
   
   const fetchLeadsForExport = async () => {
+    const user = authStore.user;
+    if (!user?.id) {
+      console.error("Export CSV: User ID not available for fetching leads.");
+      searchMessage.value = texts.value.userNotAuthMessage;
+      searchStatus.value = "error";
+      return [];
+    }
+
     try {
+      console.log("Export CSV: Attempting to fetch selected leads. IDs:", selectedLeadIds);
+      console.log("Export CSV: User ID:", user.id);
+
       const { data, error } = await supabase
         .from('leads')
         .select(selectFields)
         .in('id', selectedLeadIds)
-        .eq('user_id', authStore.user?.id);
+        .eq('user_id', user.id); // Crucial for RLS and ownership
+
+      console.log("Export CSV: Supabase fetch response - Data:", data, "Error:", error);
 
       if (error) {
-        console.error("Error fetching leads for CSV export:", error);
-        searchMessage.value = texts.value.alertError + `Failed to fetch leads for CSV export: ${error.message}`;
-        searchStatus.value = "error";
-        return [];
+        throw error; // Propagate error for outer catch
       }
       return data || [];
     } catch (e: any) {
@@ -1734,8 +1786,8 @@ const exportSelectedToCSV = () => {
     }
   };
 
-  fetchLeadsForExport().then((leadsToExportData: Lead[] | undefined) => { // FIX: Explicitly type for safety
-    if (!leadsToExportData || leadsToExportData.length === 0) {
+  fetchLeadsForExport().then((leadsToExportData: Lead[] | undefined) => { // leadsToExportData is guaranteed to be `Lead[]` here
+    if (!leadsToExportData || leadsToExportData.length === 0) { // This condition is the direct cause of "No leads to export."
       searchMessage.value = "No leads to export.";
       searchStatus.value = "warning";
       return;
@@ -1847,6 +1899,16 @@ const exportSelectedToCSV = () => {
           "Could not open a new window for CSV download. Please check your popup blocker settings."
         );
       }
+    }
+    searchMessage.value = `Exported ${leadsToExportData.length} leads to CSV.`;
+    searchStatus.value = "success";
+    rowSelection.value = {}; // Clear selections after export
+  }).catch((e) => { // Added catch for the promise chain from fetchLeadsForExport
+    console.error("Error during CSV export promise chain:", e);
+    // Error message already set by fetchLeadsForExport, but ensure final state
+    if (!searchMessage.value) {
+      searchMessage.value = texts.value.alertError + (e.message || "Unknown error during export.");
+      searchStatus.value = "error";
     }
   });
 };
