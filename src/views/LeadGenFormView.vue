@@ -179,17 +179,31 @@
                       <option value="10001+">10001+</option>
                     </select>
                   </div>
-                  <div class="col-12">
+                  <!-- UPDATED HTML STRUCTURE: Company Names and General Keywords in the same row -->
+                  <div class="col-md-6">
                     <label
-                      for="advKeywords"
+                      for="advCompanyNames"
                       class="form-label search-panel-adv-label"
-                      >{{ texts.keywordsLabel }}</label
+                      >{{ texts.companyNamesLabel }}</label
                     ><input
                       type="text"
                       class="form-control form-control-sm search-panel-adv-input"
-                      id="advKeywords"
-                      v-model="advancedFilterInputs.otherKeywords"
-                      :placeholder="texts.advKeywordsPlaceholder"
+                      id="advCompanyNames"
+                      v-model="advancedFilterInputs.companyNames"
+                      :placeholder="texts.companyNamesPlaceholder"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label
+                      for="advGeneralKeywords"
+                      class="form-label search-panel-adv-label"
+                      >{{ texts.generalKeywordsLabel }}</label
+                    ><input
+                      type="text"
+                      class="form-control form-control-sm search-panel-adv-input"
+                      id="advGeneralKeywords"
+                      v-model="advancedFilterInputs.generalKeywords"
+                      :placeholder="texts.generalKeywordsPlaceholder"
                     />
                   </div>
                   <div class="col-12 text-end">
@@ -680,7 +694,8 @@ interface Lead {
 }
 interface FilterTag {
   id: string;
-  type: "jobTitle" | "industry" | "location" | "companySize" | "otherKeywords";
+  // UPDATED: Added 'companyNames' and 'generalKeywords'
+  type: "jobTitle" | "industry" | "location" | "companySize" | "companyNames" | "generalKeywords";
   value: string;
   displayValue: string;
   label: string;
@@ -708,7 +723,8 @@ const advancedFilterInputs = reactive({
   industry: "",
   location: "",
   companySize: "",
-  otherKeywords: "",
+  companyNames: "", // RENAMED from 'otherKeywords'
+  generalKeywords: "", // NEW field
 });
 const filterTags = ref<FilterTag[]>([]);
 const isSearchingLeads = ref(false);
@@ -739,8 +755,12 @@ const defaultTexts = {
   industryLabel: "Industry",
   locationLabel: "Country/City",
   companySizeLabel: "Company Size",
-  keywordsLabel: "Company Keywords",
-  advKeywordsPlaceholder: "e.g., Google, Microsoft, AWS.",
+  // UPDATED: Renamed existing "Company Keywords" to "Company Names"
+  companyNamesLabel: "Company Names",
+  companyNamesPlaceholder: "e.g., Google, Microsoft, AWS.",
+  // NEW: General Keywords field
+  generalKeywordsLabel: "Keywords",
+  generalKeywordsPlaceholder: "e.g., SaaS, AI, cloud computing.",
   addFiltersBtnText: "Add Filters",
   tagAreaLabel: "Selected Filters:",
   removeFilterTooltip: "Remove filter",
@@ -760,7 +780,7 @@ const defaultTexts = {
   colCompanySize: "Company Size",
   colPhone: "Phone",
   colLinkedIn: "LinkedIn",
-  colKeywords: "Keywords",
+  colKeywords: "Keywords", // This remains for the table column header
   colEmail: "Email",
   colNotes: "Notes",
   colCreatedAt: "Date Added",
@@ -1421,28 +1441,32 @@ const selectAllMatchingLeads = async () => {
       .eq("tab", currentTab.value);
 
     // Apply active client filters (same logic as in fetchLeadsForCurrentUser)
-    Object.entries(activeClientFilters.value).forEach(([key, values]) => {
+    Object.entries(activeClientFilters.value).forEach(([tagType, values]) => {
       if (Array.isArray(values) && values.length > 0) {
-        const filterKey = key as keyof Lead;
-
-        if (filterKey === "company_size") {
-          query = query.eq(filterKey, values[0]);
+        if (tagType === "lead_status") {
+          if (values.length === 1) {
+            query = query.eq("lead_status", values[0]);
+          } else {
+            query = query.in("lead_status", values);
+          }
+        } else if (tagType === "companySize") {
+          query = query.eq("company_size", values[0]);
         }
-        else if (filterKey === "keywords" || filterKey === "industry") {
+        // Handles industry and the NEW generalKeywords (which maps to DB 'keywords')
+        else if (tagType === "industry" || tagType === "generalKeywords") { // Changed condition
+          const dbColumn = tagType === "industry" ? "industry" : "keywords"; // Map tagType to actual DB column
           const cleanedValues = values.map(v => `"${String(v).replace(/"/g, '""')}"`);
           const filterValue = `{${cleanedValues.join(',')}}`;
-          query = query.filter(filterKey, 'ov', filterValue);
-        } else if (filterKey === "lead_status") {
-          if (values.length === 1) {
-            query = query.eq(filterKey, values[0]);
-          } else {
-            query = query.in(filterKey, values);
-          }
-        } else if (
-          ["job_title", "location", "company_name"].includes(filterKey)
+          query = query.filter(dbColumn, 'ov', filterValue); // Use dbColumn
+        }
+        else if (
+          tagType === "jobTitle" ||
+          tagType === "location" ||
+          tagType === "companyNames" // Changed condition to new tag type
         ) {
+          const dbColumn = tagType === "companyNames" ? "company_name" : (tagType === "jobTitle" ? "job_title" : "location"); // Map tagType to actual DB column
           const orConditions = values
-            .map((val) => `${filterKey}.ilike.%${String(val).trim()}%`)
+            .map((val) => `${dbColumn}.ilike.%${String(val).trim()}%`) // Use dbColumn
             .join(",");
           if (orConditions) query = query.or(orConditions);
         }
@@ -2192,11 +2216,14 @@ function getFieldLabel(type: FilterTag["type"]): string {
     industry: "industryLabel",
     location: "locationLabel",
     companySize: "companySizeLabel",
-    otherKeywords: "keywordsLabel",
+    companyNames: "companyNamesLabel", // UPDATED
+    generalKeywords: "generalKeywordsLabel", // NEW
   };
   // @ts-ignore
   return (texts.value as any)[map[type]] || type;
 }
+// MODIFIED: This function now just adds tags and clears inputs,
+// it no longer prepares the N8N payload directly.
 function addAdvancedInputsAsTags() {
   const i = advancedFilterInputs;
   if (typeof i.jobTitle === 'string' && i.jobTitle.trim()) addTag("jobTitle", i.jobTitle.trim());
@@ -2208,15 +2235,29 @@ function addAdvancedInputsAsTags() {
     );
   if (typeof i.location === 'string' && i.location.trim()) addTag("location", i.location.trim());
   if (typeof i.companySize === 'string' && i.companySize) addTag("companySize", i.companySize);
-  if (typeof i.otherKeywords === 'string' && i.otherKeywords.trim())
-    i.otherKeywords
+
+  // Handle companyNames (formerly otherKeywords)
+  if (typeof i.companyNames === 'string' && i.companyNames.trim())
+    i.companyNames
       .trim()
       .split(",")
       .forEach((k) => {
-        if (typeof k === 'string' && k.trim()) addTag("otherKeywords", k.trim());
+        if (typeof k === 'string' && k.trim()) addTag("companyNames", k.trim()); // Changed type
       });
+
+  // Handle generalKeywords (NEW)
+  if (typeof i.generalKeywords === 'string' && i.generalKeywords.trim())
+    i.generalKeywords
+      .trim()
+      .split(",")
+      .forEach((k) => {
+        if (typeof k === 'string' && k.trim()) addTag("generalKeywords", k.trim()); // NEW type
+      });
+
+  // Clear inputs AFTER they've been added as tags
   Object.keys(i).forEach((k) => (i[k as keyof typeof i] = ""));
 }
+
 function addTag(
   type: FilterTag["type"],
   value: string,
@@ -2224,7 +2265,9 @@ function addTag(
 ) {
   const dVal = displayValueOverride || value;
   const lbl = getFieldLabel(type);
-  if (type !== "otherKeywords")
+  // Adjusted logic: If the type is 'companyNames' or 'generalKeywords', don't filter out existing tags of that type,
+  // as they are meant to be multiple. For others, keep the "replace" behavior.
+  if (type !== "companyNames" && type !== "generalKeywords") // UPDATED condition
     filterTags.value = filterTags.value.filter((t) => t.type !== type);
   if (
     filterTags.value.some(
@@ -2248,28 +2291,44 @@ function validateSearchCriteria(): boolean {
   searchMessage.value = null;
   searchStatus.value = null;
 
+  // Now validation relies on naturalLanguageQuery OR existing filterTags
   const nqHasContent = typeof naturalLanguageQuery.value === 'string' && naturalLanguageQuery.value.trim() !== "";
-  const advInputsHaveContent = Object.values(advancedFilterInputs).some(
-    (v) => typeof v === 'string' && v.trim() !== ""
-  );
   const hasAppliedFilterTags = filterTags.value.length > 0;
 
-  if (!nqHasContent && !advInputsHaveContent && !hasAppliedFilterTags) {
+  if (!nqHasContent && !hasAppliedFilterTags) {
     searchMessage.value = texts.value.noSearchCriteria;
     searchStatus.value = "error";
     return false;
   }
 
+  // If advanced filters are shown, main query is empty, and NO tags have been added yet,
+  // then jobTitle and industry are still required as per UI logic.
+  // This scenario is effectively handled by the `addAdvancedInputsAsTags()` call at the start of submitLeadSearchCriteria
+  // which would convert any currently typed input into tags and then this condition would check hasAppliedFilterTags.
+  // So, this block is mostly for the case where there's no main query and no other filters were added, but jobTitle/industry were meant to be present.
   if (showAdvancedFilters.value && !nqHasContent && !hasAppliedFilterTags) {
-    if (typeof advancedFilterInputs.jobTitle === 'string' && !advancedFilterInputs.jobTitle.trim()) {
-        searchMessage.value = texts.value.errorRequired(getFieldLabel("jobTitle"));
-        searchStatus.value = "error";
-        return false;
-    }
-    if (typeof advancedFilterInputs.industry === 'string' && !advancedFilterInputs.industry) {
-        searchMessage.value = texts.value.errorRequired(getFieldLabel("industry"));
-        searchStatus.value = "error";
-        return false;
+    // Check if after trying to add tags, jobTitle or industry are still implicitly required.
+    // This part might need fine-tuning based on exact "required" logic
+    // For now, assume if no tags, and adv filters are shown, and no main query, then jobTitle/industry are required.
+    // This is essentially checking the *original inputs* IF they haven't been converted to tags.
+    // Since addAdvancedInputsAsTags() is now called first on submit, this check becomes largely redundant
+    // for fields that get converted to tags.
+    // However, if jobTitle/industry are "required" for *any* advanced search even if tags exist,
+    // you might need a different validation approach. Sticking to the previous `texts.value.errorRequired` logic here.
+     const hasRequiredInputsFilled = filterTags.value.some(tag => tag.type === 'jobTitle') && filterTags.value.some(tag => tag.type === 'industry');
+
+     if (!hasRequiredInputsFilled) {
+        // Need to check which one is missing
+        if (!filterTags.value.some(tag => tag.type === 'jobTitle')) {
+            searchMessage.value = texts.value.errorRequired(getFieldLabel("jobTitle"));
+            searchStatus.value = "error";
+            return false;
+        }
+        if (!filterTags.value.some(tag => tag.type === 'industry')) {
+            searchMessage.value = texts.value.errorRequired(getFieldLabel("industry"));
+            searchStatus.value = "error";
+            return false;
+        }
     }
   }
 
@@ -2279,14 +2338,16 @@ function validateSearchCriteria(): boolean {
 async function submitLeadSearchCriteria() {
   if (isProcessingBatch.value || isSearchingLeads.value || isSelectingAllLeads.value) return;
 
+  // CRUCIAL CHANGE 1: Convert any pending advanced filter inputs to tags and clear inputs first.
+  // This ensures filterTags is the source of truth for advanced filters in the payload.
   if (
     showAdvancedFilters.value &&
     Object.values(advancedFilterInputs).some((v) => typeof v === 'string' && v.trim())
   ) {
-    addAdvancedInputsAsTags();
+    addAdvancedInputsAsTags(); // This will also clear advancedFilterInputs
   }
 
-  if (!validateSearchCriteria()) {
+  if (!validateSearchCriteria()) { // validate will now check filterTags as well
     return;
   }
 
@@ -2299,20 +2360,53 @@ async function submitLeadSearchCriteria() {
     await fetchTabCounts(user.id);
   }
 
-  const payloadForN8n: { mainQuery: string; filters: Record<string, any> } = {
-    mainQuery: naturalLanguageQuery.value,
-    filters: {
-      jobTitle: advancedFilterInputs.jobTitle,
-      industry: advancedFilterInputs.industry,
-      location: advancedFilterInputs.location,
-      companySize: advancedFilterInputs.companySize,
-      keywords: advancedFilterInputs.otherKeywords
-        .split(',')
-        .map(k => k.trim())
-        .filter(k => k !== ''),
-    }
+  // CRUCIAL CHANGE 2: Build N8N payload filters from filterTags
+  const n8nFilters: Record<string, any> = {
+    jobTitle: '',
+    industry: '', // single value or first value from tags
+    location: '',
+    companySize: '', // single value or first value from tags
+    companyNames: [], // array
+    keywords: [], // array
   };
 
+  filterTags.value.forEach(tag => {
+    switch (tag.type) {
+      case 'jobTitle':
+        n8nFilters.jobTitle = tag.value;
+        break;
+      case 'industry':
+        n8nFilters.industry = tag.value; // Assuming N8N expects single industry value if not multiple
+        break;
+      case 'location':
+        n8nFilters.location = tag.value;
+        break;
+      case 'companySize':
+        n8nFilters.companySize = tag.value; // Assuming N8N expects single company size value
+        break;
+      case 'companyNames':
+        // Add to array, ensuring uniqueness if needed (though tags handle this)
+        if (!n8nFilters.companyNames.includes(tag.value)) {
+          n8nFilters.companyNames.push(tag.value);
+        }
+        break;
+      case 'generalKeywords':
+        if (!n8nFilters.keywords.includes(tag.value)) {
+          n8nFilters.keywords.push(tag.value);
+        }
+        break;
+    }
+  });
+
+  const payloadForN8n: { mainQuery: string; filters: Record<string, any> } = {
+    mainQuery: naturalLanguageQuery.value,
+    filters: n8nFilters
+  };
+
+  // Ensure empty arrays if no input for multi-value fields
+  if (payloadForN8n.filters.companyNames.length === 0) {
+    payloadForN8n.filters.companyNames = [];
+  }
   if (payloadForN8n.filters.keywords.length === 0) {
     payloadForN8n.filters.keywords = [];
   }
@@ -2361,12 +2455,11 @@ async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
     searchStatus.value = "success";
 
     naturalLanguageQuery.value = "";
+    // CRUCIAL CHANGE 3: Clear filterTags only. advancedFilterInputs are already cleared by addAdvancedInputsAsTags.
     filterTags.value = [];
-    advancedFilterInputs.jobTitle = "";
-    advancedFilterInputs.industry = "";
-    advancedFilterInputs.location = "";
-    advancedFilterInputs.companySize = "";
-    advancedFilterInputs.otherKeywords = "";
+
+    // NOTE: advancedFilterInputs are cleared by addAdvancedInputsAsTags() when they are converted to tags.
+    // So no need to clear them here.
 
     if (currentTab.value !== "new") {
       changeTab("new");
@@ -2452,28 +2545,33 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       .eq("user_id", user.id)
       .eq("tab", currentTab.value);
 
-    Object.entries(activeClientFilters.value).forEach(([key, values]) => {
+    // UPDATED: Logic to apply filters from activeClientFilters based on new tag types
+    Object.entries(activeClientFilters.value).forEach(([tagType, values]) => {
       if (Array.isArray(values) && values.length > 0) {
-        const filterKey = key as keyof Lead;
-
-        if (filterKey === "company_size") {
-          query = query.eq(filterKey, values[0]);
+        if (tagType === "lead_status") { // Existing filter from FilterPanelView
+            if (values.length === 1) {
+                query = query.eq("lead_status", values[0]);
+            } else {
+                query = query.in("lead_status", values);
+            }
+        } else if (tagType === "companySize") {
+          query = query.eq("company_size", values[0]);
         }
-        else if (filterKey === "keywords" || filterKey === "industry") {
+        // Handles industry and the NEW generalKeywords (which maps to DB 'keywords')
+        else if (tagType === "industry" || tagType === "generalKeywords") { // Changed condition
+          const dbColumn = tagType === "industry" ? "industry" : "keywords"; // Map tagType to actual DB column
           const cleanedValues = values.map(v => `"${String(v).replace(/"/g, '""')}"`);
           const filterValue = `{${cleanedValues.join(',')}}`;
-          query = query.filter(filterKey, 'ov', filterValue);
-        } else if (filterKey === "lead_status") {
-          if (values.length === 1) {
-            query = query.eq(filterKey, values[0]);
-          } else {
-            query = query.in(filterKey, values);
-          }
-        } else if (
-          ["job_title", "location", "company_name"].includes(filterKey)
+          query = query.filter(dbColumn, 'ov', filterValue); // Use dbColumn
+        }
+        else if (
+          tagType === "jobTitle" ||
+          tagType === "location" ||
+          tagType === "companyNames" // Changed condition to new tag type
         ) {
+          const dbColumn = tagType === "companyNames" ? "company_name" : (tagType === "jobTitle" ? "job_title" : "location"); // Map tagType to actual DB column
           const orConditions = values
-            .map((val) => `${filterKey}.ilike.%${String(val).trim()}%`)
+            .map((val) => `${dbColumn}.ilike.%${String(val).trim()}%`) // Use dbColumn
             .join(",");
           if (orConditions) query = query.or(orConditions);
         }
