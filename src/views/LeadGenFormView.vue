@@ -179,7 +179,6 @@
                       <option value="10001+">10001+</option>
                     </select>
                   </div>
-                  <!-- UPDATED HTML STRUCTURE: Company Names and General Keywords in the same row -->
                   <div class="col-md-6">
                     <label
                       for="advCompanyNames"
@@ -265,12 +264,14 @@
               class="d-flex justify-content-between align-items-center w-100"
             >
               <div class="d-flex align-items-center">
-                <!-- EXTERNAL "SELECT ALL" BUTTON -->
                 <button
                   class="btn btn-sm btn-outline-secondary me-2"
                   @click="selectAllMatchingLeads"
                   :disabled="
-                    totalRowCount === 0 || allFilteredLeadsSelected || isProcessingBatch || isSelectingAllLeads
+                    totalRowCount === 0 ||
+                    allFilteredLeadsSelected ||
+                    isProcessingBatch ||
+                    isSelectingAllLeads
                   "
                   :title="texts.selectAllTooltip"
                 >
@@ -282,11 +283,14 @@
                   <i v-else class="bi bi-check2-square me-1"></i>
                   {{ texts.selectAllButton }}
                 </button>
-                <!-- EXTERNAL "DESELECT ALL" BUTTON -->
                 <button
                   class="btn btn-sm btn-outline-secondary me-2"
                   @click="deselectAllGlobalLeads"
-                  :disabled="selectedRowCount === 0 || isProcessingBatch || isSelectingAllLeads"
+                  :disabled="
+                    selectedRowCount === 0 ||
+                    isProcessingBatch ||
+                    isSelectingAllLeads
+                  "
                   :title="texts.deselectAllButton"
                 >
                   <i class="bi bi-square me-1"></i>
@@ -307,7 +311,7 @@
                       v-if="isProcessingBatch"
                       class="spinner-border spinner-border-sm me-1"
                       role="status"
-                    ></span>
+                    "></span>
                     {{ texts.batchActionsDropdownTitle }} ({{
                       selectedRowCount
                     }})
@@ -319,11 +323,17 @@
                           class="dropdown-item"
                           href="#"
                           :class="{
-                            disabled: !canBatchSave || isProcessingBatch || isSelectingAllLeads,
+                            disabled:
+                              !canBatchSave ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchSave || isProcessingBatch || isSelectingAllLeads) &&
-                              batchSaveSelected()
+                            !(
+                              !canBatchSave ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads
+                            ) && batchSaveSelected()
                           "
                           >{{ texts.batchSaveButton }}</a
                         >
@@ -333,11 +343,17 @@
                           class="dropdown-item"
                           href="#"
                           :class="{
-                            disabled: !canBatchArchiveNew || isProcessingBatch || isSelectingAllLeads,
+                            disabled:
+                              !canBatchArchiveNew ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchArchiveNew || isProcessingBatch || isSelectingAllLeads) &&
-                              batchArchiveSelected()
+                            !(
+                              !canBatchArchiveNew ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads
+                            ) && batchArchiveSelected()
                           "
                           >{{ texts.batchArchiveButton }}</a
                         >
@@ -352,12 +368,14 @@
                           :class="{
                             disabled:
                               !canBatchRestoreToNewFromSaved ||
-                              isProcessingBatch || isSelectingAllLeads,
+                              isProcessingBatch ||
+                              isSelectingAllLeads,
                           }"
                           @click.prevent="
                             !(
                               !canBatchRestoreToNewFromSaved ||
-                              isProcessingBatch || isSelectingAllLeads
+                              isProcessingBatch ||
+                              isSelectingAllLeads
                             ) && batchRestoreSelected()
                           "
                           >{{ texts.batchRestoreButton }}</a
@@ -369,11 +387,16 @@
                           href="#"
                           :class="{
                             disabled:
-                              !canBatchArchiveSaved || isProcessingBatch || isSelectingAllLeads,
+                              !canBatchArchiveSaved ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchArchiveSaved || isProcessingBatch || isSelectingAllLeads) &&
-                              batchArchiveSelected()
+                            !(
+                              !canBatchArchiveSaved ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads
+                            ) && batchArchiveSelected()
                           "
                           >{{ texts.batchArchiveButton }}</a
                         >
@@ -386,11 +409,17 @@
                           class="dropdown-item"
                           href="#"
                           :class="{
-                            disabled: !canBatchMoveToSaved || isProcessingBatch || isSelectingAllLeads,
+                            disabled:
+                              !canBatchMoveToSaved ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchMoveToSaved || isProcessingBatch || isSelectingAllLeads) &&
-                              batchMoveToSavedSelected()
+                            !(
+                              !canBatchMoveToSaved ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads
+                            ) && batchMoveToSavedSelected()
                           "
                           >{{ texts.batchMoveToSavedButton }}</a
                         >
@@ -402,28 +431,52 @@
                           href="#"
                           :class="{
                             disabled:
-                              !canBatchDeleteArchived || isProcessingBatch || isSelectingAllLeads,
+                              !canBatchDeleteArchived ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads,
                           }"
                           @click.prevent="
-                            !(!canBatchDeleteArchived || isProcessingBatch || isSelectingAllLeads) &&
-                              batchDeleteSelected()
+                            !(
+                              !canBatchDeleteArchived ||
+                              isProcessingBatch ||
+                              isSelectingAllLeads
+                            ) && batchDeleteSelected()
                           "
                           >{{ texts.batchDeleteButton }}</a
                         >
                       </li>
                     </template>
-                     <!-- Divider if any tab-specific actions were present -->
-                    <li v-if="(currentTab === 'new' && (canBatchSave || canBatchArchiveNew)) || (currentTab === 'saved' && (canBatchRestoreToNewFromSaved || canBatchArchiveSaved)) || (currentTab === 'archived' && (canBatchMoveToSaved || canBatchDeleteArchived))">
+                    <li
+                      v-if="
+                        (currentTab === 'new' &&
+                          (canBatchSave || canBatchArchiveNew)) ||
+                        (currentTab === 'saved' &&
+                          (canBatchRestoreToNewFromSaved ||
+                            canBatchArchiveSaved)) ||
+                        (currentTab === 'archived' &&
+                          (canBatchMoveToSaved || canBatchDeleteArchived))
+                      "
+                    >
                       <hr class="dropdown-divider" />
                     </li>
 
-                    <!-- Export CSV Action -->
                     <li>
                       <a
                         class="dropdown-item"
                         href="#"
-                        :class="{ disabled: isProcessingBatch || selectedRowCount === 0 || isSelectingAllLeads }"
-                        @click.prevent="!(isProcessingBatch || selectedRowCount === 0 || isSelectingAllLeads) && exportSelectedToCSV()"
+                        :class="{
+                          disabled:
+                            isProcessingBatch ||
+                            selectedRowCount === 0 ||
+                            isSelectingAllLeads,
+                        }"
+                        @click.prevent="
+                          !(
+                            isProcessingBatch ||
+                            selectedRowCount === 0 ||
+                            isSelectingAllLeads
+                          ) && exportSelectedToCSV()
+                        "
                       >
                         <i class="bi bi-file-earmark-spreadsheet me-1"></i>
                         {{ texts.batchExportCSVButton }}
@@ -455,7 +508,9 @@
                 <button
                   class="btn btn-sm btn-outline-secondary"
                   @click="fetchLeadsForCurrentUser(true)"
-                  :disabled="isLoadingLeads || isProcessingBatch || isSelectingAllLeads"
+                  :disabled="
+                    isLoadingLeads || isProcessingBatch || isSelectingAllLeads
+                  "
                   :title="texts.refreshButton"
                 >
                   <i
@@ -518,13 +573,17 @@
                         :key="header.id"
                         :colSpan="header.colSpan"
                         @click="
-                          header.column.getCanSort() && !isProcessingBatch && !isSelectingAllLeads
+                          header.column.getCanSort() &&
+                          !isProcessingBatch &&
+                          !isSelectingAllLeads
                             ? header.column.getToggleSortingHandler()?.($event)
                             : undefined
                         "
                         :class="{
                           'cursor-pointer':
-                            header.column.getCanSort() && !isProcessingBatch && !isSelectingAllLeads,
+                            header.column.getCanSort() &&
+                            !isProcessingBatch &&
+                            !isSelectingAllLeads,
                           'sorting-asc': header.column.getIsSorted() === 'asc',
                           'sorting-desc':
                             header.column.getIsSorted() === 'desc',
@@ -550,7 +609,8 @@
                       :key="row.id"
                       :class="{
                         'table-active': row.getIsSelected(),
-                        'processing-row-disabled': isProcessingBatch || isSelectingAllLeads,
+                        'processing-row-disabled':
+                          isProcessingBatch || isSelectingAllLeads,
                       }"
                     >
                       <td
@@ -579,33 +639,62 @@
               <div class="btn-group">
                 <button
                   class="btn btn-sm btn-outline-secondary"
-                  @click="!isProcessingBatch && !isSelectingAllLeads && table.setPageIndex(0)"
-                  :disabled="!table.getCanPreviousPage() || isProcessingBatch || isSelectingAllLeads"
+                  @click="
+                    !isProcessingBatch &&
+                      !isSelectingAllLeads &&
+                      table.setPageIndex(0)
+                  "
+                  :disabled="
+                    !table.getCanPreviousPage() ||
+                    isProcessingBatch ||
+                    isSelectingAllLeads
+                  "
                 >
                   <i class="bi bi-chevron-bar-left"></i>
                 </button>
                 <button
                   class="btn btn-sm btn-outline-secondary"
-                  @click="!isProcessingBatch && !isSelectingAllLeads && table.previousPage()"
-                  :disabled="!table.getCanPreviousPage() || isProcessingBatch || isSelectingAllLeads"
+                  @click="
+                    !isProcessingBatch &&
+                      !isSelectingAllLeads &&
+                      table.previousPage()
+                  "
+                  :disabled="
+                    !table.getCanPreviousPage() ||
+                    isProcessingBatch ||
+                    isSelectingAllLeads
+                  "
                 >
                   <i class="bi bi-chevron-left me-1"></i
                   >{{ texts.previousPage }}
                 </button>
                 <button
                   class="btn btn-sm btn-outline-secondary"
-                  @click="!isProcessingBatch && !isSelectingAllLeads && table.nextPage()"
-                  :disabled="!table.getCanNextPage() || isProcessingBatch || isSelectingAllLeads"
+                  @click="
+                    !isProcessingBatch &&
+                      !isSelectingAllLeads &&
+                      table.nextPage()
+                  "
+                  :disabled="
+                    !table.getCanNextPage() ||
+                    isProcessingBatch ||
+                    isSelectingAllLeads
+                  "
                 >
                   {{ texts.nextPage }}<i class="bi bi-chevron-right ms-1"></i>
                 </button>
                 <button
                   class="btn btn-sm btn-outline-secondary"
                   @click="
-                    !isProcessingBatch && !isSelectingAllLeads &&
+                    !isProcessingBatch &&
+                      !isSelectingAllLeads &&
                       table.setPageIndex(table.getPageCount() - 1)
                   "
-                  :disabled="!table.getCanNextPage() || isProcessingBatch || isSelectingAllLeads"
+                  :disabled="
+                    !table.getCanNextPage() ||
+                    isProcessingBatch ||
+                    isSelectingAllLeads
+                  "
                 >
                   <i class="bi bi-chevron-bar-right"></i>
                 </button>
@@ -645,6 +734,7 @@ import { ref, reactive, onMounted, computed, watch, h, nextTick } from "vue";
 import FilterPanelView, {
   type ActiveClientFilters,
   type TabCounts,
+  type FilterKey,
 } from "@/components/FilterPanelView.vue";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -679,13 +769,13 @@ interface Lead {
   last_name?: string | null;
   name?: string | null;
   job_title?: string | null;
-  industry?: string[] | null; // Confirmed as JSONB array (remains array)
+  industry?: string[] | null; // This will still receive the original array from the view
   location?: string | null;
   company_name?: string | null;
-  company_size?: string | null; // UPDATED: Now a single string (was string[] | null)
+  company_size?: number | null;
   phone?: string | null;
   linkedIn_url?: string | null;
-  keywords?: string[] | Record<string, any> | string | null; // Flexible for JSONB keywords
+  keywords?: string[] | null; // This will still receive the original JSONB array from the view
   email?: string | null;
   notes?: string | null;
   lead_status?: string | null;
@@ -694,8 +784,13 @@ interface Lead {
 }
 interface FilterTag {
   id: string;
-  // UPDATED: Added 'companyNames' and 'generalKeywords'
-  type: "jobTitle" | "industry" | "location" | "companySize" | "companyNames" | "generalKeywords";
+  type:
+    | "jobTitle"
+    | "industry"
+    | "location"
+    | "companySize"
+    | "companyNames"
+    | "generalKeywords";
   value: string;
   displayValue: string;
   label: string;
@@ -723,8 +818,8 @@ const advancedFilterInputs = reactive({
   industry: "",
   location: "",
   companySize: "",
-  companyNames: "", // RENAMED from 'otherKeywords'
-  generalKeywords: "", // NEW field
+  companyNames: "",
+  generalKeywords: "",
 });
 const filterTags = ref<FilterTag[]>([]);
 const isSearchingLeads = ref(false);
@@ -743,7 +838,7 @@ const batchActionsDropdownToggleRef = ref<HTMLButtonElement | null>(null);
 const columnHelper = createColumnHelper<Lead>();
 
 const totalRowCount = ref(0);
-const isSelectingAllLeads = ref(false); // State for global select all operation
+const isSelectingAllLeads = ref(false);
 
 const defaultTexts = {
   mainQueryLabel: "Briefly describe the type of prospects you're looking for:",
@@ -755,10 +850,8 @@ const defaultTexts = {
   industryLabel: "Industry",
   locationLabel: "Country/City",
   companySizeLabel: "Company Size",
-  // UPDATED: Renamed existing "Company Keywords" to "Company Names"
   companyNamesLabel: "Company Names",
   companyNamesPlaceholder: "e.g., Google, Microsoft, AWS.",
-  // NEW: General Keywords field
   generalKeywordsLabel: "Keywords",
   generalKeywordsPlaceholder: "e.g., SaaS, AI, cloud computing.",
   addFiltersBtnText: "Add Filters",
@@ -780,7 +873,7 @@ const defaultTexts = {
   colCompanySize: "Company Size",
   colPhone: "Phone",
   colLinkedIn: "LinkedIn",
-  colKeywords: "Keywords", // This remains for the table column header
+  colKeywords: "Keywords",
   colEmail: "Email",
   colNotes: "Notes",
   colCreatedAt: "Date Added",
@@ -834,12 +927,12 @@ const defaultTexts = {
   selectFilterPlaceholder: "Select",
   clearAllFiltersButton: "Clear All Filters",
   clearFilterSectionTooltip: "Clear section",
-  selectAllPageButton: "Select Page", // FOR TABLE HEADER CHECKBOX
-  selectAllPageTooltip: "Select all leads on current page", // FOR TABLE HEADER CHECKBOX
-  selectAllButton: "Select All", // FOR EXTERNAL BUTTON
-  selectAllTooltip: "Select all matching leads across all pages", // FOR EXTERNAL BUTTON
-  deselectAllButton: "Deselect All", // FOR EXTERNAL BUTTON (global)
-  deselectAllPageTooltip: "Deselect all leads on current page", // Unused, but kept for consistency if needed
+  selectAllPageButton: "Select Page",
+  selectAllPageTooltip: "Select all leads on current page",
+  selectAllButton: "Select All",
+  selectAllTooltip: "Select all matching leads across all pages",
+  deselectAllButton: "Deselect All",
+  deselectAllPageTooltip: "Deselect all leads on current page",
   batchActionsDropdownTitle: "Actions for Selected",
   batchSaveButton: "Save Selected",
   batchArchiveButton: "Archive Selected",
@@ -923,19 +1016,16 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         type: "checkbox",
         class: "form-check-input",
         style: "cursor: pointer;",
-        // HEADER CHECKBOX: SELECT PAGE BEHAVIOR
         checked: table.getIsAllPageRowsSelected(),
         indeterminate: table.getIsSomePageRowsSelected(),
         disabled:
-          isProcessingBatch.value || isSelectingAllLeads.value || table.getRowModel().rows.length === 0,
-        // FIX: Explicitly call local functions for header checkbox
+          isProcessingBatch.value ||
+          isSelectingAllLeads.value ||
+          table.getRowModel().rows.length === 0,
         onChange: (e: Event) => {
           if (isProcessingBatch.value || isSelectingAllLeads.value) return;
-          if ((e.target as HTMLInputElement).checked) {
-            selectAllOnPage();
-          } else {
-            deselectAllOnPage();
-          }
+          if ((e.target as HTMLInputElement).checked) selectAllOnPage();
+          else deselectAllOnPage();
         },
         title: texts.value.selectAllPageTooltip,
       }),
@@ -945,7 +1035,10 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
         class: "form-check-input",
         style: "cursor: pointer;",
         checked: row.getIsSelected(),
-        disabled: !row.getCanSelect() || isProcessingBatch.value || isSelectingAllLeads.value,
+        disabled:
+          !row.getCanSelect() ||
+          isProcessingBatch.value ||
+          isSelectingAllLeads.value,
         onChange: row.getToggleSelectedHandler(),
       }),
     size: 60,
@@ -973,14 +1066,14 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
       }`.trim() ||
       "N/A",
     enableSorting: true,
-    size: 144, // 80% of 180 (180 * 0.8 = 144)
+    size: 144,
     meta: {
       style: {
         position: "sticky",
-        left: "60px", // Positioned after the 'select' column (60px)
+        left: "60px",
         minWidth: "144px",
         width: "144px",
-        zIndex: "17", // Needs to be lower than 'select' (18) but higher than regular columns
+        zIndex: "17",
         backgroundColor: "var(--card-bg-current)",
         borderRight: "1px solid var(--border-color-current)",
       },
@@ -1042,8 +1135,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
   columnHelper.accessor("company_size", {
     id: "company_size",
     header: () => texts.value.colCompanySize,
-    cell:  (info: CellContext<Lead, Lead["company_size"]>) =>
-      info.getValue() || "N/A", // This directly renders the string value
+    cell: (info: CellContext<Lead, Lead["company_size"]>) =>
+      info.getValue() ?? "N/A",
     enableSorting: true,
     size: 180,
     meta: {
@@ -1088,39 +1181,17 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
       const leadRawKeywords = row.original.keywords;
       const rowId = row.id;
       let actualKeywordsArray: string[] = [];
-
       if (Array.isArray(leadRawKeywords)) {
         actualKeywordsArray = leadRawKeywords
           .map((kw) => String(kw).trim())
           .filter(Boolean);
-      } else if (
-        typeof leadRawKeywords === "string" &&
-        leadRawKeywords.trim() !== ""
-      ) {
-        actualKeywordsArray = leadRawKeywords
-          .split(",")
-          .map((kw) => kw.trim())
-          .filter(Boolean);
-      } else if (
-        leadRawKeywords &&
-        typeof leadRawKeywords === "object" &&
-        !Array.isArray(leadRawKeywords)
-      ) {
-        actualKeywordsArray = Object.values(leadRawKeywords)
-          .map((kw) => String(kw).trim())
-          .filter(Boolean);
       }
-
-      if (actualKeywordsArray.length === 0) {
-        return "N/A";
-      }
-
+      if (actualKeywordsArray.length === 0) return "N/A";
       const isExpanded = !!expandedKeywords.value[rowId];
       const keywordsToDisplay = isExpanded
         ? actualKeywordsArray
         : actualKeywordsArray.slice(0, MAX_VISIBLE_KEYWORDS);
       const hasMoreKeywords = actualKeywordsArray.length > MAX_VISIBLE_KEYWORDS;
-
       const keywordElements = keywordsToDisplay.map((keyword) =>
         h(
           "span",
@@ -1128,7 +1199,6 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
           keyword
         )
       );
-
       const toggleButton = hasMoreKeywords
         ? h(
             "button",
@@ -1147,7 +1217,6 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
                 )
           )
         : null;
-
       return h(
         "div",
         { class: "keywords-cell-container" },
@@ -1185,7 +1254,6 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
     size: 100,
     meta: { style: { minWidth: "100px", width: "100px" } },
   }),
-  // lead_status column removed as requested
   columnHelper.display({
     id: "actions",
     header: () => texts.value.colActions,
@@ -1201,7 +1269,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
               title: texts.value.tooltipSave,
               disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               onClick: () =>
-                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "saved"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) &&
+                updateLeadTab(lead.id, "saved"),
             },
             [h("i", { class: "bi bi-bookmark-check" })]
           )
@@ -1211,7 +1280,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
             "button",
             {
               onClick: () =>
-                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "archived"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) &&
+                updateLeadTab(lead.id, "archived"),
               class: `btn btn-sm btn-outline-warning ${
                 buttons.length > 0 ? "ms-1" : ""
               }`,
@@ -1227,7 +1297,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
             "button",
             {
               onClick: () =>
-                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "new"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) &&
+                updateLeadTab(lead.id, "new"),
               class: "btn btn-sm btn-outline-secondary",
               disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipRestore,
@@ -1240,7 +1311,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
             "button",
             {
               onClick: () =>
-                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "archived"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) &&
+                updateLeadTab(lead.id, "archived"),
               class: `btn btn-sm btn-outline-warning ${
                 buttons.length > 0 ? "ms-1" : ""
               }`,
@@ -1256,7 +1328,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
             "button",
             {
               onClick: () =>
-                !(isProcessingBatch.value || isSelectingAllLeads.value) && updateLeadTab(lead.id, "saved"),
+                !(isProcessingBatch.value || isSelectingAllLeads.value) &&
+                updateLeadTab(lead.id, "saved"),
               class: "btn btn-sm btn-outline-secondary",
               disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipMoveToSaved,
@@ -1268,12 +1341,14 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
           h(
             "button",
             {
-              onClick: () => !(isProcessingBatch.value || isSelectingAllLeads.value) && deleteLead(lead.id),
+              onClick: () =>
+                !(isProcessingBatch.value || isSelectingAllLeads.value) &&
+                deleteLead(lead.id),
               class: `btn btn-sm btn-outline-danger ${
                 buttons.length > 0 ? "ms-1" : ""
               }`,
               disabled: isProcessingBatch.value || isSelectingAllLeads.value,
-              title: texts.value.tooltipDelete,
+                            title: texts.value.tooltipDelete,
             },
             [h("i", { class: "bi bi-trash" })]
           )
@@ -1292,14 +1367,14 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
     meta: {
       style: {
         position: "sticky",
-        right: "0px", // Sticky to the right as the "footer column"
+        right: "0px",
         width: "150px",
         minWidth: "150px",
         textAlign: "center",
         verticalAlign: "middle",
-        zIndex: "18", // Highest z-index to appear on top of other scrolling content
+        zIndex: "18",
         backgroundColor: "var(--card-bg-current)",
-        borderLeft: "1px solid var(--border-color-current)", // Border on the left to separate from scrolling content
+        borderLeft: "1px solid var(--border-color-current)",
       },
     },
   }),
@@ -1307,19 +1382,21 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
 
 function getColumnStyle(column: Column<Lead, unknown>) {
   const baseStyle: Record<string, string> = {
-    "user-select": column.getCanSort() && !isProcessingBatch.value && !isSelectingAllLeads.value ? "pointer" : "none",
+    "user-select":
+      column.getCanSort() &&
+      !isProcessingBatch.value &&
+      !isSelectingAllLeads.value
+        ? "pointer"
+        : "none",
     verticalAlign: "middle",
   };
-  if (!column.columnDef.meta?.style?.width) {
+  if (!column.columnDef.meta?.style?.width)
     baseStyle.width = `${column.columnDef.size}px`;
-  }
-  if (!column.columnDef.meta?.style?.minWidth) {
+  if (!column.columnDef.meta?.style?.minWidth)
     baseStyle.minWidth = `${column.columnDef.size}px`;
-  }
   const metaStyle = column.columnDef.meta?.style || {};
   return { ...baseStyle, ...metaStyle };
 }
-
 const table = useVueTable({
   get data() {
     return tableData.value;
@@ -1349,23 +1426,9 @@ const table = useVueTable({
       typeof updater === "function" ? updater(sorting.value) : updater;
     if (JSON.stringify(newSortingState) !== oldSortingString) {
       sorting.value = newSortingState;
-      console.log(
-        `%cLeadGenFormView: SORTING CHANGED (Values Differ). From: ${oldSortingString} -> To: ${JSON.stringify(
-          sorting.value
-        )}`,
-        "color: orange; font-weight: bold;"
-      );
-      console.count("LeadGenFormView: onSortingChange (fetch triggered)");
       fetchLeadsForCurrentUser(true);
     } else {
       sorting.value = newSortingState;
-      console.log(
-        `%cLeadGenFormView: SORTING state updated by table (ref changed, values same). Current: ${JSON.stringify(
-          sorting.value
-        )}. NO FETCH.`,
-        "color: orange;"
-      );
-      console.count("LeadGenFormView: onSortingChange (ref updated, no fetch)");
     }
   },
   onPaginationChange: (updater: Updater<PaginationState>) => {
@@ -1379,21 +1442,9 @@ const table = useVueTable({
       newPaginationState.pageSize !== oldPageSize
     ) {
       pagination.value = newPaginationState;
-      console.log(
-        `%cLeadGenFormView: PAGINATION CHANGED (Values Differ). From Index: ${oldPageIndex}, Size: ${oldPageSize} -> To Index: ${pagination.value.pageIndex}, Size: ${pagination.value.pageSize}`,
-        "color: orange; font-weight: bold;"
-      );
-      console.count("LeadGenFormView: onPaginationChange (fetch triggered)");
       fetchLeadsForCurrentUser(true);
     } else {
       pagination.value = newPaginationState;
-      console.log(
-        `%cLeadGenFormView: PAGINATION state updated by table (ref changed, values same). Index: ${pagination.value.pageIndex}, Size: ${pagination.value.pageSize}. NO FETCH.`,
-        "color: orange;"
-      );
-      console.count(
-        "LeadGenFormView: onPaginationChange (ref updated, no fetch)"
-      );
     }
   },
   getCoreRowModel: getCoreRowModel(),
@@ -1403,29 +1454,47 @@ const table = useVueTable({
   get rowCount() {
     return totalRowCount.value;
   },
-  // FIX: Add getRowId to tell TanStack Table to use the actual Lead 'id' (UUID)
   getRowId: (row: Lead) => row.id,
 });
-
-// "Select Page" for the header checkbox - applies to current page only
 const selectAllOnPage = () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   table.toggleAllPageRowsSelected(true);
 };
-// "Deselect All on Page" for the header checkbox
 const deselectAllOnPage = () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
   table.toggleAllPageRowsSelected(false);
 };
+function parseCompanySizeRange(rangeString: string): {
+  min?: number;
+  max?: number;
+} {
+  if (rangeString.endsWith("+")) {
+    const min = parseInt(rangeString.slice(0, -1), 10);
+    return isNaN(min) ? {} : { min };
+  }
+  const parts = rangeString.split("-").map((p) => parseInt(p.trim(), 10));
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return { min: parts[0], max: parts[1] };
+  }
+  return {};
+}
 
-// GLOBAL "Select All" for the external button
+// Corrected mapping: keys match FilterKey (received from FilterPanelView), values are view column names
+const COLUMN_MAPPING: Record<FilterKey, string> = {
+    job_title: 'job_title', // Matches directly
+    industry: 'industry_text', // Maps to the new text column in the view
+    location: 'location', // Matches directly
+    company_size: 'company_size', // Matches directly
+    company_name: 'company_name', // Maps to company_name (your filter for companyNames)
+    keywords: 'keywords_text', // Maps to the new text column in the view
+    lead_status: 'lead_status', // Matches directly
+};
+
 const selectAllMatchingLeads = async () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
-
   isSelectingAllLeads.value = true;
   searchMessage.value = "Selecting all matching leads...";
   searchStatus.value = "info";
-
   try {
     const user = authStore.user;
     if (!user) {
@@ -1433,62 +1502,85 @@ const selectAllMatchingLeads = async () => {
       searchStatus.value = "error";
       return;
     }
-
+    // IMPORTANT: Query the new view instead of the original table
     let query = supabase
-      .from("leads")
+      .from("leads_search_view") // Changed from "leads" to your new view name
       .select("id") // Only fetch IDs
       .eq("user_id", user.id)
       .eq("tab", currentTab.value);
 
-    // Apply active client filters (same logic as in fetchLeadsForCurrentUser)
-    Object.entries(activeClientFilters.value).forEach(([tagType, values]) => {
+    // Apply active client filters
+    Object.entries(activeClientFilters.value).forEach(([filterKey, values]) => {
       if (Array.isArray(values) && values.length > 0) {
-        if (tagType === "lead_status") {
-          if (values.length === 1) {
-            query = query.eq("lead_status", values[0]);
-          } else {
-            query = query.in("lead_status", values);
-          }
-        } else if (tagType === "companySize") {
-          query = query.eq("company_size", values[0]);
+        const typedFilterKey = filterKey as FilterKey;
+        // Use the mapped column name for the Supabase query
+        const actualColumnName = COLUMN_MAPPING[typedFilterKey];
+        
+        if (!actualColumnName) {
+            console.warn(`selectAllMatchingLeads: No column mapping found for filter key: ${typedFilterKey}`);
+            return; // Skip this filter if no mapping found
         }
-        // Handles industry and the NEW generalKeywords (which maps to DB 'keywords')
-        else if (tagType === "industry" || tagType === "generalKeywords") { // Changed condition
-          const dbColumn = tagType === "industry" ? "industry" : "keywords"; // Map tagType to actual DB column
-          const cleanedValues = values.map(v => `"${String(v).replace(/"/g, '""')}"`);
-          const filterValue = `{${cleanedValues.join(',')}}`;
-          query = query.filter(dbColumn, 'ov', filterValue); // Use dbColumn
-        }
-        else if (
-          tagType === "jobTitle" ||
-          tagType === "location" ||
-          tagType === "companyNames" // Changed condition to new tag type
-        ) {
-          const dbColumn = tagType === "companyNames" ? "company_name" : (tagType === "jobTitle" ? "job_title" : "location"); // Map tagType to actual DB column
-          const orConditions = values
-            .map((val) => `${dbColumn}.ilike.%${String(val).trim()}%`) // Use dbColumn
-            .join(",");
-          if (orConditions) query = query.or(orConditions);
+
+        switch (typedFilterKey) { // Switch on the original filter key type
+          case "lead_status":
+            query = query.in(actualColumnName, values);
+            break;
+          case "company_size":
+            // This logic is already correct for numeric range filtering
+            const companySizeOrFilters: string[] = [];
+            values.forEach((rangeStr) => {
+              const { min, max } = parseCompanySizeRange(rangeStr);
+              if (min !== undefined && max !== undefined) {
+                companySizeOrFilters.push(
+                  `and(${actualColumnName}.gte.${min},${actualColumnName}.lte.${max})`
+                );
+              } else if (min !== undefined) {
+                companySizeOrFilters.push(`${actualColumnName}.gte.${min}`);
+              }
+            });
+            if (companySizeOrFilters.length > 0) {
+              query = query.or(companySizeOrFilters.join(","));
+            }
+            break;
+          // Group all fuzzy text search fields here
+          case "job_title":
+          case "location":
+          case "company_name":
+          case "industry":
+          case "keywords":
+            // For these fields, now use ilike on the new text columns from the view (or original text columns)
+            const orFuzzyConditions = values
+              .map((val) => `${actualColumnName}.ilike.%${String(val).trim()}%`)
+              .join(",");
+            if (orFuzzyConditions) query = query.or(orFuzzyConditions);
+            break;
+          default:
+            // This default should ideally never be hit if all FilterKey types are covered
+            console.warn(
+              `selectAllMatchingLeads: Unhandled filter key type in switch: ${typedFilterKey}. Please add it to COLUMN_MAPPING and switch cases.`
+            );
+            break;
         }
       }
     });
-
     const { data: leadIds, error } = await query;
-
     if (error) {
+      console.error(
+        "Error during selectAllMatchingLeads query:",
+        error,
+        "Query filters:",
+        JSON.stringify(activeClientFilters.value)
+      );
       throw error;
     }
-
     const newSelection: RowSelectionState = {};
-    if (leadIds) {
-      leadIds.forEach(lead => {
+    if (leadIds)
+      leadIds.forEach((lead) => {
         newSelection[lead.id] = true;
       });
-    }
     rowSelection.value = newSelection;
     searchMessage.value = `Selected ${leadIds?.length || 0} leads.`;
     searchStatus.value = "success";
-
   } catch (error: any) {
     console.error("Error selecting all filtered leads:", error);
     searchMessage.value = `Error selecting all leads: ${error.message}`;
@@ -1498,86 +1590,72 @@ const selectAllMatchingLeads = async () => {
   }
 };
 
-// GLOBAL "Deselect All" for the external button
 const deselectAllGlobalLeads = () => {
   if (isProcessingBatch.value || isSelectingAllLeads.value) return;
-  rowSelection.value = {}; // Clear ALL selections
+  rowSelection.value = {};
   searchMessage.value = "All leads deselected.";
   searchStatus.value = "info";
 };
-
-
-// selectedRowCount now correctly counts all globally selected leads
-const selectedRowCount = computed(
-  () => Object.keys(rowSelection.value).length
-);
-
-// New computed property to check if all filtered leads are selected
-const allFilteredLeadsSelected = computed(() =>
+const selectedRowCount = computed(() => Object.keys(rowSelection.value).length);
+const allFilteredLeadsSelected = computed(
+  () =>
     totalRowCount.value > 0 && selectedRowCount.value === totalRowCount.value
 );
-
-
 const canBatchSave = computed(
   () =>
     currentTab.value === "new" &&
     !isProcessingBatch.value &&
-    !isSelectingAllLeads.value && // Add this to disabled condition
+    !isSelectingAllLeads.value &&
     selectedRowCount.value > 0 &&
-    // Check if at least one selected lead is in the 'new' tab (from tableData for display)
-    Object.keys(rowSelection.value).some(id => 
-      tableData.value.some(lead => lead.id === id && lead.tab === "new") // Check if any *current page* lead matches selection and tab
+    Object.keys(rowSelection.value).some((id) =>
+      tableData.value.some((lead) => lead.id === id && lead.tab === "new")
     )
 );
 const canBatchArchiveNew = computed(
   () =>
     currentTab.value === "new" &&
     !isProcessingBatch.value &&
-    !isSelectingAllLeads.value && // Add this to disabled condition
+    !isSelectingAllLeads.value &&
     selectedRowCount.value > 0 &&
-    // Check if at least one selected lead is in the 'new' tab
-    Object.keys(rowSelection.value).some(id => 
-      tableData.value.some(lead => lead.id === id && lead.tab === "new")
+    Object.keys(rowSelection.value).some((id) =>
+      tableData.value.some((lead) => lead.id === id && lead.tab === "new")
     )
 );
 const canBatchRestoreToNewFromSaved = computed(
   () =>
     currentTab.value === "saved" &&
     !isProcessingBatch.value &&
-    !isSelectingAllLeads.value && // Add this to disabled condition
+    !isSelectingAllLeads.value &&
     selectedRowCount.value > 0 &&
-    // Check if at least one selected lead is in the 'saved' tab
-    Object.keys(rowSelection.value).some(id => 
-      tableData.value.some(lead => lead.id === id && lead.tab === "saved")
+    Object.keys(rowSelection.value).some((id) =>
+      tableData.value.some((lead) => lead.id === id && lead.tab === "saved")
     )
 );
 const canBatchArchiveSaved = computed(
   () =>
     currentTab.value === "saved" &&
     !isProcessingBatch.value &&
-    !isSelectingAllLeads.value && // Add this to disabled condition
+    !isSelectingAllLeads.value &&
     selectedRowCount.value > 0 &&
-    // Check if at least one selected lead is in the 'saved' tab
-    Object.keys(rowSelection.value).some(id => 
-      tableData.value.some(lead => lead.id === id && lead.tab === "saved")
+    Object.keys(rowSelection.value).some((id) =>
+      tableData.value.some((lead) => lead.id === id && lead.tab === "saved")
     )
 );
 const canBatchMoveToSaved = computed(
   () =>
     currentTab.value === "archived" &&
     !isProcessingBatch.value &&
-    !isSelectingAllLeads.value && // Add this to disabled condition
+    !isSelectingAllLeads.value &&
     selectedRowCount.value > 0 &&
-    // Check if at least one selected lead is in the 'archived' tab
-    Object.keys(rowSelection.value).some(id => 
-      tableData.value.some(lead => lead.id === id && lead.tab === "archived")
+    Object.keys(rowSelection.value).some((id) =>
+      tableData.value.some((lead) => lead.id === id && lead.tab === "archived")
     )
 );
 const canBatchDeleteArchived = computed(
   () =>
     currentTab.value === "archived" &&
     !isProcessingBatch.value &&
-    !isSelectingAllLeads.value && // Add this to disabled condition
+    !isSelectingAllLeads.value &&
     selectedRowCount.value > 0
 );
 
@@ -1597,84 +1675,72 @@ const batchProcessLeads = async (
     target?: LeadTab
   ) => Promise<{ success: boolean; error?: any }>
 ) => {
-  if (isProcessingBatch.value || isSelectingAllLeads.value) {
-    console.log("Batch Process: Skipped due to ongoing operation.");
-    return;
-  }
+  if (isProcessingBatch.value || isSelectingAllLeads.value) return;
 
-  const selectedLeadIds = Object.keys(rowSelection.value);
-  if (selectedLeadIds.length === 0) {
-    console.warn("Batch Process: No leads selected to process. Aborting.");
-    searchMessage.value = texts.value.noLeadsEligibleForAction("process"); // Generic message if no leads were selected
-    searchStatus.value = "warning";
-    return;
-  }
+  isProcessingBatch.value = true; // Set at the beginning of the entire process
 
-  const user = authStore.user;
-  if (!user?.id) {
-    console.error("Batch Process: User ID not available for batch operation.");
-    searchMessage.value = texts.value.userNotAuthMessage;
-    searchStatus.value = "error";
-    return;
-  }
-
-  let leadsToProcess: Lead[] = [];
-  try {
-    console.log("Batch Process: Attempting to fetch selected leads from DB. IDs:", selectedLeadIds);
-    console.log("Batch Process: Current User ID:", user.id);
-
-    const { data, error } = await supabase
-      .from('leads')
-      .select(selectFields)
-      .in('id', selectedLeadIds)
-      .eq('user_id', user.id); // Ensure leads belong to the current user
-
-    console.log("Batch Process: Supabase fetch response - Data:", data, "Error:", error);
-
-    if (error) {
-      throw error; // Propagate error for catch block
+  try { // Outer try block to ensure finally always runs
+    const selectedLeadIds = Object.keys(rowSelection.value);
+    if (selectedLeadIds.length === 0) {
+      searchMessage.value = texts.value.noLeadsEligibleForAction("process");
+      searchStatus.value = "warning";
+      return; // Early exit
     }
-    leadsToProcess = data || [];
-  } catch (e: any) {
-    console.error("Unexpected error during batch operation leads fetch:", e);
-    searchMessage.value = texts.value.alertError + `Batch operation failed during fetch: ${e.message}`;
-    searchStatus.value = "error";
-    return;
-  }
-  
-  if (filterFn) {
-    const leadsBeforeFilter = leadsToProcess.length;
-    leadsToProcess = leadsToProcess.filter(filterFn);
-    console.log(`Batch Process: Filtered leads. Before: ${leadsBeforeFilter}, After: ${leadsToProcess.length}`);
-  }
+    const user = authStore.user;
+    if (!user?.id) {
+      searchMessage.value = texts.value.userNotAuthMessage;
+      searchStatus.value = "error";
+      return; // Early exit
+    }
 
-  const actionNameForNoLeadsMsg = actionNameKey
-    .replace("confirmBatch", "")
-    .toLowerCase();
-  if (leadsToProcess.length === 0 && targetTabOrAction !== "delete") { // The original condition
-    searchMessage.value = texts.value.noLeadsEligibleForAction(
-      actionNameForNoLeadsMsg
-    );
-    searchStatus.value = "warning";
-    return;
-  }
-  const confirmMessageFn = texts.value[actionNameKey] as (
-    count: number
-  ) => string;
-  if (!confirm(confirmMessageFn(leadsToProcess.length))) {
-    console.log("Batch Process: User cancelled confirmation.");
-    return;
-  }
+    let leadsToProcess: Lead[] = [];
+    try { // Inner try-catch for Supabase fetch
+      const { data, error } = await supabase
+        .from("leads") // Batch operations target the original table
+        .select(selectFields) // Fetch all fields needed for processing
+        .in("id", selectedLeadIds)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      leadsToProcess = data || [];
+    } catch (e: any) {
+      console.error("Error during batch operation leads fetch:", e);
+      searchMessage.value =
+        texts.value.alertError +
+        `Batch operation failed during fetch: ${e.message}`;
+      searchStatus.value = "error";
+      return; // Exit early on inner error
+    }
 
-  isProcessingBatch.value = true;
-  const processingActionName = actionNameKey.replace("confirmBatch", "");
-  searchMessage.value = `Processing ${processingActionName} batch... (${leadsToProcess.length} leads)`;
-  searchStatus.value = null;
-  let successCount = 0;
-  let errorCount = 0;
+    if (filterFn) {
+      const leadsBeforeFilter = leadsToProcess.length;
+      leadsToProcess = leadsToProcess.filter(filterFn);
+      if (leadsBeforeFilter !== leadsToProcess.length) {
+         console.log(`Batch Process: Filtered leads. Before: ${leadsBeforeFilter}, After: ${leadsToProcess.length}`);
+      }
+    }
 
-  const results: PromiseSettledResult<{ success: boolean; error?: any }>[] =
-    await Promise.allSettled(
+    const actionNameForNoLeadsMsg = actionNameKey
+      .replace("confirmBatch", "")
+      .toLowerCase();
+    if (leadsToProcess.length === 0 && targetTabOrAction !== "delete") {
+      searchMessage.value = texts.value.noLeadsEligibleForAction(
+        actionNameForNoLeadsMsg
+      );
+      searchStatus.value = "warning";
+      return; // Early exit
+    }
+    const confirmMessageFn = texts.value[actionNameKey] as (
+      count: number
+    ) => string;
+    if (!confirm(confirmMessageFn(leadsToProcess.length))) return; // Early exit (user cancelled)
+
+    const processingActionName = actionNameKey.replace("confirmBatch", "");
+    searchMessage.value = `Processing ${processingActionName} batch... (${leadsToProcess.length} leads)`;
+    searchStatus.value = null;
+    let successCount = 0;
+    let errorCount = 0;
+
+    const results = await Promise.allSettled(
       leadsToProcess.map((lead: Lead) =>
         operationFn(
           lead.id,
@@ -1683,11 +1749,7 @@ const batchProcessLeads = async (
       )
     );
 
-  results.forEach(
-    (
-      result: PromiseSettledResult<{ success: boolean; error?: any }>,
-      index: number
-    ) => {
+    results.forEach((result, index) => {
       const leadProcessed = leadsToProcess[index];
       if (
         result.status === "fulfilled" &&
@@ -1702,23 +1764,29 @@ const batchProcessLeads = async (
           result.status === "rejected" ? result.reason : result.value
         );
       }
+    });
+
+    searchMessage.value = texts.value.batchActionResult(
+      processingActionName,
+      successCount,
+      errorCount
+    );
+    searchStatus.value =
+      errorCount > 0 ? (successCount > 0 ? "warning" : "error") : "success";
+    rowSelection.value = {}; // Clear all selections after batch operation
+    await fetchLeadsForCurrentUser(true);
+    await fetchTabCounts(authStore.user?.id);
+
+  } catch (error: any) { // Catch any unexpected errors from the outer try block
+    console.error("Unexpected error in batchProcessLeads:", error);
+    if (!searchMessage.value) { // Only set if no specific message was already set
+      searchMessage.value = texts.value.alertError + (error instanceof Error ? error.message : String(error));
+      searchStatus.value = "error";
     }
-  );
-
-  searchMessage.value = texts.value.batchActionResult(
-    processingActionName,
-    successCount,
-    errorCount
-  );
-  searchStatus.value =
-    errorCount > 0 ? (successCount > 0 ? "warning" : "error") : "success";
-  rowSelection.value = {}; // Clear all selections after batch operation
-  await fetchLeadsForCurrentUser(true);
-  await fetchTabCounts(authStore.user?.id);
-  isProcessingBatch.value = false; // Reset batch processing flag here after all is done
-  console.log(`Batch Process: Finished. Success: ${successCount}, Failed: ${errorCount}`);
+  } finally {
+    isProcessingBatch.value = false; // Always reset this flag when the function exits
+  }
 };
-
 const batchSaveSelected = () =>
   batchProcessLeads(
     "saved",
@@ -1755,189 +1823,165 @@ const batchDeleteSelected = () =>
     (lead) => lead.tab === "archived",
     (leadId) => deleteLead(leadId, true)
   );
-
 const exportSelectedToCSV = () => {
-  if (isProcessingBatch.value || selectedRowCount.value === 0 || isSelectingAllLeads.value) {
-    console.log("Export CSV skipped due to state:", {
-      isProcessingBatch: isProcessingBatch.value,
-      selectedRowCount: selectedRowCount.value,
-      isSelectingAllLeads: isSelectingAllLeads.value
-    });
-    searchMessage.value = "No leads to export."; // Show message explicitly
-    searchStatus.value = "warning";
-    return;
-  }
-
-  const selectedLeadIds = Object.keys(rowSelection.value);
-  // This check is partially redundant with selectedRowCount.value === 0, but good for clarity
-  if (selectedLeadIds.length === 0) { 
-    console.warn("Export CSV: No leads selected after `rowSelection` check.");
+  if (
+    isProcessingBatch.value ||
+    selectedRowCount.value === 0 ||
+    isSelectingAllLeads.value
+  ) {
     searchMessage.value = "No leads to export.";
     searchStatus.value = "warning";
     return;
   }
-  
+  const selectedLeadIds = Object.keys(rowSelection.value);
+  if (selectedLeadIds.length === 0) {
+    searchMessage.value = "No leads to export.";
+    searchStatus.value = "warning";
+    return;
+  }
   const fetchLeadsForExport = async () => {
     const user = authStore.user;
     if (!user?.id) {
-      console.error("Export CSV: User ID not available for fetching leads.");
       searchMessage.value = texts.value.userNotAuthMessage;
       searchStatus.value = "error";
       return [];
     }
-
     try {
-      console.log("Export CSV: Attempting to fetch selected leads. IDs:", selectedLeadIds);
-      console.log("Export CSV: User ID:", user.id);
-
+      // For export, fetch from the original table to get raw data
       const { data, error } = await supabase
-        .from('leads')
+        .from("leads") // Changed from "leads_search_view" back to "leads"
         .select(selectFields)
-        .in('id', selectedLeadIds)
-        .eq('user_id', user.id); // Crucial for RLS and ownership
-
-      console.log("Export CSV: Supabase fetch response - Data:", data, "Error:", error);
-
-      if (error) {
-        throw error; // Propagate error for outer catch
-      }
+        .in("id", selectedLeadIds)
+        .eq("user_id", user.id);
+      if (error) throw error;
       return data || [];
     } catch (e: any) {
-      console.error("Unexpected error during CSV export fetch:", e);
-      searchMessage.value = texts.value.alertError + `CSV export failed: ${e.message}`;
+      searchMessage.value =
+        texts.value.alertError + `CSV export failed: ${e.message}`;
       searchStatus.value = "error";
       return [];
     }
   };
-
-  fetchLeadsForExport().then((leadsToExportData: Lead[] | undefined) => { // leadsToExportData is guaranteed to be `Lead[]` here
-    if (!leadsToExportData || leadsToExportData.length === 0) { // This condition is the direct cause of "No leads to export."
-      searchMessage.value = "No leads to export.";
-      searchStatus.value = "warning";
-      return;
-    }
-
-    const headers = [
-      "ID",
-      "Date Added",
-      "Tab",
-      "Status",
-      "First Name",
-      "Last Name",
-      "Full Name",
-      "Job Title",
-      "Industry",
-      "Location",
-      "Company Name",
-      "Company Size",
-      "Phone",
-      "LinkedIn URL",
-      "Keywords",
-      "Email",
-      "Notes",
-      "Icebreaker",
-      "Source Query Criteria",
-    ];
-
-    const csvRows: string[] = [];
-    csvRows.push(headers.join(","));
-
-    const formatCSVCell = (value: any): string => {
-      if (value === null || typeof value === "undefined") {
-        return "";
+  fetchLeadsForExport()
+    .then((leadsToExportData: Lead[] | undefined) => {
+      if (!leadsToExportData || leadsToExportData.length === 0) {
+        searchMessage.value = "No leads to export.";
+        searchStatus.value = "warning";
+        return;
       }
-      let stringValue = String(value);
-
-      if (Array.isArray(value)) {
-        stringValue = value.map((item) => String(item).replace(/"/g, '""')).join("; ");
-      } else if (typeof value === "object" && value !== null) {
-        try {
-          stringValue = JSON.stringify(value);
-        } catch (e) {
-          stringValue = "[Object]";
-        }
-      }
-
-      if (
-        stringValue.includes('"') ||
-        stringValue.includes(',') ||
-        stringValue.includes('\n') ||
-        stringValue.includes('\r')
-      ) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      }
-      return stringValue;
-    }
-
-    leadsToExportData.forEach((lead) => {
-      const row = [
-        formatCSVCell(lead.id),
-        formatCSVCell(lead.created_at ? new Date(lead.created_at).toISOString() : ""),
-        formatCSVCell(lead.tab),
-        formatCSVCell(lead.lead_status),
-        formatCSVCell(lead.first_name),
-        formatCSVCell(lead.last_name),
-        formatCSVCell(
-          lead.name ||
-            (typeof lead.first_name === 'string' ? lead.first_name : "") +
-            (typeof lead.last_name === 'string' ? " " + lead.last_name : "")
-        ),
-        formatCSVCell(lead.job_title),
-        formatCSVCell(lead.industry),
-        formatCSVCell(lead.location),
-        formatCSVCell(lead.company_name),
-        formatCSVCell(lead.company_size),
-        formatCSVCell(lead.phone),
-        formatCSVCell(lead.linkedIn_url),
-        formatCSVCell(lead.keywords),
-        formatCSVCell(lead.email),
-        formatCSVCell(lead.notes),
-        formatCSVCell(lead.icebreaker),
-        formatCSVCell(lead.source_query_criteria),
+      const headers = [
+        "ID",
+        "Date Added",
+        "Tab",
+        "Status",
+        "First Name",
+        "Last Name",
+        "Full Name",
+        "Job Title",
+        "Industry",
+        "Location",
+        "Company Name",
+        "Company Size",
+        "Phone",
+        "LinkedIn URL",
+        "Keywords",
+        "Email",
+        "Notes",
+        "Icebreaker",
+        "Source Query Criteria",
       ];
-      csvRows.push(row.join(","));
-    });
-
-    const csvString = csvRows.join("\r\n");
-    const blob = new Blob([`\uFEFF${csvString}`], { type: "text/csv;charset=utf-8;" });
-
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `leads_export_${timestamp}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } else {
-      alert(
-        "CSV export initiated. Your browser may handle the download differently or require manual saving."
-      );
-      const encodedUri = encodeURI("data:text/csv;charset=utf-8," + `\uFEFF${csvString}`);
-      const newWindow = window.open(encodedUri);
-      if (!newWindow) {
-        alert(
-          "Could not open a new window for CSV download. Please check your popup blocker settings."
+      const csvRows: string[] = [headers.join(",")];
+      const formatCSVCell = (value: any): string => {
+        if (value === null || typeof value === "undefined") return "";
+        let stringValue = String(value);
+        if (Array.isArray(value))
+          stringValue = value
+            .map((item) => String(item).replace(/"/g, '""'))
+            .join("; ");
+        else if (typeof value === "object" && value !== null) {
+          try {
+            stringValue = JSON.stringify(value);
+          } catch (e) {
+            stringValue = "[Object]";
+          }
+        }
+        if (
+          stringValue.includes('"') ||
+          stringValue.includes(",") ||
+          stringValue.includes("\n") ||
+          stringValue.includes("\r")
+        )
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        return stringValue;
+      };
+      leadsToExportData.forEach((lead) => {
+        const row = [
+          formatCSVCell(lead.id),
+          formatCSVCell(
+            lead.created_at ? new Date(lead.created_at).toISOString() : ""
+          ),
+          formatCSVCell(lead.tab),
+          formatCSVCell(lead.lead_status),
+          formatCSVCell(lead.first_name),
+          formatCSVCell(lead.last_name),
+          formatCSVCell(
+            lead.name ||
+              (typeof lead.first_name === "string" ? lead.first_name : "") +
+                (typeof lead.last_name === "string" ? " " + lead.last_name : "")
+          ),
+          formatCSVCell(lead.job_title),
+          formatCSVCell(lead.industry), // Will export original array
+          formatCSVCell(lead.location),
+          formatCSVCell(lead.company_name),
+          formatCSVCell(lead.company_size),
+          formatCSVCell(lead.phone),
+          formatCSVCell(lead.linkedIn_url),
+          formatCSVCell(lead.keywords), // Will export original JSONB
+          formatCSVCell(lead.email),
+          formatCSVCell(lead.notes),
+          formatCSVCell(lead.icebreaker),
+          formatCSVCell(lead.source_query_criteria),
+        ];
+        csvRows.push(row.join(","));
+      });
+      const csvString = csvRows.join("\r\n");
+      const blob = new Blob([`\uFEFF${csvString}`], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const link = document.createElement("a");
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        const timestamp = new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace(/[-:T]/g, "");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `leads_export_${timestamp}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        const encodedUri = encodeURI(
+          "data:text/csv;charset=utf-8," + `\uFEFF${csvString}`
         );
+        const newWindow = window.open(encodedUri);
+        if (!newWindow) alert("Could not open window.");
       }
-    }
-    searchMessage.value = `Exported ${leadsToExportData.length} leads to CSV.`;
-    searchStatus.value = "success";
-    rowSelection.value = {}; // Clear selections after export
-  }).catch((e) => { // Added catch for the promise chain from fetchLeadsForExport
-    console.error("Error during CSV export promise chain:", e);
-    // Error message already set by fetchLeadsForExport, but ensure final state
-    if (!searchMessage.value) {
-      searchMessage.value = texts.value.alertError + (e.message || "Unknown error during export.");
+      searchMessage.value = `Exported ${leadsToExportData.length} leads to CSV.`;
+      searchStatus.value = "success";
+      rowSelection.value = {};
+    })
+    .catch((e) => {
+      if (!searchMessage.value) {
+        searchMessage.value =
+          texts.value.alertError +
+          (e.message || "Unknown error during export.");
+      }
       searchStatus.value = "error";
-    }
-  });
+    });
 };
-
-
 async function updateLeadTab(
   leadId: string,
   newTab: LeadTab,
@@ -1956,12 +2000,12 @@ async function updateLeadTab(
     }
   }
   try {
+    // Updates always target the original table
     const { error } = await supabase
       .from("leads")
       .update({ tab: newTab })
       .eq("id", leadId);
     if (error) throw error;
-
     if (!isBatchOperation) {
       switch (newTab) {
         case "saved":
@@ -1975,7 +2019,6 @@ async function updateLeadTab(
           break;
       }
       searchStatus.value = "success";
-      // Manually remove from selection as it's no longer eligible for current tab
       const currentSelection = { ...rowSelection.value };
       if (currentSelection[leadId]) {
         delete currentSelection[leadId];
@@ -1990,15 +2033,11 @@ async function updateLeadTab(
       searchMessage.value = texts.value.leadUpdateError + ` (${error.message})`;
       searchStatus.value = "error";
     }
-    console.error(`Error updating lead ${leadId} tab:`, error);
     return { success: false, leadId, newTab, error };
   } finally {
-    if (!isBatchOperation) {
-      isProcessingBatch.value = false;
-    }
+    if (!isBatchOperation) isProcessingBatch.value = false;
   }
 }
-
 async function deleteLead(
   leadId: string,
   isBatchOperation: boolean = false
@@ -2010,17 +2049,13 @@ async function deleteLead(
       searchStatus.value = null;
     }
   }
-
   try {
+    // Deletes always target the original table
     const { error } = await supabase.from("leads").delete().eq("id", leadId);
-
     if (error) throw error;
-
     if (!isBatchOperation) {
       searchMessage.value = texts.value.leadDeletedSuccess;
       searchStatus.value = "success";
-
-      // Manually remove from selection
       const currentSelection = { ...rowSelection.value };
       if (currentSelection[leadId]) {
         delete currentSelection[leadId];
@@ -2035,29 +2070,20 @@ async function deleteLead(
       searchMessage.value = texts.value.leadDeleteError + ` (${error.message})`;
       searchStatus.value = "error";
     }
-    console.error(`Error deleting lead ${leadId}:`, error);
     return { success: false, error };
   } finally {
-    if (!isBatchOperation) {
-      isProcessingBatch.value = false;
-    }
+    if (!isBatchOperation) isProcessingBatch.value = false;
   }
 }
-
 function toggleSidebar() {
   sidebarCollapsed.value = !sidebarCollapsed.value;
 }
 function toggleSearchForm() {
   showSearchForm.value = !showSearchForm.value;
 }
-
 watch(
   () => languageStore.currentLang,
-  () => {
-    console.log(
-      "Language changed, consider re-fetching or re-evaluating texts if necessary."
-    );
-  }
+  () => {}
 );
 watch(
   () => authStore.user,
@@ -2068,7 +2094,7 @@ watch(
       sorting.value = [];
       rowSelection.value = {};
       tableData.value = [];
-      totalRowCount.value = 0; // Reset totalRowCount on user change
+      totalRowCount.value = 0;
       initialLoadComplete.value = false;
       activeClientFilters.value = {};
       await fetchTabCounts(newUser.id);
@@ -2077,7 +2103,7 @@ watch(
       await archiveUnsavedLeads(oldUser.id);
       tableData.value = [];
       rowSelection.value = {};
-      totalRowCount.value = 0; // Reset totalRowCount on logout
+      totalRowCount.value = 0;
       initialLoadComplete.value = false;
       pagination.value.pageIndex = 0;
       sorting.value = [];
@@ -2089,7 +2115,6 @@ watch(
     }
   }
 );
-
 watch(selectedRowCount, async (newCount, oldCount) => {
   if (newCount > 0 && oldCount === 0) {
     await nextTick();
@@ -2097,56 +2122,44 @@ watch(selectedRowCount, async (newCount, oldCount) => {
       const existingDropdown = Dropdown.getInstance(
         batchActionsDropdownToggleRef.value
       );
-      if (!existingDropdown) {
-        new Dropdown(batchActionsDropdownToggleRef.value);
-      }
+      if (!existingDropdown) new Dropdown(batchActionsDropdownToggleRef.value);
     }
   }
 });
-
 const isAdvancedCriteriaActive = computed(
   () =>
-    (showAdvancedFilters.value && typeof naturalLanguageQuery.value === 'string' && naturalLanguageQuery.value.trim() === "") ||
+    (showAdvancedFilters.value &&
+      typeof naturalLanguageQuery.value === "string" &&
+      naturalLanguageQuery.value.trim() === "") ||
     filterTags.value.length > 0
 );
 function handleTabChangeFromPanel(newTab: LeadTab) {
-  console.log(
-    `%cLeadGenFormView: Received @update:currentTab -> ${newTab}`,
-    "color: green; font-weight: bold;"
-  );
-  console.count("LeadGenFormView: handleTabChangeFromPanel called");
   changeTab(newTab);
 }
 function handleClientFiltersUpdate(updatedFilters: ActiveClientFilters) {
-  console.log(
-    "%cLeadGenFormView: Received @update:filters ->",
-    "color: green; font-weight: bold;",
-    JSON.stringify(updatedFilters)
-  );
-  console.count("LeadGenFormView: handleClientFiltersUpdate called");
   activeClientFilters.value = updatedFilters;
-  pagination.value.pageIndex = 0; // Reset to first page on filter change
-  rowSelection.value = {}; // Clear selection on filter change
+  pagination.value.pageIndex = 0;
+  rowSelection.value = {};
   fetchLeadsForCurrentUser(true);
 }
-
 async function fetchTabCounts(userId: string | undefined) {
   if (!userId) {
     tabCounts.value = { new: 0, saved: 0, archived: 0 };
     return;
   }
   try {
+    // Tab counts should still query the base table for accurate counts
     const [newRes, savedRes, archivedRes] = await Promise.all([
       supabase
-        .from("leads")
+        .from("leads") // Keep leads here
         .select("id", { count: "exact", head: true })
         .match({ user_id: userId, tab: "new" }),
       supabase
-        .from("leads")
+        .from("leads") // Keep leads here
         .select("id", { count: "exact", head: true })
         .match({ user_id: userId, tab: "saved" }),
       supabase
-        .from("leads")
+        .from("leads") // Keep leads here
         .select("id", { count: "exact", head: true })
         .match({ user_id: userId, tab: "archived" }),
     ]);
@@ -2156,7 +2169,6 @@ async function fetchTabCounts(userId: string | undefined) {
       archived: archivedRes.count ?? 0,
     };
   } catch (error) {
-    console.error("Error fetching tab counts:", error);
     tabCounts.value = { new: 0, saved: 0, archived: 0 };
   }
 }
@@ -2169,18 +2181,16 @@ function changeTab(newTab: LeadTab) {
   )
     return;
   currentTab.value = newTab;
-  pagination.value.pageIndex = 0; // Always reset to page 0 when changing tabs
+  pagination.value.pageIndex = 0;
   sorting.value = [];
-  rowSelection.value = {}; // Clear selection on tab change
-  activeClientFilters.value = {}; // Clear filters on tab change
+  rowSelection.value = {};
+  activeClientFilters.value = {};
   fetchLeadsForCurrentUser(true);
 }
 async function archiveUnsavedLeads(
   userId: string | undefined
 ): Promise<boolean> {
-  if (!userId) {
-    return false;
-  }
+  if (!userId) return false;
   try {
     const { error } = await supabase
       .from("leads")
@@ -2189,7 +2199,6 @@ async function archiveUnsavedLeads(
     if (error) throw error;
     return true;
   } catch (e) {
-    console.error("Error archiving unsaved leads:", e);
     return false;
   }
 }
@@ -2203,7 +2212,6 @@ async function hasUnsavedLeads(userId: string | undefined): Promise<boolean> {
     if (error) throw error;
     return (count ?? 0) > 0;
   } catch (e) {
-    console.error("Error checking for unsaved leads:", e);
     return false;
   }
 }
@@ -2216,48 +2224,42 @@ function getFieldLabel(type: FilterTag["type"]): string {
     industry: "industryLabel",
     location: "locationLabel",
     companySize: "companySizeLabel",
-    companyNames: "companyNamesLabel", // UPDATED
-    generalKeywords: "generalKeywordsLabel", // NEW
+    companyNames: "companyNamesLabel",
+    generalKeywords: "generalKeywordsLabel",
   };
-  // @ts-ignore
-  return (texts.value as any)[map[type]] || type;
+  /* @ts-ignore */ return (texts.value as any)[map[type]] || type;
 }
-// MODIFIED: This function now just adds tags and clears inputs,
-// it no longer prepares the N8N payload directly.
 function addAdvancedInputsAsTags() {
   const i = advancedFilterInputs;
-  if (typeof i.jobTitle === 'string' && i.jobTitle.trim()) addTag("jobTitle", i.jobTitle.trim());
-  if (typeof i.industry === 'string' && i.industry)
+  if (typeof i.jobTitle === "string" && i.jobTitle.trim())
+    addTag("jobTitle", i.jobTitle.trim());
+  if (typeof i.industry === "string" && i.industry)
     addTag(
       "industry",
       i.industry,
       languageStore.industries?.find((o) => o.value === i.industry)?.text
     );
-  if (typeof i.location === 'string' && i.location.trim()) addTag("location", i.location.trim());
-  if (typeof i.companySize === 'string' && i.companySize) addTag("companySize", i.companySize);
-
-  // Handle companyNames (formerly otherKeywords)
-  if (typeof i.companyNames === 'string' && i.companyNames.trim())
+  if (typeof i.location === "string" && i.location.trim())
+    addTag("location", i.location.trim());
+  if (typeof i.companySize === "string" && i.companySize)
+    addTag("companySize", i.companySize);
+  if (typeof i.companyNames === "string" && i.companyNames.trim())
     i.companyNames
       .trim()
       .split(",")
       .forEach((k) => {
-        if (typeof k === 'string' && k.trim()) addTag("companyNames", k.trim()); // Changed type
+        if (typeof k === "string" && k.trim()) addTag("companyNames", k.trim());
       });
-
-  // Handle generalKeywords (NEW)
-  if (typeof i.generalKeywords === 'string' && i.generalKeywords.trim())
+  if (typeof i.generalKeywords === "string" && i.generalKeywords.trim())
     i.generalKeywords
       .trim()
       .split(",")
       .forEach((k) => {
-        if (typeof k === 'string' && k.trim()) addTag("generalKeywords", k.trim()); // NEW type
+        if (typeof k === "string" && k.trim())
+          addTag("generalKeywords", k.trim());
       });
-
-  // Clear inputs AFTER they've been added as tags
   Object.keys(i).forEach((k) => (i[k as keyof typeof i] = ""));
 }
-
 function addTag(
   type: FilterTag["type"],
   value: string,
@@ -2265,9 +2267,7 @@ function addTag(
 ) {
   const dVal = displayValueOverride || value;
   const lbl = getFieldLabel(type);
-  // Adjusted logic: If the type is 'companyNames' or 'generalKeywords', don't filter out existing tags of that type,
-  // as they are meant to be multiple. For others, keep the "replace" behavior.
-  if (type !== "companyNames" && type !== "generalKeywords") // UPDATED condition
+  if (type !== "companyNames" && type !== "generalKeywords")
     filterTags.value = filterTags.value.filter((t) => t.type !== type);
   if (
     filterTags.value.some(
@@ -2286,71 +2286,59 @@ function addTag(
 function removeFilterTag(tagId: string) {
   filterTags.value = filterTags.value.filter((t) => t.id !== tagId);
 }
-
 function validateSearchCriteria(): boolean {
   searchMessage.value = null;
   searchStatus.value = null;
-
-  // Now validation relies on naturalLanguageQuery OR existing filterTags
-  const nqHasContent = typeof naturalLanguageQuery.value === 'string' && naturalLanguageQuery.value.trim() !== "";
+  const nqHasContent =
+    typeof naturalLanguageQuery.value === "string" &&
+    naturalLanguageQuery.value.trim() !== "";
   const hasAppliedFilterTags = filterTags.value.length > 0;
-
   if (!nqHasContent && !hasAppliedFilterTags) {
     searchMessage.value = texts.value.noSearchCriteria;
     searchStatus.value = "error";
     return false;
   }
-
-  // If advanced filters are shown, main query is empty, and NO tags have been added yet,
-  // then jobTitle and industry are still required as per UI logic.
-  // This scenario is effectively handled by the `addAdvancedInputsAsTags()` call at the start of submitLeadSearchCriteria
-  // which would convert any currently typed input into tags and then this condition would check hasAppliedFilterTags.
-  // So, this block is mostly for the case where there's no main query and no other filters were added, but jobTitle/industry were meant to be present.
-  if (showAdvancedFilters.value && !nqHasContent && !hasAppliedFilterTags) {
-    // Check if after trying to add tags, jobTitle or industry are still implicitly required.
-    // This part might need fine-tuning based on exact "required" logic
-    // For now, assume if no tags, and adv filters are shown, and no main query, then jobTitle/industry are required.
-    // This is essentially checking the *original inputs* IF they haven't been converted to tags.
-    // Since addAdvancedInputsAsTags() is now called first on submit, this check becomes largely redundant
-    // for fields that get converted to tags.
-    // However, if jobTitle/industry are "required" for *any* advanced search even if tags exist,
-    // you might need a different validation approach. Sticking to the previous `texts.value.errorRequired` logic here.
-     const hasRequiredInputsFilled = filterTags.value.some(tag => tag.type === 'jobTitle') && filterTags.value.some(tag => tag.type === 'industry');
-
-     if (!hasRequiredInputsFilled) {
-        // Need to check which one is missing
-        if (!filterTags.value.some(tag => tag.type === 'jobTitle')) {
-            searchMessage.value = texts.value.errorRequired(getFieldLabel("jobTitle"));
-            searchStatus.value = "error";
-            return false;
-        }
-        if (!filterTags.value.some(tag => tag.type === 'industry')) {
-            searchMessage.value = texts.value.errorRequired(getFieldLabel("industry"));
-            searchStatus.value = "error";
-            return false;
-        }
-    }
-  }
-
-  return true;
-}
-
-async function submitLeadSearchCriteria() {
-  if (isProcessingBatch.value || isSearchingLeads.value || isSelectingAllLeads.value) return;
-
-  // CRUCIAL CHANGE 1: Convert any pending advanced filter inputs to tags and clear inputs first.
-  // This ensures filterTags is the source of truth for advanced filters in the payload.
+  const hasRequiredInputsFilled =
+    filterTags.value.some((tag) => tag.type === "jobTitle") &&
+    filterTags.value.some((tag) => tag.type === "industry");
   if (
     showAdvancedFilters.value &&
-    Object.values(advancedFilterInputs).some((v) => typeof v === 'string' && v.trim())
+    !nqHasContent &&
+    !hasAppliedFilterTags &&
+    !hasRequiredInputsFilled
   ) {
-    addAdvancedInputsAsTags(); // This will also clear advancedFilterInputs
+    if (!filterTags.value.some((tag) => tag.type === "jobTitle")) {
+      searchMessage.value = texts.value.errorRequired(
+        getFieldLabel("jobTitle")
+      );
+      searchStatus.value = "error";
+      return false;
+    }
+    if (!filterTags.value.some((tag) => tag.type === "industry")) {
+      searchMessage.value = texts.value.errorRequired(
+        getFieldLabel("industry")
+      );
+      searchStatus.value = "error";
+      return false;
+    }
   }
-
-  if (!validateSearchCriteria()) { // validate will now check filterTags as well
+  return true;
+}
+async function submitLeadSearchCriteria() {
+  if (
+    isProcessingBatch.value ||
+    isSearchingLeads.value ||
+    isSelectingAllLeads.value
+  )
     return;
-  }
-
+  if (
+    showAdvancedFilters.value &&
+    Object.values(advancedFilterInputs).some(
+      (v) => typeof v === "string" && v.trim()
+    )
+  )
+    addAdvancedInputsAsTags();
+  if (!validateSearchCriteria()) return;
   const user = authStore.user;
   if (user && (await hasUnsavedLeads(user.id))) {
     if (!confirm(texts.value.confirmArchiveUnsaved)) return;
@@ -2359,58 +2347,46 @@ async function submitLeadSearchCriteria() {
     searchStatus.value = "warning";
     await fetchTabCounts(user.id);
   }
-
-  // CRUCIAL CHANGE 2: Build N8N payload filters from filterTags
   const n8nFilters: Record<string, any> = {
-    jobTitle: '',
-    industry: '', // single value or first value from tags
-    location: '',
-    companySize: '', // single value or first value from tags
-    companyNames: [], // array
-    keywords: [], // array
+    jobTitle: "",
+    industry: "", // This will be the original industry value from select, not the text for fuzzy search
+    location: "",
+    companySize: "",
+    companyNames: [],
+    keywords: [], // This will be keywords tag values
   };
-
-  filterTags.value.forEach(tag => {
+  filterTags.value.forEach((tag) => {
     switch (tag.type) {
-      case 'jobTitle':
+      case "jobTitle":
         n8nFilters.jobTitle = tag.value;
         break;
-      case 'industry':
-        n8nFilters.industry = tag.value; // Assuming N8N expects single industry value if not multiple
+      case "industry":
+        n8nFilters.industry = tag.value; // Send the original value to N8N
         break;
-      case 'location':
+      case "location":
         n8nFilters.location = tag.value;
         break;
-      case 'companySize':
-        n8nFilters.companySize = tag.value; // Assuming N8N expects single company size value
+      case "companySize":
+        n8nFilters.companySize = tag.value;
         break;
-      case 'companyNames':
-        // Add to array, ensuring uniqueness if needed (though tags handle this)
-        if (!n8nFilters.companyNames.includes(tag.value)) {
+      case "companyNames":
+        if (!n8nFilters.companyNames.includes(tag.value))
           n8nFilters.companyNames.push(tag.value);
-        }
         break;
-      case 'generalKeywords':
-        if (!n8nFilters.keywords.includes(tag.value)) {
+      case "generalKeywords":
+        if (!n8nFilters.keywords.includes(tag.value))
           n8nFilters.keywords.push(tag.value);
-        }
         break;
     }
   });
-
-  const payloadForN8n: { mainQuery: string; filters: Record<string, any> } = {
+  const payloadForN8n = {
     mainQuery: naturalLanguageQuery.value,
-    filters: n8nFilters
+    filters: n8nFilters,
   };
-
-  // Ensure empty arrays if no input for multi-value fields
-  if (payloadForN8n.filters.companyNames.length === 0) {
+  if (payloadForN8n.filters.companyNames.length === 0)
     payloadForN8n.filters.companyNames = [];
-  }
-  if (payloadForN8n.filters.keywords.length === 0) {
+  if (payloadForN8n.filters.keywords.length === 0)
     payloadForN8n.filters.keywords = [];
-  }
-
   await handleTriggerN8nLeadSearch(payloadForN8n);
 }
 async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
@@ -2446,21 +2422,14 @@ async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
       : { message: await res.text() });
     if (!res.ok)
       throw new Error(result.message || `N8N Error: ${res.statusText}`);
-
     const successMsg = result.message || texts.value.searchLeadsSuccess;
     searchMessage.value =
       searchStatus.value === "warning"
         ? `${searchMessage.value}. ${successMsg}`
         : successMsg;
     searchStatus.value = "success";
-
     naturalLanguageQuery.value = "";
-    // CRUCIAL CHANGE 3: Clear filterTags only. advancedFilterInputs are already cleared by addAdvancedInputsAsTags.
     filterTags.value = [];
-
-    // NOTE: advancedFilterInputs are cleared by addAdvancedInputsAsTags() when they are converted to tags.
-    // So no need to clear them here.
-
     if (currentTab.value !== "new") {
       changeTab("new");
     } else {
@@ -2470,7 +2439,6 @@ async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
       await fetchTabCounts(authStore.user?.id);
     }
   } catch (e: any) {
-    console.error("Error triggering N8N lead search:", e);
     const errorTxt = texts.value.alertError + e.message;
     searchMessage.value =
       searchStatus.value === "warning"
@@ -2497,38 +2465,20 @@ async function getSupabaseSession(): Promise<Session | null> {
   return session;
 }
 
-const selectFields = `id, created_at, user_id, tab, lead_status, icebreaker, source_query_criteria, first_name, last_name, name, job_title, industry, location, company_name, company_size, phone, linkedIn_url, keywords, email, notes`;
+// Updated selectFields to include the new _text columns from the view
+const selectFields = `id, created_at, user_id, tab, lead_status, icebreaker, source_query_criteria, first_name, last_name, name, job_title, industry, industry_text, location, company_name, company_size, phone, linkedIn_url, keywords, keywords_text, email, notes`;
 
 async function fetchLeadsForCurrentUser(forceRefresh = false) {
-  console.log(
-    `%cLeadGenFormView: fetchLeadsForCurrentUser CALLED. forceRefresh: ${forceRefresh}`,
-    "color: red; font-weight: bold;",
-    `\n  Current Tab: ${currentTab.value}`,
-    `\n  Pagination: Index=${pagination.value.pageIndex}, Size=${pagination.value.pageSize}`,
-    `\n  Sorting: ${JSON.stringify(sorting.value)}`,
-    `\n  Active Client Filters: ${JSON.stringify(activeClientFilters.value)}`
-  );
-  console.count("LeadGenFormView: fetchLeadsForCurrentUser execution count");
-
   if (
     (isLoadingLeads.value && !forceRefresh) ||
     (isProcessingBatch.value && !forceRefresh) ||
     (isSelectingAllLeads.value && !forceRefresh)
   ) {
-    console.log(
-      "%cLeadGenFormView: fetchLeadsForCurrentUser SKIPPED (isLoading or isProcessingBatch or isSelectingAllLeads)",
-      "color: gray;"
-    );
     return;
   }
   isLoadingLeads.value = true;
-
   const user = authStore.user;
   if (!user) {
-    console.log(
-      "%cLeadGenFormView: fetchLeadsForCurrentUser SKIPPED (no user)",
-      "color: gray;"
-    );
     tableData.value = [];
     rowSelection.value = {};
     isLoadingLeads.value = false;
@@ -2537,43 +2487,66 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
     tabCounts.value = { new: 0, saved: 0, archived: 0 };
     return;
   }
-  
+
   try {
+    // IMPORTANT: Query the new view instead of the original table
     let query = supabase
-      .from("leads")
+      .from("leads_search_view") // Changed from "leads" to your new view name
       .select(selectFields, { count: "exact" })
       .eq("user_id", user.id)
       .eq("tab", currentTab.value);
 
-    // UPDATED: Logic to apply filters from activeClientFilters based on new tag types
-    Object.entries(activeClientFilters.value).forEach(([tagType, values]) => {
+    // Apply active client filters
+    Object.entries(activeClientFilters.value).forEach(([filterKey, values]) => {
       if (Array.isArray(values) && values.length > 0) {
-        if (tagType === "lead_status") { // Existing filter from FilterPanelView
-            if (values.length === 1) {
-                query = query.eq("lead_status", values[0]);
-            } else {
-                query = query.in("lead_status", values);
+        const typedFilterKey = filterKey as FilterKey;
+        // Use the mapped column name for the Supabase query
+        const actualColumnName = COLUMN_MAPPING[typedFilterKey];
+        
+        if (!actualColumnName) {
+            console.warn(`fetchLeadsForCurrentUser: No column mapping found for filter key: ${typedFilterKey}. This filter will be ignored.`);
+            return; // Skip this filter if no mapping found
+        }
+
+        switch (typedFilterKey) { // Switch on the original filter key type
+          case "lead_status":
+            query = query.in(actualColumnName, values);
+            break;
+          case "company_size":
+            // This logic is already correct for numeric range filtering
+            const companySizeOrFilters: string[] = [];
+            values.forEach((rangeStr) => {
+              const { min, max } = parseCompanySizeRange(rangeStr);
+              if (min !== undefined && max !== undefined) {
+                companySizeOrFilters.push(
+                  `and(${actualColumnName}.gte.${min},${actualColumnName}.lte.${max})`
+                );
+              } else if (min !== undefined) {
+                companySizeOrFilters.push(`${actualColumnName}.gte.${min}`);
+              }
+            });
+            if (companySizeOrFilters.length > 0) {
+              query = query.or(companySizeOrFilters.join(","));
             }
-        } else if (tagType === "companySize") {
-          query = query.eq("company_size", values[0]);
-        }
-        // Handles industry and the NEW generalKeywords (which maps to DB 'keywords')
-        else if (tagType === "industry" || tagType === "generalKeywords") { // Changed condition
-          const dbColumn = tagType === "industry" ? "industry" : "keywords"; // Map tagType to actual DB column
-          const cleanedValues = values.map(v => `"${String(v).replace(/"/g, '""')}"`);
-          const filterValue = `{${cleanedValues.join(',')}}`;
-          query = query.filter(dbColumn, 'ov', filterValue); // Use dbColumn
-        }
-        else if (
-          tagType === "jobTitle" ||
-          tagType === "location" ||
-          tagType === "companyNames" // Changed condition to new tag type
-        ) {
-          const dbColumn = tagType === "companyNames" ? "company_name" : (tagType === "jobTitle" ? "job_title" : "location"); // Map tagType to actual DB column
-          const orConditions = values
-            .map((val) => `${dbColumn}.ilike.%${String(val).trim()}%`) // Use dbColumn
-            .join(",");
-          if (orConditions) query = query.or(orConditions);
+            break;
+          // Group all fuzzy text search fields here, using the actualColumnName (which might be _text)
+          case "job_title":
+          case "location":
+          case "company_name":
+          case "industry":
+          case "keywords":
+            // For these fields, now use ilike on the new text columns from the view (or original text columns)
+            const orFuzzyConditions = values
+              .map((val) => `${actualColumnName}.ilike.%${String(val).trim()}%`)
+              .join(",");
+            if (orFuzzyConditions) query = query.or(orFuzzyConditions);
+            break;
+          default:
+            // This default should ideally never be hit if all FilterKey types are covered
+            console.warn(
+              `fetchLeadsForCurrentUser: Unhandled filter key type in switch: ${typedFilterKey}. Please add it to COLUMN_MAPPING and switch cases.`
+            );
+            break;
         }
       }
     });
@@ -2581,23 +2554,25 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
     if (sorting.value.length > 0) {
       const sortColumn = sorting.value[0];
       const dbSortColumn = sortColumn.id;
+      // Allow sorting on the original columns, as they exist in the view
+      // Note: Sorting on the _text columns might be unexpected for arrays/JSONB if not carefully considered.
+      // Keeping original column names for sorting for consistency with initial data display.
       const allowedSort = [
         "name",
         "job_title",
         "company_name",
         "email",
         "created_at",
-        "lead_status", 
+        "lead_status",
+        "company_size",
+        "industry", // Sorting on array columns can be complex, default behavior might be lexical
+        "keywords", // Sorting on JSONB columns also complex, default behavior might be lexical
       ];
       if (allowedSort.includes(dbSortColumn)) {
         query = query.order(dbSortColumn, { ascending: !sortColumn.desc });
       } else {
+        // Fallback for sorting on columns not in allowedSort
         query = query.order("created_at", { ascending: false });
-        if (dbSortColumn !== "created_at") {
-          console.warn(
-            `Unmapped/array sort attempt: ${dbSortColumn}. Defaulting to sort by created_at.`
-          );
-        }
       }
     } else {
       query = query.order("created_at", { ascending: false });
@@ -2607,88 +2582,63 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
     const pageSize = pagination.value.pageSize;
     query = query.range(page * pageSize, (page + 1) * pageSize - 1);
 
-    console.log(
-      "%cLeadGenFormView: Supabase Query constructed. Attempting to execute...",
-      "color: purple;",
-      `Parameters - Tab: ${currentTab.value}, Page: ${page}, PageSize: ${pageSize}`
-    );
-
     const { data: fetchedData, error, status, count } = await query;
 
-    console.log(
-      `%cLeadGenFormView: Supabase Response -> Status: ${status}, Count: ${count}, Fetched Data Length: ${
-        fetchedData?.length || 0
-      }`,
-      "color: purple; font-weight: bold;",
-      error ? `Error: ${error.message}` : "No Supabase error."
-    );
-
     if (error && status !== 406) {
+      console.error(
+        "Supabase fetch error:",
+        error,
+        "Query filters:",
+        JSON.stringify(activeClientFilters.value)
+      );
       if (error.message.includes("JWT")) {
         searchMessage.value = texts.value.accessDeniedMessage;
         searchStatus.value = "error";
         await authStore.signOut();
-      } else {
-        console.error("Supabase fetch error:", error);
       }
       tableData.value = [];
       totalRowCount.value = 0;
+    } else if (error) {
+      console.warn(
+        "Supabase fetch warning/non-blocking error:",
+        error,
+        "Query filters:",
+        JSON.stringify(activeClientFilters.value)
+      );
+      tableData.value = fetchedData || [];
+      totalRowCount.value = count || fetchedData?.length || 0;
+      // You can keep the error message here if you want to notify user about filter issues
+      // if (error.code === "PGRST100" || error.code === "42883") {
+      //   searchMessage.value = `Filter error: ${error.message}. Some filters may not be applied correctly.`;
+      //   searchStatus.value = "warning";
+      // }
     } else {
       tableData.value = fetchedData || [];
       const totalCount = count || 0;
       totalRowCount.value = totalCount;
-
       const newPageCount = Math.ceil(totalCount / pageSize);
-      
       const currentPageIndex = pagination.value.pageIndex;
-      console.log(
-        `%cLeadGenFormView: Pagination correction check -> CurrentIndex: ${currentPageIndex}, NewPageCount: ${newPageCount}, TotalCount: ${totalCount}, CurrentTab: ${currentTab.value}`,
-        "color: #007bff;"
-      );
-
       if (newPageCount > 0 && currentPageIndex >= newPageCount) {
-        console.log(
-          `%cLeadGenFormView: Correcting pagination. Current page (${currentPageIndex}) is out of new bounds (${
-            newPageCount - 1
-          }). Setting to ${newPageCount - 1}.`,
-          "color: #007bff; font-style: italic;"
-        );
         pagination.value.pageIndex = newPageCount - 1;
       } else if (
         currentPageIndex > 0 &&
         totalCount === 0 &&
         currentTab.value !== "new"
       ) {
-        console.log(
-          `%cLeadGenFormView: Correcting pagination. Current page (${currentPageIndex}) has no items on non-'new' tab. Setting to page 0.`,
-          "color: #007bff; font-style: italic;"
-        );
         pagination.value.pageIndex = 0;
-      } else if (totalCount > 0 && currentPageIndex === 0 && tableData.value.length === 0) {
-        if (currentPageIndex > 0) {
-             pagination.value.pageIndex = currentPageIndex - 1;
-        }
       }
     }
   } catch (e: any) {
-    console.error(
-      "%cLeadGenFormView: ERROR caught in fetchLeadsForCurrentUser try-catch block:",
-      "background: red; color: white; font-weight: bold;",
-      e
-    );
     if (!searchMessage.value) {
-      searchMessage.value = texts.value.alertError + (e.message || "Unknown error");
-      searchStatus.value = "error";
+      searchMessage.value =
+        texts.value.alertError + (e.message || "Unknown error");
     }
+    searchStatus.value = "error";
     tableData.value = [];
     totalRowCount.value = 0;
   } finally {
     isLoadingLeads.value = false;
     if (!initialLoadComplete.value) initialLoadComplete.value = true;
-    console.log(
-      "%cLeadGenFormView: fetchLeadsForCurrentUser FINISHED.",
-      "color: red;"
-    );
   }
 }
 

@@ -1,6 +1,6 @@
 <template>
-  <div class="filter-panel card"> <!-- 'card' class is good for structure -->
-    <div class="card-body"> <!-- 'card-body' adds padding -->
+  <div class="filter-panel card">
+    <div class="card-body">
       <!-- Tab Switcher with Counts -->
       <div class="mb-4">
         <h6 class="tabs-title-heading">{{ texts.tabsTitle || 'Lead Categories' }}</h6>
@@ -44,7 +44,7 @@
             {{ filterGroup.label }}
           </label>
           <button
-            v-if="activeFilters[filterGroup.key] && ((Array.isArray(activeFilters[filterGroup.key])) || (!Array.isArray(activeFilters[filterGroup.key]) && activeFilters[filterGroup.key]))"
+            v-if="activeFilters[filterGroup.key] && activeFilters[filterGroup.key]?.length"
             @click="clearFilterSection(filterGroup.key)"
             class="btn btn-sm btn-icon-danger py-0 px-1 clear-section-btn"
             :title="texts.clearFilterSectionTooltip + ' ' + filterGroup.label"
@@ -60,9 +60,10 @@
             :id="`filter-input-${filterGroup.key}`"
             v-model="inputValues[filterGroup.key]"
             :placeholder="filterGroup.placeholder || (texts.addFilterPlaceholder + ' ' + filterGroup.label.toLowerCase())"
-            @keyup.enter="addTextFilter(filterGroup.key, filterGroup.type === 'keywords')"
+            @keyup.enter="addTextFilter(filterGroup.key)"
+            :disabled="isLoading"
           />
-          <button class="btn btn-outline-themed btn-sm add-filter-btn" type="button" @click="addTextFilter(filterGroup.key, filterGroup.type === 'keywords')">
+          <button class="btn btn-outline-themed btn-sm add-filter-btn" type="button" @click="addTextFilter(filterGroup.key)" :disabled="isLoading">
             <i class="bi bi-plus-lg"></i>
           </button>
         </div>
@@ -73,6 +74,7 @@
           :id="`filter-select-${filterGroup.key}`"
           v-model="inputValues[filterGroup.key]"
           @change="addSelectFilter(filterGroup.key, ($event.target as HTMLSelectElement).value)"
+          :disabled="isLoading"
         >
           <option value="">{{ filterGroup.placeholder || (texts.selectFilterPlaceholder + ' ' + filterGroup.label) }}</option>
           <option v-for="option in filterGroup.options" :key="option.value" :value="option.value">
@@ -80,24 +82,25 @@
           </option>
         </select>
 
-        <div v-if="activeFilters[filterGroup.key]" class="d-flex flex-wrap gap-1 mt-1 filter-tags-container">
+        <div v-if="activeFilters[filterGroup.key] && activeFilters[filterGroup.key]?.length" class="d-flex flex-wrap gap-1 mt-1 filter-tags-container">
           <span
             v-for="(item, index) in activeFilters[filterGroup.key]"
             :key="`${filterGroup.key}-${index}`"
             class="badge filter-tag p-1"
           >
-            {{ item }}
+            {{ getDisplayValue(filterGroup.key, item) }}
             <button
               type="button"
               class="btn-close btn-close-sm ms-1 filter-tag-close"
               @click="removeFilterItem(filterGroup.key, item)"
               :aria-label="texts.removeFilterTooltip"
+              :disabled="isLoading"
             ></button>
           </span>
         </div>
       </div>
        <hr class="filter-divider mt-4">
-        <button @click="clearAllClientFilters" class="btn btn-sm btn-danger w-100 clear-all-btn">
+        <button @click="clearAllClientFiltersAndEmit" class="btn btn-sm btn-danger w-100 clear-all-btn" :disabled="isLoading">
             <i class="bi bi-trash3 me-1"></i> {{ texts.clearAllFiltersButton || "Clear All Filters" }}
         </button>
     </div>
@@ -105,7 +108,6 @@
 </template>
 
 <script setup lang="ts">
-// ----- SCRIPT is THE SAME as your provided version -----
 import { ref, reactive, watch, computed } from 'vue';
 import type { PropType } from 'vue'
 import type { LeadTab } from '@/types/tabs';
@@ -113,11 +115,13 @@ import type { LeadTab } from '@/types/tabs';
 export interface TabCounts { new: number; saved: number; archived: number; }
 export type FilterKey = 'job_title' | 'industry' | 'location' | 'company_name' | 'company_size' | 'keywords' | 'lead_status';
 
+export interface ClientFilterOption { value: string; text: string }
+
 export interface ClientFilterItem {
     key: FilterKey;
     label: string;
     type: 'text' | 'select' | 'keywords';
-    options?: { value: string; text: string }[];
+    options?: ClientFilterOption[];
     placeholder?: string;
 }
 export interface ActiveClientFilters {
@@ -133,43 +137,13 @@ export interface ActiveClientFilters {
 
 
 const props = defineProps({
-  currentTab: {
-    type: String as PropType<LeadTab>,
-    required: true,
-  },
-  tabCounts: {
-    type: Object as PropType<TabCounts>,
-    required: true,
-    default: () => ({ new: 0, saved: 0, archived: 0 }),
-  },
-  languageStore: {
-    type: Object,
-    required: true,
-  },
-  isLoading: {
-    type: Boolean,
-    default: false,
-  },
-  industryOptions: {
-    type: Array as PropType<{ value: string; text: string }[]>,
-    default: () => [],
-  },
-  companySizeOptions: {
-    type: Array as PropType<{ value: string; text: string }[]>,
-    default: () => [
-        { value: '1-10', text: '1-10' }, { value: '11-50', text: '11-50' },
-        { value: '51-200', text: '51-200' }, { value: '201-500', text: '201-500' },
-        { value: '501-1000', text: '501-1000' }, { value: '1001-5000', text: '1001-5000' },
-        { value: '5001-10000', text: '5001-10000' }, { value: '10001+', text: '10001+' },
-    ],
-  },
-  leadStatusOptions: {
-    type: Array as PropType<{ value: string; text: string }[]>,
-    default: () => [
-        { value: 'New Prospect', text: 'New Prospect' }, { value: 'Contacted', text: 'Contacted' },
-        { value: 'Follow-up', text: 'Follow-up' }, { value: 'Replied', text: 'Replied' },
-    ],
-  },
+  currentTab: { type: String as PropType<LeadTab>, required: true, },
+  tabCounts: { type: Object as PropType<TabCounts>, required: true, default: () => ({ new: 0, saved: 0, archived: 0 }), },
+  languageStore: { type: Object, required: true, },
+  isLoading: { type: Boolean, default: false, },
+  industryOptions: { type: Array as PropType<ClientFilterOption[]>, default: () => [], },
+  companySizeOptions: { type: Array as PropType<ClientFilterOption[]>, default: () => [ /* Ensure this is populated with your defaults */ ], },
+  leadStatusOptions: { type: Array as PropType<ClientFilterOption[]>, default: () => [ /* Ensure this is populated with your defaults */ ], },
 });
 
 const emit = defineEmits(['update:currentTab', 'update:filters']);
@@ -180,26 +154,37 @@ const inputValues = reactive<Record<FilterKey, string>>({
 });
 const activeFilters = reactive<ActiveClientFilters>({});
 
+// CORRECTED TEXTS COMPUTED PROPERTY
 const texts = computed(() => {
-    const defaults = {
-        tabsTitle: 'Lead Categories', tabNew: 'New', tabSaved: 'Saved', tabArchived: 'Archived',
-        addFilterPlaceholder: 'Add', selectFilterPlaceholder: 'Select',
-        removeFilterTooltip: 'Remove filter', clearAllFiltersButton: 'Clear All Filters',
+    const defaultTextsValues = {
+        tabsTitle: 'Lead Categories',
+        tabNew: 'New',
+        tabSaved: 'Saved',
+        tabArchived: 'Archived',
+        addFilterPlaceholder: 'Add',
+        selectFilterPlaceholder: 'Select',
+        removeFilterTooltip: 'Remove filter',
+        clearAllFiltersButton: 'Clear All Filters',
         clearFilterSectionTooltip: 'Clear section',
-        colJobTitle: 'Job Title', colIndustry: 'Industry', colLocation: 'Location', colCompanyName: 'Company Name',
-        colCompanySize: 'Company Size', colKeywords: 'Keywords', colStatus: 'Lead Status',
-        industryPlaceholder: 'Select Industry', companySizePlaceholder: 'Select Company Size',
+        colJobTitle: 'Job Title',
+        colIndustry: 'Industry',
+        colLocation: 'Location',
+        colCompanyName: 'Company Name',
+        colCompanySize: 'Company Size',
+        colKeywords: 'Keywords',
+        colStatus: 'Lead Status',
+        industryPlaceholder: 'Select Industry',
+        companySizePlaceholder: 'Select Company Size',
     };
-    if (props.languageStore && typeof props.languageStore.texts === 'object' && Object.keys(props.languageStore.texts).length > 0) {
-        const merged = { ...defaults };
-        for (const key in props.languageStore.texts) {
-            if (Object.prototype.hasOwnProperty.call(props.languageStore.texts, key)) {
-                merged[key as keyof typeof merged] = props.languageStore.texts[key];
-            }
-        }
-        return merged;
+
+    if (props.languageStore && // Check if languageStore itself is provided
+        props.languageStore.texts && // Check if .texts exists (truthy check covers undefined and null)
+        typeof props.languageStore.texts === 'object' && // Ensure it's an object (this also implies not null)
+        Object.keys(props.languageStore.texts).length > 0) { // Ensure it's not an empty object
+        
+        return { ...defaultTextsValues, ...props.languageStore.texts };
     }
-    return defaults;
+    return defaultTextsValues; // Fallback to defaults
 });
 
 
@@ -209,34 +194,46 @@ const filterableFields = computed<ClientFilterItem[]>(() => [
     { key: 'location', label: texts.value.colLocation, type: 'text' },
     { key: 'company_name', label: texts.value.colCompanyName, type: 'text' },
     { key: 'company_size', label: texts.value.colCompanySize, type: 'select', options: props.companySizeOptions, placeholder: texts.value.companySizePlaceholder },
-    { key: 'keywords', label: texts.value.colKeywords, type: 'keywords' },
+    { key: 'keywords', label: texts.value.colKeywords, type: 'keywords' }, // 'keywords' type implies text input for adding multiple tags
     { key: 'lead_status', label: texts.value.colStatus, type: 'select', options: props.leadStatusOptions, placeholder: texts.value.selectFilterPlaceholder + ' ' + texts.value.colStatus },
 ]);
 
 
-watch(() => props.currentTab, (newVal) => {
+function getDisplayValue(key: FilterKey, value: string): string {
+  const field = filterableFields.value.find(f => f.key === key);
+  if (field && field.type === 'select' && field.options) {
+    const option = field.options.find(opt => opt.value === value);
+    return option ? option.text : value;
+  }
+  return value;
+}
+
+watch(() => props.currentTab, (newVal, oldVal) => {
   localCurrentTab.value = newVal;
+  if (newVal !== oldVal) {
+    console.log(`FilterPanel: Tab changed from ${oldVal} to ${newVal} via prop. Clearing internal visual filters.`);
+    for (const key in activeFilters) {
+        delete activeFilters[key as FilterKey];
+    }
+    for (const key in inputValues) {
+        inputValues[key as FilterKey] = '';
+    }
+  }
 });
 
 function emitTabChange(tab: LeadTab) {
-  console.log(`%cFilterPanel: Emitting @update:currentTab -> ${tab}`, 'color: blue; font-weight: bold;'); // Log tab change
   if (props.isLoading) return;
-  localCurrentTab.value = tab;
   emit('update:currentTab', tab);
 }
 
-function addTextFilter(key: FilterKey, isKeywords: boolean = false) {
+function addTextFilter(key: FilterKey) { // Removed isKeywords param, as type 'keywords' also uses text input for tags
     const value = inputValues[key]?.trim();
     if (!value) return;
     if (!activeFilters[key]) {
         activeFilters[key] = [];
     }
-    if (isKeywords) {
-        if (!activeFilters[key]?.includes(value)) {
-            activeFilters[key]?.push(value);
-        }
-    } else {
-        activeFilters[key] = [value];
+    if (!activeFilters[key]?.includes(value)) {
+        activeFilters[key]?.push(value);
     }
     inputValues[key] = '';
     emitUpdateFilters();
@@ -244,9 +241,13 @@ function addTextFilter(key: FilterKey, isKeywords: boolean = false) {
 
 function addSelectFilter(key: FilterKey, value: string) {
     if (value) {
-        activeFilters[key] = [value];
-    } else {
-        delete activeFilters[key];
+        if (!activeFilters[key]) {
+            activeFilters[key] = [];
+        }
+        if (!activeFilters[key]?.includes(value)) {
+            activeFilters[key]?.push(value);
+        }
+        inputValues[key] = ''; // Reset select to placeholder
     }
     emitUpdateFilters();
 }
@@ -269,7 +270,7 @@ function clearFilterSection(key: FilterKey) {
     emitUpdateFilters();
 }
 
-function clearAllClientFilters() {
+function clearAllClientFiltersAndEmit() {
     for (const key in activeFilters) {
         delete activeFilters[key as FilterKey];
     }
@@ -280,9 +281,7 @@ function clearAllClientFilters() {
 }
 
 function emitUpdateFilters() {
-  const filtersToEmit = JSON.parse(JSON.stringify(activeFilters));
-  console.log('%cFilterPanel: Emitting @update:filters ->', 'color: blue; font-weight: bold;', JSON.stringify(filtersToEmit)); // Log filters
-  console.count('FilterPanel: @update:filters emitted'); // Count how many times this happens
+  const filtersToEmit = JSON.parse(JSON.stringify(activeFilters)); // Deep copy
   emit('update:filters', filtersToEmit);
 }
 </script>
