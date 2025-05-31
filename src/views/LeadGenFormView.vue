@@ -2606,7 +2606,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
         JSON.stringify(activeClientFilters.value)
       );
       tableData.value = fetchedData || [];
-      totalRowCount.value = count || fetchedData?.length || 0;
+      totalRowCount.value = count || (fetchedData ? (fetchedData as Lead[]).length : 0);
       // You can keep the error message here if you want to notify user about filter issues
       // if (error.code === "PGRST100" || error.code === "42883") {
       //   searchMessage.value = `Filter error: ${error.message}. Some filters may not be applied correctly.`;
