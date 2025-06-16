@@ -258,6 +258,7 @@ export const industriesData: Industry[] = [
     { value: "accounting", zh: "會計", en: "Accounting" },
     { value: "events services", zh: "活動服務", en: "Events Services" },
     { value: "luxury goods & jewelry", zh: "奢侈品與珠寶", en: "Luxury Goods & Jewelry" },
+    { value: "cosmetics", zh: "美妝", en: "cosmetics" },
     { value: "logistics & supply chain", zh: "物流與供應鏈", en: "Logistics & Supply Chain" },
     { value: "warehousing", zh: "倉儲", en: "Warehousing" },
     { value: "package/freight delivery", zh: "包裹/貨運配送", en: "Package/Freight Delivery" }
