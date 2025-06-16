@@ -374,12 +374,14 @@ button:focus-visible {
 .btn-danger {
   --bs-btn-color: #fff;
   --bs-btn-bg: var(
-    --table-action-btn-secondary-color-current
-  ); /* This seems to be using secondary for danger? Check if intended. Default BS danger is red. */
-  --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
+    --primary-color-current
+  );
+  --bs-btn-border-color: var(--primary-color-current);
   --bs-btn-hover-color: #fff;
   --bs-btn-hover-bg: #dc2626; /* Standard Bootstrap danger hover */
   --bs-btn-hover-border-color: #dc2626;
+  --bs-btn-disabled-bg: var(--primary-color-current);
+  --bs-btn-disabled-border-color: var(--primary-color-current);
 }
 .btn-outline-danger {
   --bs-btn-color: var(
@@ -398,17 +400,21 @@ button:focus-visible {
   --bs-btn-border-color: var(--table-action-btn-secondary-color-current);
   --bs-btn-hover-color: var(--table-action-btn-text-hover-current);
   --bs-btn-hover-bg: var(
-    --table-action-btn-secondary-hover-bg-light
+    --table-action-btn-success-hover-bg-current
   ); /* CHECK: This uses light theme var always */
   --bs-btn-hover-border-color: var(
-    --table-action-btn-secondary-hover-bg-light
+    --table-action-btn-success-hover-bg-current
   ); /* CHECK: This uses light theme var always */
 }
 
 .table-action-buttons .btn-outline-warning,
 .btn-group > .btn-outline-warning {
-  --bs-btn-color: var(--table-action-btn-secondary-color-current); /* Changed to warning var */
-  --bs-btn-border-color: var(--table-action-btn-secondary-color-current); /* Changed to warning var */
+  --bs-btn-color: var(
+    --table-action-btn-secondary-color-current
+  ); /* Changed to warning var */
+  --bs-btn-border-color: var(
+    --table-action-btn-secondary-color-current
+  ); /* Changed to warning var */
   --bs-btn-hover-color: var(--text-color-base-current); /* Or var(--table-action-btn-text-hover-current) if it contrasts */
   --bs-btn-hover-bg: var(--table-action-btn-warning-hover-bg-current);
   --bs-btn-hover-border-color: var(--table-action-btn-warning-hover-bg-current);
@@ -416,8 +422,12 @@ button:focus-visible {
 
 .table-action-buttons .btn-outline-secondary,
 .btn-group > .btn-outline-secondary:not(:disabled):not(.disabled) {
-  --bs-btn-color: var(--table-action-btn-secondary-color-current); /* Changed to secondary var */
-  --bs-btn-border-color: var(--table-action-btn-secondary-color-current); /* Changed to secondary var */
+  --bs-btn-color: var(
+    --table-action-btn-secondary-color-current
+  ); /* Changed to secondary var */
+  --bs-btn-border-color: var(
+    --table-action-btn-secondary-color-current
+  ); /* Changed to secondary var */
   --bs-btn-hover-color: var(--table-action-btn-text-hover-current);
   --bs-btn-hover-bg: var(--table-action-btn-secondary-hover-bg-current);
   --bs-btn-hover-border-color: var(
@@ -1513,19 +1523,41 @@ html[data-bs-theme="dark"] .landing-footer {
     color-mix(in srgb, var(--primary-color-current) 20%, transparent);
   background-color: var(--card-bg-current);
 }
+
+/* === Refined Styling for Search Panel Tags === */
 .content-area-view .search-panel-tag.tag-pill {
-  /* Ensuring specificity for search panel tags */
-  background-color: var(--primary-light-current);
-  color: var(--primary-dark-current); /* Ensure contrast */
-  border: 1px solid var(--primary-color-current);
+  display: inline-flex; /* Use flexbox for better alignment of text and close button */
+  align-items: center; /* Vertically align items */
+  gap: 0.25rem; /* Small gap between text and close button */
+  padding: 0.3em 0.75em; /* Adjusted padding for a more prominent pill shape */
+  border-radius: 1.5rem; /* More rounded, pill-like shape */
+  font-size: 0.875rem; /* Slightly larger font size for better readability */
   font-weight: 500;
+  
+  /* Color refinement */
+  background-color: color-mix(in srgb, var(--primary-color-current) 15%, var(--card-bg-current) 85%); /* Lighter tint of primary on card background */
+  color: var(--primary-dark-current); /* Darker text for contrast */
+  border: 1px solid color-mix(in srgb, var(--primary-color-current) 30%, var(--border-color-current) 70%); /* Subtle border matching the theme */
+  white-space: nowrap; /* Prevent text from wrapping within the tag */
 }
+
 .content-area-view .search-panel-tag.tag-pill .btn-close {
-  --bs-btn-close-color: var(--primary-dark-current); /* Ensure contrast */
+  --bs-btn-close-color: var(--primary-dark-current); /* Matches tag text color for consistency */
+  font-size: 0.7em; /* Slightly adjust close button size */
+  opacity: 0.7; /* Make it a bit lighter */
+  transition: opacity 0.2s ease;
 }
+
+.content-area-view .search-panel-tag.tag-pill .btn-close:hover {
+  opacity: 1; /* Full opacity on hover */
+}
+/* === End Refined Styling for Search Panel Tags === */
+
 .content-area-view .search-panel-alert.alert {
   border-width: 0px;
   border-left-width: 4px; /* Accent border */
+  background-color: var(--sidebar-bg-current);
+  color: var(--text-muted-current);
 }
 
 /* Table Section Styling (within .lead-gen-view-wrapper .content-area-view) */
