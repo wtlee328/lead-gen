@@ -311,7 +311,7 @@
                       v-if="isProcessingBatch"
                       class="spinner-border spinner-border-sm me-1"
                       role="status"
-                    "></span>
+                    ></span>
                     {{ texts.batchActionsDropdownTitle }} ({{
                       selectedRowCount
                     }})
@@ -640,13 +640,11 @@
                 <button
                   class="btn btn-sm btn-outline-secondary"
                   @click="
-                    !isProcessingBatch &&
-                      !isSelectingAllLeads &&
+                    !isSelectingAllLeads &&
                       table.setPageIndex(0)
                   "
                   :disabled="
                     !table.getCanPreviousPage() ||
-                    isProcessingBatch ||
                     isSelectingAllLeads
                   "
                 >
@@ -655,13 +653,11 @@
                 <button
                   class="btn btn-sm btn-outline-secondary"
                   @click="
-                    !isProcessingBatch &&
-                      !isSelectingAllLeads &&
+                    !isSelectingAllLeads &&
                       table.previousPage()
                   "
                   :disabled="
                     !table.getCanPreviousPage() ||
-                    isProcessingBatch ||
                     isSelectingAllLeads
                   "
                 >
@@ -671,13 +667,11 @@
                 <button
                   class="btn btn-sm btn-outline-secondary"
                   @click="
-                    !isProcessingBatch &&
-                      !isSelectingAllLeads &&
+                    !isSelectingAllLeads &&
                       table.nextPage()
                   "
                   :disabled="
                     !table.getCanNextPage() ||
-                    isProcessingBatch ||
                     isSelectingAllLeads
                   "
                 >
@@ -686,13 +680,11 @@
                 <button
                   class="btn btn-sm btn-outline-secondary"
                   @click="
-                    !isProcessingBatch &&
-                      !isSelectingAllLeads &&
+                    !isSelectingAllLeads &&
                       table.setPageIndex(table.getPageCount() - 1)
                   "
                   :disabled="
                     !table.getCanNextPage() ||
-                    isProcessingBatch ||
                     isSelectingAllLeads
                   "
                 >
@@ -709,8 +701,8 @@
                   class="form-select form-select-sm"
                   style="width: auto"
                   :value="table.getState().pagination.pageSize"
-                  @change="e => !isProcessingBatch && !isSelectingAllLeads && table.setPageSize(Number((e.target as HTMLSelectElement).value))"
-                  :disabled="isProcessingBatch || isSelectingAllLeads"
+                  @change="e => !isSelectingAllLeads && table.setPageSize(Number((e.target as HTMLSelectElement).value))"
+                  :disabled="isSelectingAllLeads"
                 >
                   <option
                     v-for="size in [10, 15, 25, 50, 100]"
@@ -1282,9 +1274,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
               onClick: () =>
                 !(isProcessingBatch.value || isSelectingAllLeads.value) &&
                 updateLeadTab(lead.id, "archived"),
-              class: `btn btn-sm btn-outline-warning ${
-                buttons.length > 0 ? "ms-1" : ""
-              }`,
+              class: `btn btn-sm btn-outline-warning${buttons.length > 0 ? ' ms-1' : ''}`,
               disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipArchive,
             },
@@ -1300,8 +1290,8 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
                 !(isProcessingBatch.value || isSelectingAllLeads.value) &&
                 updateLeadTab(lead.id, "new"),
               class: "btn btn-sm btn-outline-secondary",
-              disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipRestore,
+              disabled: isProcessingBatch.value || isSelectingAllLeads.value,
             },
             [h("i", { class: "bi bi-arrow-counterclockwise" })]
           )
@@ -1313,9 +1303,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
               onClick: () =>
                 !(isProcessingBatch.value || isSelectingAllLeads.value) &&
                 updateLeadTab(lead.id, "archived"),
-              class: `btn btn-sm btn-outline-warning ${
-                buttons.length > 0 ? "ms-1" : ""
-              }`,
+              class: `btn btn-sm btn-outline-warning${buttons.length > 0 ? ' ms-1' : ''}`,
               disabled: isProcessingBatch.value || isSelectingAllLeads.value,
               title: texts.value.tooltipArchive,
             },
@@ -1344,9 +1332,7 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
               onClick: () =>
                 !(isProcessingBatch.value || isSelectingAllLeads.value) &&
                 deleteLead(lead.id),
-              class: `btn btn-sm btn-outline-danger ${
-                buttons.length > 0 ? "ms-1" : ""
-              }`,
+              class: `btn btn-sm btn-outline-danger${buttons.length > 0 ? ' ms-1' : ''}`,
               disabled: isProcessingBatch.value || isSelectingAllLeads.value,
                             title: texts.value.tooltipDelete,
             },
@@ -1381,6 +1367,11 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
 ]);
 
 function getColumnStyle(column: Column<Lead, unknown>) {
+  // Ensure column and its properties exist to prevent null reference errors
+  if (!column || !column.columnDef) {
+    return {};
+  }
+  
   const baseStyle: Record<string, string> = {
     "user-select":
       column.getCanSort() &&
@@ -1390,29 +1381,68 @@ function getColumnStyle(column: Column<Lead, unknown>) {
         : "none",
     verticalAlign: "middle",
   };
+  
+  // Safely access column size with fallback
+  const columnSize = column.columnDef.size || 100;
+  
   if (!column.columnDef.meta?.style?.width)
-    baseStyle.width = `${column.columnDef.size}px`;
+    baseStyle.width = `${columnSize}px`;
   if (!column.columnDef.meta?.style?.minWidth)
-    baseStyle.minWidth = `${column.columnDef.size}px`;
+    baseStyle.minWidth = `${columnSize}px`;
+    
   const metaStyle = column.columnDef.meta?.style || {};
-  return { ...baseStyle, ...metaStyle };
+  
+  // Create a safe copy of styles, handling CSS custom properties properly
+  const validStyle: Record<string, string> = {};
+  
+  try {
+    Object.entries({ ...baseStyle, ...metaStyle }).forEach(([key, value]) => {
+      // Validate key: must be a valid CSS property name
+      if (key && typeof key === 'string' && key.trim() !== '' && value != null) {
+        // Convert camelCase to kebab-case for CSS properties
+        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        
+        // Ensure value is a string and handle CSS custom properties
+        let cssValue = String(value);
+        
+        // Don't modify CSS custom properties (var(--property-name))
+        if (!cssValue.startsWith('var(')) {
+          // Only remove quotes from non-CSS-custom-property values
+          cssValue = cssValue.replace(/["']/g, '');
+        }
+        
+        if (cssValue.trim() !== '') {
+          validStyle[cssKey] = cssValue;
+        }
+      }
+    });
+  } catch (error) {
+    console.warn('Error processing column styles:', error);
+    // Return minimal safe styles on error
+    return {
+      'vertical-align': 'middle',
+      'user-select': 'none'
+    };
+  }
+  
+  return validStyle;
 }
 const table = useVueTable({
-  get data() {
-    return tableData.value;
-  },
-  columns: columns.value,
-  state: {
-    get sorting() {
-      return sorting.value;
+    get data() {
+      return tableData.value || [];
     },
-    get pagination() {
-      return pagination.value;
+    columns: columns.value,
+    state: {
+      get sorting() {
+        return sorting.value || [];
+      },
+      get pagination() {
+        return pagination.value || { pageIndex: 0, pageSize: 15 };
+      },
+      get rowSelection() {
+        return rowSelection.value || {};
+      },
     },
-    get rowSelection() {
-      return rowSelection.value;
-    },
-  },
   enableRowSelection: true,
   onRowSelectionChange: (updater: Updater<RowSelectionState>) => {
     if (isProcessingBatch.value || isSelectingAllLeads.value) return;
@@ -1426,6 +1456,8 @@ const table = useVueTable({
       typeof updater === "function" ? updater(sorting.value) : updater;
     if (JSON.stringify(newSortingState) !== oldSortingString) {
       sorting.value = newSortingState;
+      // Clear row selection to prevent race condition when data updates
+      rowSelection.value = {};
       fetchLeadsForCurrentUser(true);
     } else {
       sorting.value = newSortingState;
@@ -1442,6 +1474,8 @@ const table = useVueTable({
       newPaginationState.pageSize !== oldPageSize
     ) {
       pagination.value = newPaginationState;
+      // Clear row selection to prevent race condition when data updates
+      rowSelection.value = {};
       fetchLeadsForCurrentUser(true);
     } else {
       pagination.value = newPaginationState;
@@ -1696,8 +1730,8 @@ const batchProcessLeads = async (
     let leadsToProcess: Lead[] = [];
     try { // Inner try-catch for Supabase fetch
       const { data, error } = await supabase
-        .from("leads") // Batch operations target the original table
-        .select(selectFields) // Fetch all fields needed for processing
+        .from("leads_search_view") // Batch operations should use the same view as regular queries
+        .select(selectFields) // Fixed typo: was selectFeellslds
         .in("id", selectedLeadIds)
         .eq("user_id", user.id);
       if (error) throw error;
@@ -1735,19 +1769,40 @@ const batchProcessLeads = async (
     if (!confirm(confirmMessageFn(leadsToProcess.length))) return; // Early exit (user cancelled)
 
     const processingActionName = actionNameKey.replace("confirmBatch", "");
-    searchMessage.value = `Processing ${processingActionName} batch... (${leadsToProcess.length} leads)`;
-    searchStatus.value = null;
     let successCount = 0;
     let errorCount = 0;
-
-    const results = await Promise.allSettled(
-      leadsToProcess.map((lead: Lead) =>
-        operationFn(
-          lead.id,
-          targetTabOrAction !== "delete" ? targetTabOrAction : undefined
+    const totalLeads = leadsToProcess.length;
+    
+    // Process leads in smaller batches to keep UI responsive
+    const batchSize = 5;
+    const results: PromiseSettledResult<any>[] = [];
+    
+    for (let i = 0; i < totalLeads; i += batchSize) {
+      const currentBatch = leadsToProcess.slice(i, i + batchSize);
+      const processed = i + currentBatch.length;
+      
+      // Update progress message
+      searchMessage.value = `Processing ${processingActionName} batch... (${processed}/${totalLeads} leads)`;
+      searchStatus.value = null;
+      
+      // Allow UI to update
+      await nextTick();
+      
+      // Process current batch
+      const batchResults = await Promise.allSettled(
+        currentBatch.map((lead: Lead) =>
+          operationFn(
+            lead.id,
+            targetTabOrAction !== "delete" ? targetTabOrAction : undefined
+          )
         )
-      )
-    );
+      );
+      
+      results.push(...batchResults);
+      
+      // Small delay to keep UI responsive
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
 
     results.forEach((result, index) => {
       const leadProcessed = leadsToProcess[index];
@@ -1773,9 +1828,50 @@ const batchProcessLeads = async (
     );
     searchStatus.value =
       errorCount > 0 ? (successCount > 0 ? "warning" : "error") : "success";
-    rowSelection.value = {}; // Clear all selections after batch operation
-    await fetchLeadsForCurrentUser(true);
-    await fetchTabCounts(authStore.user?.id);
+    
+    // Clear row selection BEFORE fetching new data to prevent race condition
+    rowSelection.value = {};
+    
+    try {
+      // Force UI update before fetching new data
+      await nextTick();
+      
+      // Force table to re-render by triggering a state change
+      if (table.value) {
+        table.value.resetRowSelection();
+      }
+      
+      // Force a complete refresh of the current tab data
+      pagination.value.pageIndex = 0;
+      sorting.value = [];
+      activeClientFilters.value = {};
+      
+      // Allow UI to stabilize before fetching new data
+      await nextTick();
+      
+      // Fetch updated data and counts
+      await fetchLeadsForCurrentUser(true);
+      await fetchTabCounts(authStore.user?.id);
+      
+      // Final UI update
+      await nextTick();
+      
+    } catch (refreshError: any) {
+      console.error('Error during data refresh:', refreshError);
+      // Fallback: simple data refresh without complex state manipulation
+      try {
+        await fetchLeadsForCurrentUser(true);
+        await fetchTabCounts(authStore.user?.id);
+      } catch (fallbackError: any) {
+        console.error('Fallback refresh also failed:', fallbackError);
+      }
+    }
+    
+    console.log('Batch operation completed, data refreshed');
+    console.log('Current table data count:', tableData.value.length);
+    console.log('Current tab counts:', tabCounts.value);
+    console.log('Current tab:', currentTab.value);
+    console.log('Row selection state:', rowSelection.value);
 
   } catch (error: any) { // Catch any unexpected errors from the outer try block
     console.error("Unexpected error in batchProcessLeads:", error);
@@ -1847,9 +1943,9 @@ const exportSelectedToCSV = () => {
       return [];
     }
     try {
-      // For export, fetch from the original table to get raw data
+      // For export, fetch from the view to get the same data structure as displayed
       const { data, error } = await supabase
-        .from("leads") // Changed from "leads_search_view" back to "leads"
+        .from("leads_search_view") // Use view to access industry_text and keywords_text
         .select(selectFields)
         .in("id", selectedLeadIds)
         .eq("user_id", user.id);
@@ -2019,6 +2115,7 @@ async function updateLeadTab(
           break;
       }
       searchStatus.value = "success";
+      // Clear the specific row selection and fetch updated data
       const currentSelection = { ...rowSelection.value };
       if (currentSelection[leadId]) {
         delete currentSelection[leadId];
@@ -2056,6 +2153,8 @@ async function deleteLead(
     if (!isBatchOperation) {
       searchMessage.value = texts.value.leadDeletedSuccess;
       searchStatus.value = "success";
+      
+      // Clear the specific row selection and fetch updated data
       const currentSelection = { ...rowSelection.value };
       if (currentSelection[leadId]) {
         delete currentSelection[leadId];
