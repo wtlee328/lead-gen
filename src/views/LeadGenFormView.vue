@@ -1427,10 +1427,10 @@ function getColumnStyle(column: Column<Lead, unknown>) {
   
   return validStyle;
 }
-const table = useVueTable({
-    get data() {
-      return tableData.value || [];
-    },
+const table: Ref<Table<Lead>> = useVueTable({
+  get data() {
+    return tableData.value || [];
+  },
     columns: columns.value,
     state: {
       get sorting() {
@@ -1837,7 +1837,7 @@ const batchProcessLeads = async (
       await nextTick();
       
       // Force table to re-render by triggering a state change
-      if (table && table.value) {
+      if (table) {
         table.value.resetRowSelection();
       }
       
