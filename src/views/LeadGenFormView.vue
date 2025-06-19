@@ -1837,7 +1837,7 @@ const batchProcessLeads = async (
       await nextTick();
       
       // Force table to re-render by triggering a state change
-      if (table.value) {
+      if (table && table.value) {
         table.value.resetRowSelection();
       }
       
