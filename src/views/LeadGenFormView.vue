@@ -1691,12 +1691,17 @@ const batchProcessLeads = async (
   targetTabOrAction: LeadTab | "delete",
   actionNameKey: keyof Pick<
     Translations,
-    | "confirmBatchSave"
-    | "confirmBatchArchive"
-    | "confirmBatchRestore"
-    | "confirmBatchDelete"
-    | "confirmBatchMoveToSaved"
-  >,
+    |
+      "confirmBatchSave"
+    |
+      "confirmBatchArchive"
+    |
+      "confirmBatchRestore"
+    |
+      "confirmBatchDelete"
+    |
+      "confirmBatchMoveToSaved"
+  > | null,
   filterFn: (lead: Lead) => boolean,
   operationFn: (
     leadId: string,
