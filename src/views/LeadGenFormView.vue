@@ -728,7 +728,9 @@ import FilterPanelView, {
   type TabCounts,
   type FilterKey,
 } from "@/components/FilterPanelView.vue";
-import { useLanguageStore } from "@/stores/languageStore";
+import { useLanguageStore } from '@/stores/languageStore';
+
+import type { Table } from '@tanstack/vue-table';
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/services/supabaseClient";
 import type { Session } from "@supabase/supabase-js";
@@ -931,16 +933,8 @@ const defaultTexts = {
   batchRestoreButton: "Restore Selected to New",
   batchDeleteButton: "Delete Selected",
   batchMoveToSavedButton: "Move Selected to Saved",
-  confirmBatchSave: (count: number) =>
-    `Are you sure you want to save ${count} selected lead(s)?`,
-  confirmBatchArchive: (count: number) =>
-    `Are you sure you want to archive ${count} selected lead(s)?`,
-  confirmBatchRestore: (count: number) =>
-    `Are you sure you want to restore ${count} selected lead(s) to 'New'?`,
   confirmBatchDelete: (count: number) =>
     `Are you sure you want to permanently delete ${count} selected lead(s)? This action cannot be undone.`,
-  confirmBatchMoveToSaved: (count: number) =>
-    `Are you sure you want to move ${count} selected lead(s) to 'Saved'?`,
   noLeadsEligibleForAction: (action: string) =>
     `No selected leads are eligible for ${action}.`,
   batchActionResult: (action: string, success: number, failed: number) =>
@@ -1427,7 +1421,7 @@ function getColumnStyle(column: Column<Lead, unknown>) {
   
   return validStyle;
 }
-const table: Ref<Table<Lead>> = useVueTable({
+const table: Table<Lead> = useVueTable({
   get data() {
     return tableData.value || [];
   },
@@ -1753,22 +1747,28 @@ const batchProcessLeads = async (
       }
     }
 
-    const actionNameForNoLeadsMsg = actionNameKey
-      .replace("confirmBatch", "")
-      .toLowerCase();
-    if (leadsToProcess.length === 0 && targetTabOrAction !== "delete") {
-      searchMessage.value = texts.value.noLeadsEligibleForAction(
-        actionNameForNoLeadsMsg
-      );
+    if (actionNameKey) {
+      const actionNameForNoLeadsMsg = actionNameKey
+        .replace("confirmBatch", "")
+        .toLowerCase();
+      if (leadsToProcess.length === 0 && targetTabOrAction !== "delete") {
+        searchMessage.value = texts.value.noLeadsEligibleForAction(
+          actionNameForNoLeadsMsg
+        );
+        searchStatus.value = "warning";
+        return; // Early exit
+      }
+      const confirmMessageFn = texts.value[actionNameKey] as (
+        count: number
+      ) => string;
+      if (!confirm(confirmMessageFn(leadsToProcess.length))) return; // Early exit (user cancelled)
+    } else if (leadsToProcess.length === 0) {
+      searchMessage.value = texts.value.noLeadsEligibleForAction("process");
       searchStatus.value = "warning";
-      return; // Early exit
+      return; // Early exit if no leads and no confirmation
     }
-    const confirmMessageFn = texts.value[actionNameKey] as (
-      count: number
-    ) => string;
-    if (!confirm(confirmMessageFn(leadsToProcess.length))) return; // Early exit (user cancelled)
 
-    const processingActionName = actionNameKey.replace("confirmBatch", "");
+    const processingActionName = actionNameKey ? actionNameKey.replace("confirmBatch", "") : targetTabOrAction;
     let successCount = 0;
     let errorCount = 0;
     const totalLeads = leadsToProcess.length;
@@ -1838,7 +1838,7 @@ const batchProcessLeads = async (
       
       // Force table to re-render by triggering a state change
       if (table) {
-        table.value.resetRowSelection();
+        table.resetRowSelection();
       }
       
       // Force a complete refresh of the current tab data
@@ -1886,14 +1886,14 @@ const batchProcessLeads = async (
 const batchSaveSelected = () =>
   batchProcessLeads(
     "saved",
-    "confirmBatchSave",
+    null,
     (lead) => lead.tab === "new",
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );
 const batchArchiveSelected = () =>
   batchProcessLeads(
     "archived",
-    "confirmBatchArchive",
+    null,
     (lead) =>
       currentTab.value === "new" ? lead.tab === "new" : lead.tab === "saved",
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
@@ -1901,14 +1901,14 @@ const batchArchiveSelected = () =>
 const batchRestoreSelected = () =>
   batchProcessLeads(
     "new",
-    "confirmBatchRestore",
+    null,
     (lead) => lead.tab === "saved",
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );
 const batchMoveToSavedSelected = () =>
   batchProcessLeads(
     "saved",
-    "confirmBatchMoveToSaved",
+    null,
     (lead) => lead.tab === "archived",
     (leadId, tab) => updateLeadTab(leadId, tab!, true)
   );

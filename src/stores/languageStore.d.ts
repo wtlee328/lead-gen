@@ -1,5 +1,4 @@
-import type { LanguageCode, // Import the actual translations
-Translations } from '@/types/language';
+import type { LanguageCode, Translations } from '@/types/language';
 export declare const useLanguageStore: import("pinia").StoreDefinition<"language", Pick<{
     currentLang: import("vue").Ref<LanguageCode, LanguageCode>;
     setLanguage: (lang: LanguageCode) => void;

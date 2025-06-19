@@ -6,14 +6,15 @@ export interface TabCounts {
     archived: number;
 }
 export type FilterKey = 'job_title' | 'industry' | 'location' | 'company_name' | 'company_size' | 'keywords' | 'lead_status';
+export interface ClientFilterOption {
+    value: string;
+    text: string;
+}
 export interface ClientFilterItem {
     key: FilterKey;
     label: string;
     type: 'text' | 'select' | 'keywords';
-    options?: {
-        value: string;
-        text: string;
-    }[];
+    options?: ClientFilterOption[];
     placeholder?: string;
 }
 export interface ActiveClientFilters {
@@ -49,31 +50,16 @@ declare const _default: import("vue").DefineComponent<import("vue").ExtractPropT
         default: boolean;
     };
     industryOptions: {
-        type: PropType<{
-            value: string;
-            text: string;
-        }[]>;
+        type: PropType<ClientFilterOption[]>;
         default: () => never[];
     };
     companySizeOptions: {
-        type: PropType<{
-            value: string;
-            text: string;
-        }[]>;
-        default: () => {
-            value: string;
-            text: string;
-        }[];
+        type: PropType<ClientFilterOption[]>;
+        default: () => never[];
     };
     leadStatusOptions: {
-        type: PropType<{
-            value: string;
-            text: string;
-        }[]>;
-        default: () => {
-            value: string;
-            text: string;
-        }[];
+        type: PropType<ClientFilterOption[]>;
+        default: () => never[];
     };
 }>, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     "update:currentTab": (...args: any[]) => void;
@@ -101,31 +87,16 @@ declare const _default: import("vue").DefineComponent<import("vue").ExtractPropT
         default: boolean;
     };
     industryOptions: {
-        type: PropType<{
-            value: string;
-            text: string;
-        }[]>;
+        type: PropType<ClientFilterOption[]>;
         default: () => never[];
     };
     companySizeOptions: {
-        type: PropType<{
-            value: string;
-            text: string;
-        }[]>;
-        default: () => {
-            value: string;
-            text: string;
-        }[];
+        type: PropType<ClientFilterOption[]>;
+        default: () => never[];
     };
     leadStatusOptions: {
-        type: PropType<{
-            value: string;
-            text: string;
-        }[]>;
-        default: () => {
-            value: string;
-            text: string;
-        }[];
+        type: PropType<ClientFilterOption[]>;
+        default: () => never[];
     };
 }>> & Readonly<{
     "onUpdate:currentTab"?: ((...args: any[]) => any) | undefined;
@@ -133,17 +104,8 @@ declare const _default: import("vue").DefineComponent<import("vue").ExtractPropT
 }>, {
     tabCounts: TabCounts;
     isLoading: boolean;
-    industryOptions: {
-        value: string;
-        text: string;
-    }[];
-    companySizeOptions: {
-        value: string;
-        text: string;
-    }[];
-    leadStatusOptions: {
-        value: string;
-        text: string;
-    }[];
+    industryOptions: ClientFilterOption[];
+    companySizeOptions: ClientFilterOption[];
+    leadStatusOptions: ClientFilterOption[];
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, true, {}, any>;
 export default _default;

@@ -86,6 +86,8 @@ export interface Translations {
     batchRestoreButton: string;
     batchDeleteButton: string;
     batchMoveToSavedButton: string;
+    showLessButton: string;
+    showMoreButtonText: (count: number) => string;
     previousPage: string;
     nextPage: string;
     pageText: string;
@@ -174,6 +176,7 @@ export interface Translations {
     passwordLabel?: string;
     loginButton?: string;
     signInWithGoogleButton?: string;
+    signInWithLinkedInButton?: string;
     orDivider?: string;
     noAccountPrompt?: string;
     signUpLink?: string;

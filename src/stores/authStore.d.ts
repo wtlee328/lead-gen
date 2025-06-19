@@ -223,6 +223,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
         session: Session;
         weakPassword?: import("@supabase/auth-js").WeakPassword;
     } | null>;
+    signInWithOAuth: (provider: "google" | "linkedin_oidc") => Promise<void>;
     signOut: () => Promise<void>;
 }, "user" | "session" | "loading" | "error">, Pick<{
     user: import("vue").Ref<{
@@ -448,6 +449,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
         session: Session;
         weakPassword?: import("@supabase/auth-js").WeakPassword;
     } | null>;
+    signInWithOAuth: (provider: "google" | "linkedin_oidc") => Promise<void>;
     signOut: () => Promise<void>;
 }, "isAuthenticated">, Pick<{
     user: import("vue").Ref<{
@@ -673,5 +675,6 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
         session: Session;
         weakPassword?: import("@supabase/auth-js").WeakPassword;
     } | null>;
+    signInWithOAuth: (provider: "google" | "linkedin_oidc") => Promise<void>;
     signOut: () => Promise<void>;
-}, "initializeAuth" | "signUp" | "signIn" | "signOut">>;
+}, "initializeAuth" | "signUp" | "signIn" | "signInWithOAuth" | "signOut">>;
