@@ -3,28 +3,25 @@
   "compilerOptions": {
     "composite": true, // ESSENTIAL for referenced projects
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-
     "baseUrl": ".", // Relative to this file (project root)
     "paths": {
-      "@/*": ["./src/*"] // For your @/ alias
+      "@/*": [
+        "./src/*"
+      ] // For your @/ alias
     },
-
     "jsx": "preserve", // Crucial for Vue
-
     // --- EMIT AND DECLARATION SETTINGS ---
-    "declaration": true,          // MUST be true (or absent, as it might be true in the extended config)
-    "emitDeclarationOnly": true,  // RECOMMENDED: vue-tsc -b will only emit .d.ts files. Vite handles JS emit.
-    "noEmit": false,              // MUST NOT be true. If emitDeclarationOnly is true, noEmit should be false.
-                                  // If emitDeclarationOnly is false, noEmit should also be false.
-                                  // If "@vue/tsconfig/tsconfig.dom.json" sets noEmit:true, you MUST override it here.
-
+    "declaration": true, // MUST be true (or absent, as it might be true in the extended config)
+    "emitDeclarationOnly": true, // RECOMMENDED: vue-tsc -b will only emit .d.ts files. Vite handles JS emit.
+    "noEmit": false, // MUST NOT be true. If emitDeclarationOnly is true, noEmit should be false.
+    // If emitDeclarationOnly is false, noEmit should also be false.
+    // If "@vue/tsconfig/tsconfig.dom.json" sets noEmit:true, you MUST override it here.
     /* Linting & Strictness - these are good */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true, // If you added this
-
     // Other potentially inherited or useful options
     "esModuleInterop": true, // Likely inherited, but good to be aware
     "resolveJsonModule": true, // Likely inherited
