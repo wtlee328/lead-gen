@@ -2468,13 +2468,18 @@ async function handleLeadSearch(criteriaPayload: any) {
   searchStatus.value = null;
 
   try {
-    const session = authStore.session;
+    // Force refresh the session to get the latest JWT token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      throw new Error(`Failed to retrieve auth session: ${sessionError.message}`);
+    }
+    
     if (!session?.access_token) {
-      searchMessage.value =
-        texts.value.userNotAuthMessage +
-        " " +
-        (texts.value.n8nConfigError || "Configuration error.");
+      searchMessage.value = texts.value.userNotAuthMessage;
       searchStatus.value = "error";
+      // Optionally, redirect to login
+      // authStore.signOut(); 
       return;
     }
 
@@ -2488,8 +2493,15 @@ async function handleLeadSearch(criteriaPayload: any) {
     });
 
     if (!res.ok) {
-      const result = await res.json();
-      throw new Error(result.message || `API Error: ${res.statusText}`);
+      // Try to parse the error response, but handle cases where it's not valid JSON
+      let errorDetail = `API Error: ${res.status} ${res.statusText}`;
+      try {
+        const result = await res.json();
+        errorDetail = result.detail || result.message || errorDetail;
+      } catch (e) {
+        // Ignore JSON parsing errors if the response is not JSON
+      }
+      throw new Error(errorDetail);
     }
 
     searchMessage.value = texts.value.searchLeadsSuccess;
