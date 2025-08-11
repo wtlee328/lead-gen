@@ -819,8 +819,6 @@ const filterTags = ref<FilterTag[]>([]);
 const isSearchingLeads = ref(false);
 const searchStatus = ref<"success" | "error" | "warning" | "info" | null>(null);
 const searchMessage = ref<string | null>(null);
-const N8N_WEBHOOK_URL = import.meta.env
-  .VITE_N8N_LEAD_INGESTION_WEBHOOK_URL as string;
 const tableData = ref<Lead[]>([]);
 const isLoadingLeads = ref(false);
 const initialLoadComplete = ref(false);
@@ -2429,89 +2427,58 @@ function validateSearchCriteria(): boolean {
   return true;
 }
 async function submitLeadSearchCriteria() {
-  if (
-    isProcessingBatch.value ||
-    isSearchingLeads.value ||
-    isSelectingAllLeads.value
-  )
-    return;
-  if (
-    showAdvancedFilters.value &&
-    Object.values(advancedFilterInputs).some(
-      (v) => typeof v === "string" && v.trim()
-    )
-  )
-    addAdvancedInputsAsTags();
-  if (!validateSearchCriteria()) return;
-  const user = authStore.user;
-  if (user && (await hasUnsavedLeads(user.id))) {
-    if (!confirm(texts.value.confirmArchiveUnsaved)) return;
-    if (!(await archiveUnsavedLeads(user.id))) return;
-    searchMessage.value = texts.value.unsavedLeadsArchived;
-    searchStatus.value = "warning";
-    await fetchTabCounts(user.id);
-  }
-  const n8nFilters: Record<string, any> = {
-    jobTitle: "",
-    industry: "", // This will be the original industry value from select, not the text for fuzzy search
-    location: "",
-    companySize: "",
-    companyNames: [],
-    keywords: [], // This will be keywords tag values
-  };
-  filterTags.value.forEach((tag) => {
-    switch (tag.type) {
-      case "jobTitle":
-        n8nFilters.jobTitle = tag.value;
-        break;
-      case "industry":
-        n8nFilters.industry = tag.value; // Send the original value to N8N
-        break;
-      case "location":
-        n8nFilters.location = tag.value;
-        break;
-      case "companySize":
-        n8nFilters.companySize = tag.value;
-        break;
-      case "companyNames":
-        if (!n8nFilters.companyNames.includes(tag.value))
-          n8nFilters.companyNames.push(tag.value);
-        break;
-      case "generalKeywords":
-        if (!n8nFilters.keywords.includes(tag.value))
-          n8nFilters.keywords.push(tag.value);
-        break;
+  if (isSearchingLeads.value) return;
+
+  const hasNewLeads = tabCounts.value.new > 0;
+  if (hasNewLeads) {
+    if (confirm(texts.value.confirmArchiveUnsaved)) {
+      await archiveAllNewLeads();
+      searchMessage.value = texts.value.unsavedLeadsArchived;
+      searchStatus.value = "info";
+    } else {
+      return;
     }
-  });
-  const payloadForN8n = {
-    mainQuery: naturalLanguageQuery.value,
-    filters: n8nFilters,
-  };
-  if (payloadForN8n.filters.companyNames.length === 0)
-    payloadForN8n.filters.companyNames = [];
-  if (payloadForN8n.filters.keywords.length === 0)
-    payloadForN8n.filters.keywords = [];
-  await handleTriggerN8nLeadSearch(payloadForN8n);
-}
-async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
-  isSearchingLeads.value = true;
-  if (searchStatus.value !== "warning") {
-    searchMessage.value = null;
-    searchStatus.value = null;
   }
-  const session = authStore.session;
-  if (!session?.access_token || !N8N_WEBHOOK_URL) {
-    const currentMsg = searchMessage.value;
-    const errorMsg = !session?.access_token
-      ? texts.value.userNotAuthMessage
-      : texts.value.n8nConfigError;
-    searchMessage.value = currentMsg ? `${currentMsg}. ${errorMsg}` : errorMsg;
-    searchStatus.value = "error";
-    isSearchingLeads.value = false;
+
+  const criteriaPayload = {
+    mainQuery: naturalLanguageQuery.value,
+    filters: {
+      jobTitle: filterTags.value.find(t => t.type === 'jobTitle')?.value || '',
+      industry: filterTags.value.find(t => t.type === 'industry')?.value || '',
+      location: filterTags.value.find(t => t.type === 'location')?.value || '',
+      companySize: filterTags.value.find(t => t.type === 'companySize')?.value || '',
+      companyNames: filterTags.value.filter(t => t.type === 'companyNames').map(t => t.value),
+      keywords: filterTags.value.filter(t => t.type === 'generalKeywords').map(t => t.value),
+    }
+  };
+
+  if (!criteriaPayload.mainQuery && Object.values(criteriaPayload.filters).every(v => !v || (Array.isArray(v) && v.length === 0))) {
+    searchMessage.value = texts.value.noSearchCriteria;
+    searchStatus.value = "warning";
     return;
   }
+
+  await handleLeadSearch(criteriaPayload);
+}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://wtlee328-lead-generation-api.hf.space/api/v1";
+
+async function handleLeadSearch(criteriaPayload: any) {
+  isSearchingLeads.value = true;
+  searchMessage.value = null;
+  searchStatus.value = null;
+
   try {
-    const res = await fetch(N8N_WEBHOOK_URL, {
+    const session = authStore.session;
+    if (!session?.access_token) {
+      searchMessage.value =
+        texts.value.userNotAuthMessage +
+        " " +
+        (texts.value.n8nConfigError || "Configuration error.");
+      searchStatus.value = "error";
+      return;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/leads/search`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -2519,35 +2486,18 @@ async function handleTriggerN8nLeadSearch(criteriaPayload: any) {
       },
       body: JSON.stringify(criteriaPayload),
     });
-    const result = await (res.headers
-      .get("content-type")
-      ?.includes("application/json")
-      ? res.json()
-      : { message: await res.text() });
-    if (!res.ok)
-      throw new Error(result.message || `N8N Error: ${res.statusText}`);
-    const successMsg = result.message || texts.value.searchLeadsSuccess;
-    searchMessage.value =
-      searchStatus.value === "warning"
-        ? `${searchMessage.value}. ${successMsg}`
-        : successMsg;
-    searchStatus.value = "success";
-    naturalLanguageQuery.value = "";
-    filterTags.value = [];
-    if (currentTab.value !== "new") {
-      changeTab("new");
-    } else {
-      pagination.value.pageIndex = 0;
-      rowSelection.value = {};
-      await fetchLeadsForCurrentUser(true);
-      await fetchTabCounts(authStore.user?.id);
+
+    if (!res.ok) {
+      const result = await res.json();
+      throw new Error(result.message || `API Error: ${res.statusText}`);
     }
-  } catch (e: any) {
-    const errorTxt = texts.value.alertError + e.message;
-    searchMessage.value =
-      searchStatus.value === "warning"
-        ? `${searchMessage.value}. ${errorTxt}`
-        : errorTxt;
+
+    searchMessage.value = texts.value.searchLeadsSuccess;
+    searchStatus.value = "success";
+    await fetchLeadsForCurrentUser(true);
+    await fetchTabCounts(authStore.user?.id);
+  } catch (error: any) {
+    searchMessage.value = texts.value.alertError + error.message;
     searchStatus.value = "error";
   } finally {
     isSearchingLeads.value = false;
