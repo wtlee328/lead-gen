@@ -2464,9 +2464,22 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:7860
 
 async function archiveAllNewLeads() {
   try {
-    // The Supabase client will automatically handle the Authorization header.
-    // Manually adding it can cause issues.
-    const { error } = await supabase.functions.invoke('archive-new-leads-on-logout');
+    // Step 1: Get a fresh, guaranteed valid session from Supabase.
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      throw new Error(`Failed to retrieve auth session: ${sessionError.message}`);
+    }
+    if (!session) {
+      throw new Error("User is not authenticated.");
+    }
+    
+    // Step 2: Manually set the Authorization header for the function call.
+    const { error } = await supabase.functions.invoke('archive-new-leads-on-logout', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    });
     
     if (error) throw error;
     
