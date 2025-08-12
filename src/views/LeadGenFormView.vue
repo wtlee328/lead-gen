@@ -2460,7 +2460,18 @@ async function submitLeadSearchCriteria() {
 
   await handleLeadSearch(criteriaPayload);
 }
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://wtlee328-lead-generation-api.hf.space/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:7860/api/v1";
+
+async function archiveAllNewLeads() {
+  try {
+    const { error } = await supabase.functions.invoke('archive-new-leads-on-logout');
+    if (error) throw error;
+  } catch (error: any) {
+    console.error("Error archiving new leads:", error);
+    searchMessage.value = texts.value.autoArchiveError + ` ${error.message}`;
+    searchStatus.value = "error";
+  }
+}
 
 async function handleLeadSearch(criteriaPayload: any) {
   isSearchingLeads.value = true;
