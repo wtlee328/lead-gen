@@ -2464,8 +2464,19 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:7860
 
 async function archiveAllNewLeads() {
   try {
-    const { error } = await supabase.functions.invoke('archive-new-leads-on-logout');
+    const session = authStore.session;
+    if (!session) {
+      throw new Error("User is not authenticated.");
+    }
+    
+    const { error } = await supabase.functions.invoke('archive-new-leads-on-logout', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    });
+    
     if (error) throw error;
+    
   } catch (error: any) {
     console.error("Error archiving new leads:", error);
     searchMessage.value = texts.value.autoArchiveError + ` ${error.message}`;
