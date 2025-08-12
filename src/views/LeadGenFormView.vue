@@ -2464,25 +2464,23 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:7860
 
 async function archiveAllNewLeads() {
   try {
-    // Step 1: Get a fresh, guaranteed valid session from Supabase.
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw new Error(sessionError.message);
+    if (!session) throw new Error("User not authenticated.");
 
-    if (sessionError) {
-      throw new Error(`Failed to retrieve auth session: ${sessionError.message}`);
-    }
-    if (!session) {
-      throw new Error("User is not authenticated.");
-    }
-    
-    // Step 2: Manually set the Authorization header for the function call.
-    const { error } = await supabase.functions.invoke('archive-new-leads-on-logout', {
+    const res = await fetch(`${API_BASE_URL}/leads/archive-new`, {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`
-      }
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
     });
-    
-    if (error) throw error;
-    
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.detail || 'Failed to archive new leads.');
+    }
+
   } catch (error: any) {
     console.error("Error archiving new leads:", error);
     searchMessage.value = texts.value.autoArchiveError + ` ${error.message}`;
