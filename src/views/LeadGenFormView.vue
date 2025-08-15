@@ -2286,9 +2286,9 @@ async function submitLeadSearchCriteria() {
   isSearchingLeads.value = true;
   try {
     // Construct the full API URL from the environment variable
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    const apiBaseUrl = import.meta.env.VITE_SUPABASE_URL;
     if (!apiBaseUrl) {
-      throw new Error("VITE_API_BASE_URL is not defined. Please check your .env file.");
+      throw new Error("VITE_SUPABASE_URL is not defined. Please check your .env file or hosting provider settings.");
     }
     const apiUrl = `${apiBaseUrl}/api/v1/leads/search`;
 
