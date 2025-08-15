@@ -832,6 +832,28 @@ const columnHelper = createColumnHelper<Lead>();
 const totalRowCount = ref(0);
 const isSelectingAllLeads = ref(false);
 
+async function fetchTabCounts(userId: string | undefined) {
+  if (!userId) {
+    tabCounts.value = { new: 0, saved: 0, archived: 0 };
+    return;
+  }
+  try {
+    const { data, error } = await supabase.rpc('get_user_lead_counts', { p_user_id: userId });
+    if (error) throw error;
+    if (data && data.length > 0) {
+      const counts = data[0];
+      tabCounts.value = {
+        new: counts.new_count || 0,
+        saved: counts.saved_count || 0,
+        archived: counts.archived_count || 0,
+      };
+    }
+  } catch (error: any) {
+    console.error('Error fetching tab counts:', error);
+    // Do not show an error message for this, as it's a background count update
+  }
+}
+
 async function fetchLeadsForCurrentUser(forceRefresh = false) {
   if (isLoadingLeads.value && !forceRefresh) return;
   isLoadingLeads.value = true;
