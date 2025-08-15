@@ -2494,21 +2494,17 @@ async function handleLeadSearch(criteriaPayload: any) {
   searchStatus.value = null;
 
   try {
-    // Force refresh the session to get the latest JWT token
+    // Step 1: Get a fresh, guaranteed valid session from Supabase.
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
     if (sessionError) {
       throw new Error(`Failed to retrieve auth session: ${sessionError.message}`);
     }
-    
-    if (!session?.access_token) {
-      searchMessage.value = texts.value.userNotAuthMessage;
-      searchStatus.value = "error";
-      // Optionally, redirect to login
-      // authStore.signOut(); 
-      return;
+    if (!session) {
+      throw new Error("User is not authenticated.");
     }
 
+    // Step 2: Use the fresh token to call the backend API.
     const res = await fetch(`${API_BASE_URL}/leads/search`, {
       method: "POST",
       headers: {
@@ -2519,7 +2515,6 @@ async function handleLeadSearch(criteriaPayload: any) {
     });
 
     if (!res.ok) {
-      // Try to parse the error response, but handle cases where it's not valid JSON
       let errorDetail = `API Error: ${res.status} ${res.statusText}`;
       try {
         const result = await res.json();
@@ -2532,6 +2527,7 @@ async function handleLeadSearch(criteriaPayload: any) {
 
     searchMessage.value = texts.value.searchLeadsSuccess;
     searchStatus.value = "success";
+    // These will now succeed because the search data is saved before the response is sent.
     await fetchLeadsForCurrentUser(true);
     await fetchTabCounts(authStore.user?.id);
   } catch (error: any) {
