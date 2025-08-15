@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     logger.info("🚀 Lead Generation API starting up...")
+    logger.info(f"Environment: {settings.ENVIRONMENT}")
+    logger.info(f"Port: {settings.PORT}")
+    logger.info(f"Supabase URL configured: {bool(settings.SUPABASE_URL and settings.SUPABASE_URL != 'https://example.supabase.co')}")
+    logger.info(f"OpenAI API Key configured: {bool(settings.OPENAI_API_KEY)}")
     yield
     logger.info("🛑 Lead Generation API shutting down...")
 

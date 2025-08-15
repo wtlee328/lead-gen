@@ -23,9 +23,9 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: List[str] = ["*"]
     
     # Supabase
-    SUPABASE_URL: str = ""
-    SUPABASE_SERVICE_ROLE_KEY: str = ""  # For server-side operations
-    SUPABASE_JWT_SECRET: str = ""        # For JWT verification
+    SUPABASE_URL: str = "https://example.supabase.co"  # Default placeholder
+    SUPABASE_SERVICE_ROLE_KEY: str = "placeholder-service-role-key"  # For server-side operations
+    SUPABASE_JWT_SECRET: str = "placeholder-jwt-secret"        # For JWT verification
     
     # AI Services
     OPENAI_API_KEY: Optional[str] = None
