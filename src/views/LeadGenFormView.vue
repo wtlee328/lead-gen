@@ -2286,11 +2286,12 @@ async function submitLeadSearchCriteria() {
   isSearchingLeads.value = true;
   try {
     // Construct the full API URL from the environment variable
-    const apiBaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
     if (!apiBaseUrl) {
-      throw new Error("VITE_SUPABASE_URL is not defined. Please check your .env file or hosting provider settings.");
+      throw new Error("VITE_API_BASE_URL is not defined in your hosting environment.");
     }
-    const apiUrl = `${apiBaseUrl}/api/v1/leads/search`;
+    // The base URL now includes /api/v1, so we just append the endpoint
+    const apiUrl = `${apiBaseUrl}/leads/search`;
 
     const session = authStore.session;
     if (!session?.access_token) {
