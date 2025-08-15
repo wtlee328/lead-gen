@@ -906,9 +906,6 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
 }
 
 onMounted(async () => {
-  await languageStore.fetchIndustries();
-  await languageStore.fetchTexts(languageStore.currentLanguage);
-  
   const user = authStore.user;
   if (user) {
     await fetchTabCounts(user.id);
