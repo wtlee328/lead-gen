@@ -1,15 +1,16 @@
 """
 AI service for lead generation and processing
-Replicates n8n workflow: LLM → Apollo URL → Apify Crawler → Lead Data
+Replicates n8n workflow: LLM -> Apollo URL -> Apify Crawler -> Lead Data
 """
 
 import asyncio
 import logging
 import json
 import re
+import uuid
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
-import openai
+from openai import OpenAI # Use the official library
 from anthropic import Anthropic
 import httpx
 from apify_client import ApifyClient
@@ -17,7 +18,7 @@ from apify_client import ApifyClient
 from leadgen_app.config import settings
 from leadgen_app.models.request_models import LeadSearchRequest, LeadFilters
 from leadgen_app.models.response_models import LeadData, ConfidenceLevel
-from leadgen_app.models.lead_models import ApifyLeadData, ProcessedLead, convert_apify_to_processed, ApifyActorConfig
+from leadgen_app.models.lead_models import ApifyLeadData, ProcessedLead, convert_apify_to_processed
 from leadgen_app.utils.helpers import log_processing_metrics
 
 logger = logging.getLogger(__name__)
@@ -61,17 +62,14 @@ class AIService:
     
     def __init__(self):
         self.openai_client = None
-        self.anthropic_client = None
         self.apify_client = None
         
-        # Initialize AI clients
         if settings.OPENAI_API_KEY:
-            self.openai_client = True  # Flag to indicate OpenAI is available
+            logger.info("OpenAI API key is loaded. Initializing client.")
+            self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        else:
+            logger.warning("OpenAI API key is NOT loaded. LLM functionality will be disabled.")
             
-        if settings.ANTHROPIC_API_KEY:
-            self.anthropic_client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-            
-        # Initialize Apify client
         if settings.APIFY_API_TOKEN:
             self.apify_client = ApifyClient(settings.APIFY_API_TOKEN)
     
@@ -81,38 +79,22 @@ class AIService:
         user_id: str
     ) -> Tuple[List[LeadData], Dict[str, Any]]:
         """
-        Main method replicating n8n workflow:
-        1. Convert input to Apollo URL using LLM
-        2. Run Apify crawler with the URL
-        3. Process and return lead data
-        
-        Args:
-            request: Lead search request
-            user_id: User identifier
-            
-        Returns:
-            Tuple of (leads_data, metrics)
+        Main method replicating n8n workflow.
         """
         start_time = datetime.now()
-        logger.info(f"Processing lead search for user {user_id} - n8n workflow replication")
+        logger.info(f"--- URL Generation Debug Trace ---")
+        logger.info(f"[1/5] Starting lead search for user {user_id}. Request data:\n{request.dict()}")
         
         try:
-            # Step 1: Convert natural language input to Apollo URL using LLM
             apollo_url = await self._convert_to_apollo_url(request)
-            logger.info(f"Generated Apollo URL: {apollo_url}")
             
-            # Step 2: Run Apify crawler to get prospect data
+            logger.info(f"[5/5] Final URL passed to Apify crawler: {apollo_url}")
+            
             raw_leads = await self._run_apify_crawler(apollo_url, request.max_results)
             logger.info(f"Apify crawler returned {len(raw_leads)} leads")
             
-            # Step 3: Process raw leads into structured format
-            processed_leads = await self._process_apify_leads(
-                raw_leads, 
-                request, 
-                user_id
-            )
+            processed_leads = await self._process_apify_leads(raw_leads, request, user_id)
             
-            # Step 4: Generate metrics
             processing_time = (datetime.now() - start_time).total_seconds()
             metrics = self._generate_metrics(processed_leads, processing_time, 1)
             
@@ -125,17 +107,41 @@ class AIService:
     
     async def _convert_to_apollo_url(self, request: LeadSearchRequest) -> str:
         """
-        Convert natural language input to Apollo.io search URL using LLM
-        Replicates the LLM step from n8n workflow
-        
-        Args:
-            request: Lead search request
-            
-        Returns:
-            Apollo.io search URL
+        Convert natural language input to Apollo.io search URL using LLM.
         """
-        # Construct the LLM prompt (exact replica from n8n)
-        prompt = f"""
+        prompt = self._construct_llm_prompt(request)
+        logger.info(f"[2/5] Constructed LLM prompt:\n{prompt}")
+        
+        try:
+            if self.openai_client:
+                response = await self._call_openai(prompt, max_tokens=1500)
+                logger.info(f"[3/5] Raw response from OpenAI:\n{response}")
+            else:
+                logger.warning("OpenAI client not available, using fallback URL generation.")
+                return self._generate_apollo_url_fallback(request)
+            
+            try:
+                result = json.loads(response.strip())
+                apollo_url = result.get("searchUrl", "")
+                
+                if not apollo_url or not apollo_url.startswith("https://app.apollo.io"):
+                    logger.warning(f"LLM generated an invalid URL: {apollo_url}. Using fallback.")
+                    return self._generate_apollo_url_fallback(request)
+                
+                logger.info(f"[4/5] Successfully parsed URL from LLM response: {apollo_url}")
+                return apollo_url
+                
+            except json.JSONDecodeError:
+                logger.warning("Failed to parse LLM response as JSON, using fallback.")
+                return self._generate_apollo_url_fallback(request)
+                
+        except Exception as e:
+            logger.warning(f"LLM Apollo URL generation failed: {str(e)}, using fallback.")
+            return self._generate_apollo_url_fallback(request)
+    
+    def _construct_llm_prompt(self, request: LeadSearchRequest) -> str:
+        """Constructs the prompt for the LLM."""
+        return f"""
 Your task is to take as input a natural language description of a prospect audience, and turn that into an Apollo Search URL. Here's an example of an Apollo Search URL: 
 https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified&personTitles[]=project%20manager&personTitles[]=director&personLocations[]=United%20States&organizationIndustryTagIds[]=5567cdd67369643e64020000&organizationNumEmployeesRanges[]=11%2C20&organizationNumEmployeesRanges[]=21%2C50&organizationIndustryTagIds%5B%5D=5567ced173696450cb580000&qOrganizationKeywordTags%5B%5D=Google&includedOrganizationKeywordFields%5B%5D=name&qAndedOrganizationKeywordTags[]=startup&includedAndedOrganizationKeywordFields[]=name&includedAndedOrganizationKeywordFields[]=tags &includedAndedOrganizationKeywordFields[]=social_media_description 
 
@@ -147,11 +153,17 @@ This URL describes a search that people that are:
 5. Company has the number of employees 11-20 or 21-50. 
 6. Have a industry related to retail. 
 7. Have a company keyword "Google". 
-8. Must include companies related to "startup" via keywords in their name, tags, or description.  
-	- If a/multiple company name is explicitly mentioned (e.g., "Google"), include: &qOrganizationKeywordTags[]=COMPANY_NAME1 &qOrganizationKeywordTags[]=COMPANY_NAME2 &includedOrganizationKeywordFields[]=name 
+8. Must include companies related to "startup" via keywords in their name, tags, or description.
+
+You must extract all relevant information (like titles, locations, company names, etc.) from the "Input Description" first, and then supplement it with any "Additional Filters" provided.
+
+- If a/multiple company name is explicitly mentioned (e.g., "Google"), include: &qOrganizationKeywordTags[]=COMPANY_NAME1 &qOrganizationKeywordTags[]=COMPANY_NAME2 &includedOrganizationKeywordFields[]=name
+- If a company name is mentioned in the main query (e.g., "Software engineer at Anthropic"), you MUST treat it as a company name and use the `qOrganizationKeywordTags` parameter.
 	- If a/multiple company-related concept is mentioned (e.g., "startup", "VC-backed", "open-source", "remote-first"), treat it as a required keyword. These describe company identity, structure, or positioning, not names. Use: &qAndedOrganizationKeywordTags[]=KEYWORD1 &qAndedOrganizationKeywordTags[]=KEYWORD2 &includedAndedOrganizationKeywordFields[]=tags &includedAndedOrganizationKeywordFields[]=social_media_description 
 
 You can change those fields (and only those fields).
+
+ABSOLUTELY DO NOT infer or add any extra filters that are not explicitly mentioned in the user's request. For example, if the user asks for "Software engineers at OpenAI", do not add a keyword for "open-source". Stick strictly to the provided information.
 
 Industry ID Reference:
 {json.dumps(list(APOLLO_INDUSTRY_IDS.items()), indent=2)}
@@ -163,134 +175,46 @@ Additional Filters:
 - Industry: {request.filters.industry or 'Not specified'}
 - Location: {request.filters.location or 'Not specified'}
 - Company Size: {request.filters.company_size or 'Not specified'}
-- Company Names: {', '.join(request.filters.company_names) if request.filters.company_names else 'Not specified'}
-- Keywords: {', '.join(request.filters.keywords) if request.filters.keywords else 'Not specified'}
+- Company Names: {request.filters.company_names or 'Not specified'}
+- Keywords: {request.filters.general_keywords or 'Not specified'}
 
 Return the generated URL in a JSON object without quotations:
 {{"searchUrl":"Search URL goes here"}}
 """
-        
-        try:
-            # Call LLM to generate Apollo URL
-            if self.openai_client:
-                response = await self._call_openai(prompt, max_tokens=1500)
-            elif self.anthropic_client:
-                response = await self._call_anthropic(prompt, max_tokens=1500)
-            else:
-                # Fallback to rule-based URL generation
-                return self._generate_apollo_url_fallback(request)
-            
-            # Parse the JSON response
-            try:
-                result = json.loads(response.strip())
-                apollo_url = result.get("searchUrl", "")
-                
-                if not apollo_url or not apollo_url.startswith("https://app.apollo.io"):
-                    raise ValueError("Invalid Apollo URL generated")
-                
-                return apollo_url
-                
-            except json.JSONDecodeError:
-                logger.warning("Failed to parse LLM response as JSON, using fallback")
-                return self._generate_apollo_url_fallback(request)
-                
-        except Exception as e:
-            logger.warning(f"LLM Apollo URL generation failed: {str(e)}, using fallback")
-            return self._generate_apollo_url_fallback(request)
-    
+
     def _generate_apollo_url_fallback(self, request: LeadSearchRequest) -> str:
         """
-        Fallback method to generate Apollo URL when LLM fails
-        
-        Args:
-            request: Lead search request
-            
-        Returns:
-            Basic Apollo.io search URL
+        Fallback method to generate Apollo URL when LLM fails.
         """
+        logger.info("Executing fallback URL generation.")
         base_url = "https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified"
         
-        # Add job titles
-        if request.filters.job_title:
-            titles = [title.strip() for title in request.filters.job_title.split(',')]
-            for title in titles:
-                base_url += f"&personTitles[]={title.replace(' ', '%20')}"
-        
-        # Add location
-        if request.filters.location:
-            base_url += f"&personLocations[]={request.filters.location.replace(' ', '%20')}"
-        
-        # Add industry
-        if request.filters.industry:
-            industry_lower = request.filters.industry.lower()
-            industry_id = APOLLO_INDUSTRY_IDS.get(industry_lower)
-            if industry_id:
-                base_url += f"&organizationIndustryTagIds[]={industry_id}"
-        
-        # Add company size
-        if request.filters.company_size:
-            size_mapping = {
-                "1-10": "1%2C10",
-                "11-50": "11%2C50", 
-                "51-200": "51%2C200",
-                "201-500": "201%2C500",
-                "501-1000": "501%2C1000",
-                "1001-5000": "1001%2C5000",
-                "5001-10000": "5001%2C10000",
-                "10001+": "10001%2C"
-            }
-            size_param = size_mapping.get(request.filters.company_size)
-            if size_param:
-                base_url += f"&organizationNumEmployeesRanges[]={size_param}"
-        
-        # Add company names
-        for company in request.filters.company_names:
-            base_url += f"&qOrganizationKeywordTags[]={company.replace(' ', '%20')}"
-        if request.filters.company_names:
-            base_url += "&includedOrganizationKeywordFields[]=name"
-        
-        # Add keywords
-        for keyword in request.filters.keywords:
-            base_url += f"&qAndedOrganizationKeywordTags[]={keyword.replace(' ', '%20')}"
-        if request.filters.keywords:
-            base_url += "&includedAndedOrganizationKeywordFields[]=tags"
-            base_url += "&includedAndedOrganizationKeywordFields[]=social_media_description"
-        
+        if not request.main_query and not request.filters.dict(exclude_none=True):
+             return "https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified&personTitles[]=project%20manager&personTitles[]=director&personLocations[]=United%20States&organizationIndustryTagIds[]=5567cdd67369643e64020000&organizationNumEmployeesRanges[]=11%2C20&organizationNumEmployeesRanges[]=21%2C50&organizationIndustryTagIds%5B%5D=5567ced173696450cb580000&qOrganizationKeywordTags%5B%5D=Google&includedOrganizationKeywordFields%5B%5D=name&qAndedOrganizationKeywordTags[]=startup&includedAndedOrganizationKeywordFields[]=name&includedAndedOrganizationKeywordFields[]=tags &includedAndedOrganizationKeywordFields[]=social_media_description"
+
         return base_url
     
     async def _run_apify_crawler(self, apollo_url: str, max_results: int) -> List[Dict[str, Any]]:
         """
         Run Apify crawler to scrape Apollo.io
-        Replicates the Apify step from n8n workflow
-        
-        Args:
-            apollo_url: Apollo.io search URL
-            max_results: Maximum number of results to retrieve
-            
-        Returns:
-            List of raw lead data from Apify
         """
         if not self.apify_client:
             raise ValueError("Apify client not initialized - missing APIFY_API_TOKEN")
         
         try:
-            # Prepare Apify actor input (matching n8n configuration)
             run_input = {
                 "url": apollo_url,
-                "totalRecords": max(500, min(max_results, 500)),  # Minimum 500 required by actor
+                "totalRecords": max(500, min(max_results, 500)),
                 "fileName": "Apollo Prospects"
             }
             
             logger.info(f"Running Apify actor with input: {run_input}")
             
-            # Run the Apify actor synchronously (matching n8n behavior)
-            # Using the same actor ID from n8n: jljBwyyQakqrL1wae
             run = await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: self.apify_client.actor("jljBwyyQakqrL1wae").call(run_input=run_input)
             )
             
-            # Fetch results from the dataset
             items = []
             dataset_client = self.apify_client.dataset(run["defaultDatasetId"])
             
@@ -304,7 +228,6 @@ Return the generated URL in a JSON object without quotations:
             
         except Exception as e:
             logger.error(f"Apify crawler error: {str(e)}")
-            # Return empty list instead of failing completely
             return []
     
     async def _process_apify_leads(
@@ -314,50 +237,31 @@ Return the generated URL in a JSON object without quotations:
         user_id: str
     ) -> List[LeadData]:
         """
-        Process raw Apify data into structured LeadData format
-        Uses proper data models for better type safety and validation
-        
-        Args:
-            raw_leads: Raw data from Apify crawler
-            request: Original search request
-            user_id: User identifier
-            
-        Returns:
-            List of processed LeadData objects
+        Process raw Apify data into structured LeadData format.
         """
         start_time = datetime.now()
         processed_leads = []
         error_count = 0
         
-        # Prepare source query criteria (matching n8n format)
         source_query_criteria = {
             "mainQuery": request.main_query,
-            "filters": {
-                "jobTitle": request.filters.job_title or "",
-                "industry": request.filters.industry or "",
-                "location": request.filters.location or "",
-                "companySize": request.filters.company_size or "",
-                "companyNames": request.filters.company_names,
-                "keywords": request.filters.keywords
-            }
+            "filters": request.filters.dict()
         }
         
         for raw_lead in raw_leads:
             try:
-                # Parse raw data into structured Apify model
                 apify_lead = ApifyLeadData(**raw_lead)
-                
-                # Convert to processed lead format
                 processed_lead = convert_apify_to_processed(apify_lead, source_query_criteria)
                 
-                # Convert to LeadData format for compatibility
                 lead_data = LeadData(
+                    id=processed_lead.id or str(uuid.uuid4()),
+                    user_id=user_id,
                     first_name=processed_lead.first_name,
                     last_name=processed_lead.last_name,
                     name=processed_lead.name,
                     email=processed_lead.email,
                     phone=processed_lead.phone,
-                    linkedin_url=processed_lead.linkedIn_url,
+                    linkedin_url=processed_lead.linkedin_url,
                     job_title=processed_lead.job_title,
                     company_name=processed_lead.company_name,
                     company_size=processed_lead.company_size,
@@ -377,7 +281,6 @@ Return the generated URL in a JSON object without quotations:
                 error_count += 1
                 continue
         
-        # Log processing metrics
         log_processing_metrics(
             "apify_lead_processing",
             start_time,
@@ -387,42 +290,6 @@ Return the generated URL in a JSON object without quotations:
         )
         
         return processed_leads
-    
-    def _extract_industries(self, raw_lead: Dict[str, Any]) -> List[str]:
-        """Extract industry information from raw lead data"""
-        industries = []
-        
-        # Try different possible field names
-        industry_fields = ["industry", "organizationIndustry", "industries"]
-        
-        for field in industry_fields:
-            value = raw_lead.get(field)
-            if value:
-                if isinstance(value, list):
-                    industries.extend(value)
-                elif isinstance(value, str):
-                    industries.append(value)
-        
-        return list(set(industries))  # Remove duplicates
-    
-    def _extract_keywords(self, raw_lead: Dict[str, Any]) -> List[str]:
-        """Extract keywords from raw lead data"""
-        keywords = []
-        
-        # Extract from various fields that might contain keywords
-        keyword_sources = [
-            raw_lead.get("organizationKeywords", []),
-            raw_lead.get("keywords", []),
-            raw_lead.get("tags", [])
-        ]
-        
-        for source in keyword_sources:
-            if isinstance(source, list):
-                keywords.extend(source)
-            elif isinstance(source, str):
-                keywords.append(source)
-        
-        return list(set(keywords))  # Remove duplicates
     
     def _generate_metrics(
         self, 
@@ -438,7 +305,6 @@ Return the generated URL in a JSON object without quotations:
             if lead.confidence_level:
                 confidence_dist[lead.confidence_level.value] += 1
             
-            # Count enriched leads
             contact_methods = sum([
                 bool(lead.email),
                 bool(lead.phone),
@@ -458,31 +324,15 @@ Return the generated URL in a JSON object without quotations:
     async def _call_openai(self, prompt: str, max_tokens: int = 500) -> str:
         """Call OpenAI API"""
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-            
-            response = await client.chat.completions.create(
-                model="gpt-5-nano",  # Using gpt-5-nano as requested
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
-                max_completion_tokens=max_tokens,  # Fixed parameter name for gpt-5-nano
-                # temperature=0.3  # Removed - gpt-5-nano only supports default temperature
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"},
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
             logger.error(f"OpenAI API error: {str(e)}")
-            raise
-    
-    async def _call_anthropic(self, prompt: str, max_tokens: int = 500) -> str:
-        """Call Anthropic API"""
-        try:
-            response = await self.anthropic_client.messages.create(
-                model="claude-3-sonnet-20240229",
-                max_tokens=max_tokens,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            return response.content[0].text.strip()
-        except Exception as e:
-            logger.error(f"Anthropic API error: {str(e)}")
             raise
 
 # Global AI service instance

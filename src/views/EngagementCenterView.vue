@@ -75,7 +75,7 @@
             <div>
               <h4 class="mb-0">{{ selectedLead.name || `${selectedLead.first_name} ${selectedLead.last_name}`.trim() }}</h4>
               <p class="mb-0 text-muted">{{ selectedLead.job_title }} at {{ selectedLead.company_name }}</p>
-              <a :href="selectedLead.linkedIn_url" target="_blank" class="small" v-if="selectedLead.linkedIn_url">
+              <a :href="selectedLead.linkedin_url" target="_blank" class="small" v-if="selectedLead.linkedin_url">
                 <i class="bi bi-linkedin"></i> {{ texts.viewLinkedIn || 'View LinkedIn' }}
               </a>
             </div>
@@ -185,7 +185,7 @@ interface EngagementLead {
   name?: string | null; // Could be a computed from first/last
   job_title?: string | null;
   company_name?: string | null;
-  linkedIn_url?: string | null;
+  linkedin_url?: string | null;
   email?: string | null; // Crucial for sending icebreakers
 
   // Engagement-specific fields
@@ -350,7 +350,7 @@ async function sendIcebreaker(lead: EngagementLead) {
 async function logOrScheduleActivity(lead: EngagementLead) {
   if (!lead || !newActivityNotes.value.trim()) return;
   // TODO: Persist this to your backend/Supabase
-  // await engagementStore.logActivity(lead.id, newActivityType.value, newActivityNotes.value, newActivityDateTime.value || undefined);
+  // await engagementStore.logActivity(lead.id, newActivityType.value, newActivityNotes.value, newIptActivityDateTime.value || undefined);
   console.log('Logging/Scheduling:', newActivityType.value, newActivityNotes.value, newActivityDateTime.value);
 
   const leadInHub = leadsInHub.value.find(l => l.id === lead.id);

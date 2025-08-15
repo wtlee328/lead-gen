@@ -3,18 +3,20 @@ FastAPI Lead Generation Service
 Replaces n8n workflow for AI-powered lead discovery
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Request
+import logging
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Depends, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
-import logging
-from contextlib import asynccontextmanager
+import json
 
 from leadgen_app.config import settings
 from leadgen_app.routers import leads, health
-from leadgen_app.utils.logger import setup_logging
 from leadgen_app.services.auth_service import verify_jwt_token
+from leadgen_app.utils.logger import setup_logging
 
 # Setup logging
 setup_logging()
@@ -24,10 +26,6 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     logger.info("🚀 Lead Generation API starting up...")
-    logger.info(f"Environment: {settings.ENVIRONMENT}")
-    logger.info(f"Port: {settings.PORT}")
-    logger.info(f"Supabase URL configured: {bool(settings.SUPABASE_URL and settings.SUPABASE_URL != 'https://example.supabase.co')}")
-    logger.info(f"OpenAI API Key configured: {bool(settings.OPENAI_API_KEY)}")
     yield
     logger.info("🛑 Lead Generation API shutting down...")
 
@@ -40,6 +38,29 @@ app = FastAPI(
     redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None,
     lifespan=lifespan
 )
+
+# --- START ENHANCED VALIDATION LOGGING ---
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Log detailed validation errors to the server console.
+    """
+    # Log the full error details
+    logger.error(f"Validation error for request to {request.url}:")
+    try:
+        # The `exc.errors()` method provides a structured list of validation errors
+        error_details = exc.errors()
+        logger.error(json.dumps(error_details, indent=2))
+    except Exception:
+        # Fallback for unexpected error structures
+        logger.error(str(exc))
+        
+    # Return the default 422 response to the client
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors()},
+    )
+# --- END ENHANCED VALIDATION LOGGING ---
 
 # Middleware
 app.add_middleware(

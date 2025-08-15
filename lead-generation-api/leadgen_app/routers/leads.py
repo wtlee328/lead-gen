@@ -31,7 +31,6 @@ router = APIRouter()
 )
 async def search_leads(
     request: LeadSearchRequest,
-    background_tasks: BackgroundTasks,
     user_id: str = Depends(require_authenticated_user)
 ):
     """
@@ -39,7 +38,7 @@ async def search_leads(
     1. Convert natural language to Apollo URL using LLM
     2. Run Apify crawler to scrape Apollo.io
     3. Process and return lead data in n8n format
-    4. Save results to Supabase in background
+    4. Save results to Supabase
     """
     request_id = str(uuid.uuid4())
     
@@ -54,17 +53,10 @@ async def search_leads(
                 detail=validation_result["error"]
             )
         
-        # Check if user has too many recent requests
-        recent_count = await get_supabase_service().get_user_lead_count(user_id, "new")
-        if recent_count > settings.MAX_LEADS_PER_REQUEST * 5:
-            logger.warning(f"User {user_id} has too many recent leads: {recent_count}")
-            await get_supabase_service().archive_user_new_leads(user_id)
-        
         # Process the search request using n8n workflow replication
         leads_data, metrics = await ai_service.process_lead_search(request, user_id)
         
         if not leads_data:
-            # Return n8n-style response for no results
             return JSONResponse(
                 status_code=200,
                 content={
@@ -79,23 +71,15 @@ async def search_leads(
         # Prepare source query criteria for database storage
         source_query_criteria = {
             "mainQuery": request.main_query,
-            "filters": {
-                "jobTitle": request.filters.job_title or "",
-                "industry": request.filters.industry or "",
-                "location": request.filters.location or "",
-                "companySize": request.filters.company_size or "",
-                "companyNames": request.filters.company_names,
-                "keywords": request.filters.keywords
-            },
+            "filters": request.filters.dict(),
             "maxResults": request.max_results,
             "includeEnrichment": request.include_enrichment,
             "requestId": request_id,
             "timestamp": metrics.get("timestamp", "")
         }
         
-        # Save leads to database in background
-        background_tasks.add_task(
-            save_leads_background,
+        # Save leads to database
+        await save_leads_background(
             leads_data,
             user_id,
             source_query_criteria,
@@ -117,7 +101,7 @@ async def search_leads(
                         "location": lead.location,
                         "email": lead.email,
                         "phone": lead.phone,
-                        "linkedIn_url": lead.linkedin_url,
+                        "linkedin_url": lead.linkedin_url,
                         "keywords": lead.keywords,
                         "source_query_criteria": lead.source_query_criteria,
                         "icebreaker": None
@@ -131,7 +115,6 @@ async def search_leads(
         if metrics.get("total_enriched", 0) > 0:
             success_message += f" {metrics['total_enriched']} leads were enriched with additional data."
         
-        # Return in exact n8n format expected by frontend
         return JSONResponse(
             status_code=200,
             content={
@@ -149,7 +132,6 @@ async def search_leads(
     except Exception as e:
         logger.error(f"Error in lead search {request_id}: {str(e)}", exc_info=True)
         
-        # Return error in n8n-compatible format
         return JSONResponse(
             status_code=500,
             content={

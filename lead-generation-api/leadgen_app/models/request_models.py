@@ -6,6 +6,10 @@ from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
 from enum import Enum
 
+def to_camel(string: str) -> str:
+    words = string.split('_')
+    return words[0] + ''.join(word.capitalize() for word in words[1:])
+
 class CompanySize(str, Enum):
     """Company size options"""
     SMALL = "1-10"
@@ -39,24 +43,19 @@ class LeadFilters(BaseModel):
     industry: Optional[str] = Field(None, description="Industry category")
     location: Optional[str] = Field(None, max_length=200, description="Geographic location")
     company_size: Optional[str] = Field(None, description="Company size range")
-    company_names: List[str] = Field(default_factory=list, description="Specific company names")
-    keywords: List[str] = Field(default_factory=list, description="Relevant keywords")
-    
-    @validator('company_names', 'keywords')
-    def validate_lists(cls, v):
-        """Validate list fields"""
-        if v is None:
-            return []
-        # Remove empty strings and limit length
-        cleaned = [item.strip() for item in v if item and item.strip()]
-        return cleaned[:20]  # Limit to 20 items
-    
-    @validator('job_title', 'location')
+    company_names: Optional[str] = Field(None, description="Specific company names as a comma-separated string")
+    general_keywords: Optional[str] = Field(None, description="Relevant keywords as a comma-separated string")
+
+    @validator('job_title', 'location', 'company_names', 'general_keywords')
     def validate_strings(cls, v):
         """Validate string fields"""
         if v:
             return v.strip()
         return v
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
 
 class LeadSearchRequest(BaseModel):
     """Main request model for lead search"""
@@ -78,19 +77,21 @@ class LeadSearchRequest(BaseModel):
         return v.strip()
     
     class Config:
-        schema_extra = {
+        alias_generator = to_camel
+        populate_by_name = True
+        json_schema_extra = {
             "example": {
-                "main_query": "I'm looking for CEOs and Marketing Managers at cosmetics companies in Taiwan",
+                "mainQuery": "I'm looking for CEOs and Marketing Managers at cosmetics companies in Taiwan",
                 "filters": {
-                    "job_title": "CEO, Marketing Manager",
+                    "jobTitle": "CEO, Marketing Manager",
                     "industry": "cosmetics",
                     "location": "Taiwan",
-                    "company_size": "51-200",
-                    "company_names": [],
+                    "companySize": "51-200",
+                    "companyNames": [],
                     "keywords": ["skincare", "beauty", "cosmetics"]
                 },
-                "max_results": 50,
-                "include_enrichment": True
+                "maxResults": 50,
+                "includeEnrichment": True
             }
         }
 

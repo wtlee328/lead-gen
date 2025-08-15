@@ -20,6 +20,7 @@ RUN apt-get update \
 COPY requirements.txt .
 
 # Install Python dependencies
+# Force cache invalidation by adding a comment - 5
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 

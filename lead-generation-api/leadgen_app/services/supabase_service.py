@@ -60,7 +60,7 @@ class SupabaseService:
                     "name": lead.name,
                     "email": lead.email,
                     "phone": lead.phone,
-                    "linkedIn_url": lead.linkedin_url,
+                    "linkedin_url": lead.linkedin_url,
                     "job_title": lead.job_title,
                     "company_name": lead.company_name,
                     "company_size": lead.company_size,
@@ -72,8 +72,7 @@ class SupabaseService:
                         "confidence_score": lead.confidence_score,
                         "confidence_level": lead.confidence_level.value if lead.confidence_level else None
                     },
-                    "created_at": datetime.utcnow().isoformat(),
-                    "updated_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.utcnow().isoformat()
                 }
                 
                 lead_records.append(record)

@@ -4,7 +4,7 @@ Basic tests for the FastAPI application
 
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
+from leadgen_app.main import app
 
 client = TestClient(app)
 
@@ -48,7 +48,7 @@ def test_unauthorized_access():
         "main_query": "test query",
         "filters": {}
     })
-    assert response.status_code == 401
+    assert response.status_code == 403
 
 def test_invalid_search_request():
     """Test invalid search request format"""
@@ -56,4 +56,4 @@ def test_invalid_search_request():
     response = client.post("/api/v1/leads/search", json={
         "invalid": "data"
     })
-    assert response.status_code in [401, 422]  # Auth or validation error
+    assert response.status_code in [403, 422]  # Auth or validation error

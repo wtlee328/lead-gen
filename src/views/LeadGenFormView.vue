@@ -832,6 +832,10 @@ const columnHelper = createColumnHelper<Lead>();
 const totalRowCount = ref(0);
 const isSelectingAllLeads = ref(false);
 
+function toggleAdvancedFilters() {
+  showAdvancedFilters.value = !showAdvancedFilters.value;
+}
+
 const defaultTexts = {
   mainQueryLabel: "Briefly describe the type of prospects you're looking for:",
   mainQueryPlaceholder:
@@ -2228,518 +2232,107 @@ watch(selectedRowCount, async (newCount, oldCount) => {
     }
   }
 });
-const isAdvancedCriteriaActive = computed(
-  () =>
-    (showAdvancedFilters.value &&
-      typeof naturalLanguageQuery.value === "string" &&
-      naturalLanguageQuery.value.trim() === "") ||
-    filterTags.value.length > 0
-);
-function handleTabChangeFromPanel(newTab: LeadTab) {
-  changeTab(newTab);
-}
-function handleClientFiltersUpdate(updatedFilters: ActiveClientFilters) {
-  activeClientFilters.value = updatedFilters;
-  pagination.value.pageIndex = 0;
-  rowSelection.value = {};
-  fetchLeadsForCurrentUser(true);
-}
-async function fetchTabCounts(userId: string | undefined) {
-  if (!userId) {
-    tabCounts.value = { new: 0, saved: 0, archived: 0 };
-    return;
-  }
-  try {
-    // Tab counts should still query the base table for accurate counts
-    const [newRes, savedRes, archivedRes] = await Promise.all([
-      supabase
-        .from("leads") // Keep leads here
-        .select("id", { count: "exact", head: true })
-        .match({ user_id: userId, tab: "new" }),
-      supabase
-        .from("leads") // Keep leads here
-        .select("id", { count: "exact", head: true })
-        .match({ user_id: userId, tab: "saved" }),
-      supabase
-        .from("leads") // Keep leads here
-        .select("id", { count: "exact", head: true })
-        .match({ user_id: userId, tab: "archived" }),
-    ]);
-    tabCounts.value = {
-      new: newRes.count ?? 0,
-      saved: savedRes.count ?? 0,
-      archived: archivedRes.count ?? 0,
-    };
-  } catch (error) {
-    tabCounts.value = { new: 0, saved: 0, archived: 0 };
-  }
-}
-function changeTab(newTab: LeadTab) {
-  if (
-    isLoadingLeads.value ||
-    newTab === currentTab.value ||
-    isProcessingBatch.value ||
-    isSelectingAllLeads.value
-  )
-    return;
-  currentTab.value = newTab;
-  pagination.value.pageIndex = 0;
-  sorting.value = [];
-  rowSelection.value = {};
-  activeClientFilters.value = {};
-  fetchLeadsForCurrentUser(true);
-}
-async function archiveUnsavedLeads(
-  userId: string | undefined
-): Promise<boolean> {
-  if (!userId) return false;
-  try {
-    const { error } = await supabase
-      .from("leads")
-      .update({ tab: "archived" })
-      .match({ user_id: userId, tab: "new" });
-    if (error) throw error;
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-async function hasUnsavedLeads(userId: string | undefined): Promise<boolean> {
-  if (!userId) return false;
-  try {
-    const { count, error } = await supabase
-      .from("leads")
-      .select("id", { count: "exact", head: true })
-      .match({ user_id: userId, tab: "new" });
-    if (error) throw error;
-    return (count ?? 0) > 0;
-  } catch (e) {
-    return false;
-  }
-}
-function toggleAdvancedFilters() {
-  showAdvancedFilters.value = !showAdvancedFilters.value;
-}
-function getFieldLabel(type: FilterTag["type"]): string {
-  const map = {
-    jobTitle: "jobTitleLabel",
-    industry: "industryLabel",
-    location: "locationLabel",
-    companySize: "companySizeLabel",
-    companyNames: "companyNamesLabel",
-    generalKeywords: "generalKeywordsLabel",
-  };
-  /* @ts-ignore */ return (texts.value as any)[map[type]] || type;
-}
-function addAdvancedInputsAsTags() {
-  const i = advancedFilterInputs;
-  if (typeof i.jobTitle === "string" && i.jobTitle.trim())
-    addTag("jobTitle", i.jobTitle.trim());
-  if (typeof i.industry === "string" && i.industry)
-    addTag(
-      "industry",
-      i.industry,
-      languageStore.industries?.find((o) => o.value === i.industry)?.text
-    );
-  if (typeof i.location === "string" && i.location.trim())
-    addTag("location", i.location.trim());
-  if (typeof i.companySize === "string" && i.companySize)
-    addTag("companySize", i.companySize);
-  if (typeof i.companyNames === "string" && i.companyNames.trim())
-    i.companyNames
-      .trim()
-      .split(",")
-      .forEach((k) => {
-        if (typeof k === "string" && k.trim()) addTag("companyNames", k.trim());
-      });
-  if (typeof i.generalKeywords === "string" && i.generalKeywords.trim())
-    i.generalKeywords
-      .trim()
-      .split(",")
-      .forEach((k) => {
-        if (typeof k === "string" && k.trim())
-          addTag("generalKeywords", k.trim());
-      });
-  Object.keys(i).forEach((k) => (i[k as keyof typeof i] = ""));
-}
-function addTag(
-  type: FilterTag["type"],
-  value: string,
-  displayValueOverride?: string
-) {
-  const dVal = displayValueOverride || value;
-  const lbl = getFieldLabel(type);
-  if (type !== "companyNames" && type !== "generalKeywords")
-    filterTags.value = filterTags.value.filter((t) => t.type !== type);
-  if (
-    filterTags.value.some(
-      (t) => t.type === type && t.value.toLowerCase() === value.toLowerCase()
-    )
-  )
-    return;
-  filterTags.value.push({
-    id: uuidv4(),
-    type,
-    value,
-    displayValue: dVal,
-    label: lbl,
-  });
-}
-function removeFilterTag(tagId: string) {
-  filterTags.value = filterTags.value.filter((t) => t.id !== tagId);
-}
-function validateSearchCriteria(): boolean {
+const isAdvancedCriteriaActive = computed(() => {
+  return Object.values(advancedFilterInputs).some((value) => !!value);
+});
+
+async function submitLeadSearchCriteria() {
+  // Clear previous search messages
   searchMessage.value = null;
   searchStatus.value = null;
-  const nqHasContent =
-    typeof naturalLanguageQuery.value === "string" &&
-    naturalLanguageQuery.value.trim() !== "";
-  const hasAppliedFilterTags = filterTags.value.length > 0;
-  if (!nqHasContent && !hasAppliedFilterTags) {
-    searchMessage.value = texts.value.noSearchCriteria;
-    searchStatus.value = "error";
-    return false;
-  }
-  const hasRequiredInputsFilled =
-    filterTags.value.some((tag) => tag.type === "jobTitle") &&
-    filterTags.value.some((tag) => tag.type === "industry");
-  if (
-    showAdvancedFilters.value &&
-    !nqHasContent &&
-    !hasAppliedFilterTags &&
-    !hasRequiredInputsFilled
-  ) {
-    if (!filterTags.value.some((tag) => tag.type === "jobTitle")) {
-      searchMessage.value = texts.value.errorRequired(
-        getFieldLabel("jobTitle")
-      );
-      searchStatus.value = "error";
-      return false;
-    }
-    if (!filterTags.value.some((tag) => tag.type === "industry")) {
-      searchMessage.value = texts.value.errorRequired(
-        getFieldLabel("industry")
-      );
-      searchStatus.value = "error";
-      return false;
-    }
-  }
-  return true;
-}
-async function submitLeadSearchCriteria() {
-  if (isSearchingLeads.value) return;
 
-  const hasNewLeads = tabCounts.value.new > 0;
-  if (hasNewLeads) {
-    if (confirm(texts.value.confirmArchiveUnsaved)) {
-      await archiveAllNewLeads();
-      searchMessage.value = texts.value.unsavedLeadsArchived;
-      searchStatus.value = "info";
-    } else {
-      return;
-    }
+  // If advanced filters are used, prioritize them by clearing the main query.
+  if (isAdvancedCriteriaActive.value) {
+    naturalLanguageQuery.value = "";
   }
 
-  const criteriaPayload = {
-    mainQuery: naturalLanguageQuery.value,
-    filters: {
-      jobTitle: filterTags.value.find(t => t.type === 'jobTitle')?.value || '',
-      industry: filterTags.value.find(t => t.type === 'industry')?.value || '',
-      location: filterTags.value.find(t => t.type === 'location')?.value || '',
-      companySize: filterTags.value.find(t => t.type === 'companySize')?.value || '',
-      companyNames: filterTags.value.filter(t => t.type === 'companyNames').map(t => t.value),
-      keywords: filterTags.value.filter(t => t.type === 'generalKeywords').map(t => t.value),
-    }
-  };
-
-  if (!criteriaPayload.mainQuery && Object.values(criteriaPayload.filters).every(v => !v || (Array.isArray(v) && v.length === 0))) {
+  // Validate that at least one search criteria is provided
+  if (!naturalLanguageQuery.value.trim() && !isAdvancedCriteriaActive.value) {
     searchMessage.value = texts.value.noSearchCriteria;
     searchStatus.value = "warning";
     return;
   }
 
-  await handleLeadSearch(criteriaPayload);
-}
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:7860/api/v1";
-
-async function archiveAllNewLeads() {
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw new Error(sessionError.message);
-    if (!session) throw new Error("User not authenticated.");
-
-    const res = await fetch(`${API_BASE_URL}/leads/archive-new`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.detail || 'Failed to archive new leads.');
-    }
-
-  } catch (error: any) {
-    console.error("Error archiving new leads:", error);
-    searchMessage.value = texts.value.autoArchiveError + ` ${error.message}`;
+  const user = authStore.user;
+  if (!user) {
+    searchMessage.value = texts.value.userNotAuthMessage;
     searchStatus.value = "error";
+    return;
   }
-}
 
-async function handleLeadSearch(criteriaPayload: any) {
+  // Auto-archive unsaved leads in the 'new' tab before starting a new search
+  if (tabCounts.value.new > 0) {
+    if (confirm(texts.value.confirmArchiveUnsaved)) {
+      try {
+        const { error: archiveError } = await supabase.rpc(
+          "archive_unsaved_leads_for_user",
+          { p_user_id: user.id }
+        );
+        if (archiveError) throw archiveError;
+        searchMessage.value = texts.value.unsavedLeadsArchived;
+        searchStatus.value = "info";
+        await fetchTabCounts(user.id); // Refresh counts after archiving
+      } catch (error: any) {
+        console.error("Auto-archive error:", error);
+        searchMessage.value = `${texts.value.autoArchiveError}: ${error.message}`;
+        searchStatus.value = "error";
+        return; // Stop the search if archiving fails
+      }
+    } else {
+      return; // User cancelled the search
+    }
+  }
+
   isSearchingLeads.value = true;
-  searchMessage.value = null;
-  searchStatus.value = null;
-
   try {
-    // Step 1: Get a fresh, guaranteed valid session from Supabase.
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // The API URL for your FastAPI backend.
+    // This assumes it's running on localhost:8000 and Vite proxy is configured.
+    const apiUrl = "/api/v1/leads/search";
 
-    if (sessionError) {
-      throw new Error(`Failed to retrieve auth session: ${sessionError.message}`);
-    }
-    if (!session) {
-      throw new Error("User is not authenticated.");
+    const session = authStore.session;
+    if (!session?.access_token) {
+      throw new Error("Authentication token not found.");
     }
 
-    // Step 2: Use the fresh token to call the backend API.
-    const res = await fetch(`${API_BASE_URL}/leads/search`, {
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify(criteriaPayload),
+      body: JSON.stringify({
+        main_query: naturalLanguageQuery.value,
+        filters: advancedFilterInputs,
+      }),
     });
 
-    if (!res.ok) {
-      let errorDetail = `API Error: ${res.status} ${res.statusText}`;
-      try {
-        const result = await res.json();
-        errorDetail = result.detail || result.message || errorDetail;
-      } catch (e) {
-        // Ignore JSON parsing errors if the response is not JSON
-      }
-      throw new Error(errorDetail);
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Handle non-2xx responses from the API
+      throw new Error(data.detail || `Request failed with status ${response.status}`);
     }
 
+    // Assuming the structure of a successful response is { success: true, ... }
+    // and your actual backend returns the data directly.
+    // We'll treat a 200 OK response as success.
     searchMessage.value = texts.value.searchLeadsSuccess;
     searchStatus.value = "success";
-    // These will now succeed because the search data is saved before the response is sent.
+    naturalLanguageQuery.value = ""; // Clear query on success
+    Object.keys(advancedFilterInputs).forEach((key) => {
+      advancedFilterInputs[key as keyof typeof advancedFilterInputs] = "";
+    });
+    filterTags.value = [];
+    currentTab.value = "new";
     await fetchLeadsForCurrentUser(true);
-    await fetchTabCounts(authStore.user?.id);
+    await fetchTabCounts(user.id);
+
   } catch (error: any) {
-    searchMessage.value = texts.value.alertError + error.message;
+    console.error("Search submission error:", error);
+    searchMessage.value = `${texts.value.alertError}${error.message}`;
     searchStatus.value = "error";
   } finally {
     isSearchingLeads.value = false;
   }
 }
-async function getSupabaseSession(): Promise<Session | null> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session) {
-    if (authStore.isAuthenticated) await authStore.signOut();
-    searchMessage.value = error
-      ? texts.value.alertError + error.message
-      : texts.value.userNotAuthMessage;
-    searchStatus.value = "error";
-    return null;
-  }
-  return session;
-}
-
-// Updated selectFields to include the new _text columns from the view
-const selectFields = `id, created_at, user_id, tab, lead_status, icebreaker, source_query_criteria, first_name, last_name, name, job_title, industry, industry_text, location, company_name, company_size, phone, linkedIn_url, keywords, keywords_text, email, notes`;
-
-async function fetchLeadsForCurrentUser(forceRefresh = false) {
-  if (
-    (isLoadingLeads.value && !forceRefresh) ||
-    (isProcessingBatch.value && !forceRefresh) ||
-    (isSelectingAllLeads.value && !forceRefresh)
-  ) {
-    return;
-  }
-  isLoadingLeads.value = true;
-  const user = authStore.user;
-  if (!user) {
-    tableData.value = [];
-    rowSelection.value = {};
-    isLoadingLeads.value = false;
-    initialLoadComplete.value = true;
-    totalRowCount.value = 0;
-    tabCounts.value = { new: 0, saved: 0, archived: 0 };
-    return;
-  }
-
-  try {
-    // IMPORTANT: Query the new view instead of the original table
-    let query = supabase
-      .from("leads_search_view") // Changed from "leads" to your new view name
-      .select(selectFields, { count: "exact" })
-      .eq("user_id", user.id)
-      .eq("tab", currentTab.value);
-
-    // Apply active client filters
-    Object.entries(activeClientFilters.value).forEach(([filterKey, values]) => {
-      if (Array.isArray(values) && values.length > 0) {
-        const typedFilterKey = filterKey as FilterKey;
-        // Use the mapped column name for the Supabase query
-        const actualColumnName = COLUMN_MAPPING[typedFilterKey];
-        
-        if (!actualColumnName) {
-            console.warn(`fetchLeadsForCurrentUser: No column mapping found for filter key: ${typedFilterKey}. This filter will be ignored.`);
-            return; // Skip this filter if no mapping found
-        }
-
-        switch (typedFilterKey) { // Switch on the original filter key type
-          case "lead_status":
-            query = query.in(actualColumnName, values);
-            break;
-          case "company_size":
-            // This logic is already correct for numeric range filtering
-            const companySizeOrFilters: string[] = [];
-            values.forEach((rangeStr) => {
-              const { min, max } = parseCompanySizeRange(rangeStr);
-              if (min !== undefined && max !== undefined) {
-                companySizeOrFilters.push(
-                  `and(${actualColumnName}.gte.${min},${actualColumnName}.lte.${max})`
-                );
-              } else if (min !== undefined) {
-                companySizeOrFilters.push(`${actualColumnName}.gte.${min}`);
-              }
-            });
-            if (companySizeOrFilters.length > 0) {
-              query = query.or(companySizeOrFilters.join(","));
-            }
-            break;
-          // Group all fuzzy text search fields here, using the actualColumnName (which might be _text)
-          case "job_title":
-          case "location":
-          case "company_name":
-          case "industry":
-          case "keywords":
-            // For these fields, now use ilike on the new text columns from the view (or original text columns)
-            const orFuzzyConditions = values
-              .map((val) => `${actualColumnName}.ilike.%${String(val).trim()}%`)
-              .join(",");
-            if (orFuzzyConditions) query = query.or(orFuzzyConditions);
-            break;
-          default:
-            // This default should ideally never be hit if all FilterKey types are covered
-            console.warn(
-              `fetchLeadsForCurrentUser: Unhandled filter key type in switch: ${typedFilterKey}. Please add it to COLUMN_MAPPING and switch cases.`
-            );
-            break;
-        }
-      }
-    });
-
-    if (sorting.value.length > 0) {
-      const sortColumn = sorting.value[0];
-      const dbSortColumn = sortColumn.id;
-      // Allow sorting on the original columns, as they exist in the view
-      // Note: Sorting on the _text columns might be unexpected for arrays/JSONB if not carefully considered.
-      // Keeping original column names for sorting for consistency with initial data display.
-      const allowedSort = [
-        "name",
-        "job_title",
-        "company_name",
-        "email",
-        "created_at",
-        "lead_status",
-        "company_size",
-        "industry", // Sorting on array columns can be complex, default behavior might be lexical
-        "keywords", // Sorting on JSONB columns also complex, default behavior might be lexical
-      ];
-      if (allowedSort.includes(dbSortColumn)) {
-        query = query.order(dbSortColumn, { ascending: !sortColumn.desc });
-      } else {
-        // Fallback for sorting on columns not in allowedSort
-        query = query.order("created_at", { ascending: false });
-      }
-    } else {
-      query = query.order("created_at", { ascending: false });
-    }
-
-    const page = pagination.value.pageIndex;
-    const pageSize = pagination.value.pageSize;
-    query = query.range(page * pageSize, (page + 1) * pageSize - 1);
-
-    const { data: fetchedData, error, status, count } = await query;
-
-    if (error && status !== 406) {
-      console.error(
-        "Supabase fetch error:",
-        error,
-        "Query filters:",
-        JSON.stringify(activeClientFilters.value)
-      );
-      if (error.message.includes("JWT")) {
-        searchMessage.value = texts.value.accessDeniedMessage;
-        searchStatus.value = "error";
-        await authStore.signOut();
-      }
-      tableData.value = [];
-      totalRowCount.value = 0;
-    } else if (error) {
-      console.warn(
-        "Supabase fetch warning/non-blocking error:",
-        error,
-        "Query filters:",
-        JSON.stringify(activeClientFilters.value)
-      );
-      tableData.value = fetchedData || [];
-      totalRowCount.value = count || (fetchedData ? (fetchedData as Lead[]).length : 0);
-      // You can keep the error message here if you want to notify user about filter issues
-      // if (error.code === "PGRST100" || error.code === "42883") {
-      //   searchMessage.value = `Filter error: ${error.message}. Some filters may not be applied correctly.`;
-      //   searchStatus.value = "warning";
-      // }
-    } else {
-      tableData.value = fetchedData || [];
-      const totalCount = count || 0;
-      totalRowCount.value = totalCount;
-      const newPageCount = Math.ceil(totalCount / pageSize);
-      const currentPageIndex = pagination.value.pageIndex;
-      if (newPageCount > 0 && currentPageIndex >= newPageCount) {
-        pagination.value.pageIndex = newPageCount - 1;
-      } else if (
-        currentPageIndex > 0 &&
-        totalCount === 0 &&
-        currentTab.value !== "new"
-      ) {
-        pagination.value.pageIndex = 0;
-      }
-    }
-  } catch (e: any) {
-    if (!searchMessage.value) {
-      searchMessage.value =
-        texts.value.alertError + (e.message || "Unknown error");
-    }
-    searchStatus.value = "error";
-    tableData.value = [];
-    totalRowCount.value = 0;
-  } finally {
-    isLoadingLeads.value = false;
-    if (!initialLoadComplete.value) initialLoadComplete.value = true;
-  }
-}
-
-onMounted(async () => {
-  const session = authStore.session || (await getSupabaseSession());
-  if (session && authStore.user) {
-    await fetchTabCounts(authStore.user.id);
-    await fetchLeadsForCurrentUser(true);
-  } else {
-    isLoadingLeads.value = false;
-    initialLoadComplete.value = true;
-    tabCounts.value = { new: 0, saved: 0, archived: 0 };
-    totalRowCount.value = 0;
-  }
-});
 </script>
