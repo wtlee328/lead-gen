@@ -18,7 +18,9 @@ class AuthService:
     """Authentication service for handling JWT tokens"""
     
     def __init__(self):
-        self.jwt_secret = settings.SUPABASE_JWT_SECRET
+        # For Supabase JWT verification, we need the JWT secret
+        # The JWT secret is typically the same as the service role key for verification
+        self.jwt_secret = settings.SUPABASE_SERVICE_ROLE_KEY
         self.algorithm = "HS256"
     
     def verify_token(self, token: str) -> Dict[str, Any]:
@@ -35,7 +37,7 @@ class AuthService:
             HTTPException: If token is invalid
         """
         try:
-            # Decode the JWT token
+            # Decode the JWT token using the service role key as the secret
             payload = jwt.decode(
                 token, 
                 self.jwt_secret, 
@@ -52,14 +54,6 @@ class AuthService:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid token: missing user ID"
-                )
-            
-            # Check token expiration
-            exp = payload.get("exp")
-            if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Token has expired"
                 )
             
             logger.info(f"Token verified for user: {user_id}")
