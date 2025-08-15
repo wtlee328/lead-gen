@@ -832,6 +832,9 @@ const columnHelper = createColumnHelper<Lead>();
 const totalRowCount = ref(0);
 const isSelectingAllLeads = ref(false);
 
+const selectFields =
+  "id, created_at, user_id, tab, first_name, last_name, name, job_title, industry, location, company_name, company_size, phone, linkedIn_url, keywords, email, notes, lead_status, icebreaker, source_query_criteria";
+
 async function fetchTabCounts(userId: string | undefined) {
   if (!userId) {
     tabCounts.value = { new: 0, saved: 0, archived: 0 };
