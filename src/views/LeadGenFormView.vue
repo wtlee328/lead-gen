@@ -909,6 +909,25 @@ function toggleAdvancedFilters() {
   showAdvancedFilters.value = !showAdvancedFilters.value;
 }
 
+function handleTabChangeFromPanel(newTab: LeadTab) {
+  if (currentTab.value !== newTab) {
+    currentTab.value = newTab;
+    // Reset pagination and sorting when tab changes
+    pagination.value.pageIndex = 0;
+    sorting.value = [];
+    rowSelection.value = {}; // Clear selection
+    fetchLeadsForCurrentUser(true);
+  }
+}
+
+function handleClientFiltersUpdate(newFilters: ActiveClientFilters) {
+  activeClientFilters.value = newFilters;
+  // Reset pagination and fetch leads with new filters
+  pagination.value.pageIndex = 0;
+  rowSelection.value = {}; // Clear selection
+  fetchLeadsForCurrentUser(true);
+}
+
 const defaultTexts = {
   mainQueryLabel: "Briefly describe the type of prospects you're looking for:",
   mainQueryPlaceholder:
