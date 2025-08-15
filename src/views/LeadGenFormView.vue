@@ -2285,9 +2285,12 @@ async function submitLeadSearchCriteria() {
 
   isSearchingLeads.value = true;
   try {
-    // The API URL for your FastAPI backend.
-    // This assumes it's running on localhost:8000 and Vite proxy is configured.
-    const apiUrl = "/api/v1/leads/search";
+    // Construct the full API URL from the environment variable
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    if (!apiBaseUrl) {
+      throw new Error("VITE_API_BASE_URL is not defined. Please check your .env file.");
+    }
+    const apiUrl = `${apiBaseUrl}/api/v1/leads/search`;
 
     const session = authStore.session;
     if (!session?.access_token) {
@@ -2313,9 +2316,6 @@ async function submitLeadSearchCriteria() {
       throw new Error(data.detail || `Request failed with status ${response.status}`);
     }
 
-    // Assuming the structure of a successful response is { success: true, ... }
-    // and your actual backend returns the data directly.
-    // We'll treat a 200 OK response as success.
     searchMessage.value = texts.value.searchLeadsSuccess;
     searchStatus.value = "success";
     naturalLanguageQuery.value = ""; // Clear query on success

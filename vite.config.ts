@@ -31,13 +31,5 @@ export default defineConfig(() => {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
       'import.meta.env.VITE_APP_BUILD_TIMESTAMP': JSON.stringify(clientBuildTimestamp)
     },
-    server: {
-      proxy: {
-        '/api': {
-          target: 'http://127.0.0.1:8000',
-          changeOrigin: true,
-        },
-      },
-    },
   };
 });
