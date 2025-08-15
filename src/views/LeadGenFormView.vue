@@ -832,6 +832,54 @@ const columnHelper = createColumnHelper<Lead>();
 const totalRowCount = ref(0);
 const isSelectingAllLeads = ref(false);
 
+async function fetchLeadsForCurrentUser(forceRefresh = false) {
+  if (isLoadingLeads.value && !forceRefresh) return;
+  isLoadingLeads.value = true;
+
+  try {
+    const user = authStore.user;
+    if (!user) {
+      tableData.value = [];
+      totalRowCount.value = 0;
+      return;
+    }
+
+    let query = supabase
+      .from("leads_search_view")
+      .select(selectFields, { count: "exact" })
+      .eq("user_id", user.id)
+      .eq("tab", currentTab.value);
+
+    // Apply sorting
+    if (sorting.value.length > 0) {
+      const sort = sorting.value[0];
+      query = query.order(sort.id, { ascending: sort.desc === false });
+    } else {
+      query = query.order("created_at", { ascending: false });
+    }
+
+    // Apply pagination
+    const { pageIndex, pageSize } = pagination.value;
+    const rangeFrom = pageIndex * pageSize;
+    const rangeTo = rangeFrom + pageSize - 1;
+    query = query.range(rangeFrom, rangeTo);
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    tableData.value = data || [];
+    totalRowCount.value = count || 0;
+  } catch (error: any) {
+    console.error("Error fetching leads:", error);
+    searchMessage.value = `Failed to load leads: ${error.message}`;
+    searchStatus.value = "error";
+  } finally {
+    isLoadingLeads.value = false;
+    initialLoadComplete.value = true;
+  }
+}
+
 function toggleAdvancedFilters() {
   showAdvancedFilters.value = !showAdvancedFilters.value;
 }
