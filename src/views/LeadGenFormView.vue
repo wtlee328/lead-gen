@@ -841,16 +841,23 @@ async function fetchTabCounts(userId: string | undefined) {
     return;
   }
   try {
-    const { data, error } = await supabase.rpc('get_user_lead_counts', { p_user_id: userId });
-    if (error) throw error;
-    if (data && data.length > 0) {
-      const counts = data[0];
-      tabCounts.value = {
-        new: counts.new_count || 0,
-        saved: counts.saved_count || 0,
-        archived: counts.archived_count || 0,
-      };
-    }
+    // Fetch counts for each tab individually in parallel
+    const [{ count: newCount, error: newError }, { count: savedCount, error: savedError }, { count: archivedCount, error: archivedError }] = await Promise.all([
+      supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('tab', 'new'),
+      supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('tab', 'saved'),
+      supabase.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('tab', 'archived')
+    ]);
+
+    if (newError) throw newError;
+    if (savedError) throw savedError;
+    if (archivedError) throw archivedError;
+
+    tabCounts.value = {
+      new: newCount || 0,
+      saved: savedCount || 0,
+      archived: archivedCount || 0,
+    };
+
   } catch (error: any) {
     console.error('Error fetching tab counts:', error);
     // Do not show an error message for this, as it's a background count update
