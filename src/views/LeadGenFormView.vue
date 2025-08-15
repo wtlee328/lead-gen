@@ -1246,10 +1246,10 @@ const columns = computed<ColumnDef<Lead, any>[]>(() => [
     size: 140,
     meta: { style: { minWidth: "140px", width: "140px" } },
   }),
-  columnHelper.accessor("linkedIn_url", {
-    id: "linkedIn_url",
+  columnHelper.accessor("linkedin_url", {
+    id: "linkedin_url",
     header: () => texts.value.colLinkedIn,
-    cell: (info: CellContext<Lead, Lead["linkedIn_url"]>) => {
+    cell: (info: CellContext<Lead, Lead["linkedin_url"]>) => {
       const url = info.getValue();
       return url
         ? h(
