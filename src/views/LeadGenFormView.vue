@@ -2371,11 +2371,15 @@ async function submitLeadSearchCriteria() {
   if (tabCounts.value.new > 0) {
     if (confirm(texts.value.confirmArchiveUnsaved)) {
       try {
-        const { error: archiveError } = await supabase.rpc(
-          "archive_unsaved_leads_for_user",
-          { p_user_id: user.id }
-        );
+        // Re-implementing the logic of the missing RPC function directly
+        const { error: archiveError } = await supabase
+          .from('leads')
+          .update({ tab: 'archived' })
+          .eq('user_id', user.id)
+          .eq('tab', 'new');
+
         if (archiveError) throw archiveError;
+        
         searchMessage.value = texts.value.unsavedLeadsArchived;
         searchStatus.value = "info";
         await fetchTabCounts(user.id); // Refresh counts after archiving
