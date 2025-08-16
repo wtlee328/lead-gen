@@ -733,8 +733,7 @@ import { useLanguageStore } from '@/stores/languageStore';
 import type { Table } from '@tanstack/vue-table';
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/services/supabaseClient";
-import type { Session } from "@supabase/supabase-js";
-import { v4 as uuidv4 } from "uuid";
+
 import {
   useVueTable,
   getCoreRowModel,
@@ -768,7 +767,7 @@ interface Lead {
   company_name?: string | null;
   company_size?: number | null;
   phone?: string | null;
-  linkedIn_url?: string | null;
+  linkedin_url?: string | null;
   keywords?: string[] | null; // This will still receive the original JSONB array from the view
   email?: string | null;
   notes?: string | null;
@@ -784,7 +783,9 @@ interface FilterTag {
     | "location"
     | "companySize"
     | "companyNames"
-    | "generalKeywords";
+    | "generalKeywords"
+    | "keywords"
+    | "custom";
   value: string;
   displayValue: string;
   label: string;
@@ -941,6 +942,83 @@ function handleClientFiltersUpdate(newFilters: ActiveClientFilters) {
   pagination.value.pageIndex = 0;
   rowSelection.value = {}; // Clear selection
   fetchLeadsForCurrentUser(true);
+}
+
+function addAdvancedInputsAsTags() {
+  // Convert advanced filter inputs to filter tags
+  const newTags: FilterTag[] = [];
+  
+  if (advancedFilterInputs.jobTitle) {
+    newTags.push({
+      id: `job_title_${Date.now()}`,
+      type: 'jobTitle',
+      value: advancedFilterInputs.jobTitle,
+      displayValue: advancedFilterInputs.jobTitle,
+      label: texts.value.jobTitleLabel || 'Job Title'
+    });
+  }
+  
+  if (advancedFilterInputs.industry) {
+    newTags.push({
+      id: `industry_${Date.now()}`,
+      type: 'industry',
+      value: advancedFilterInputs.industry,
+      displayValue: advancedFilterInputs.industry,
+      label: texts.value.industryLabel || 'Industry'
+    });
+  }
+  
+  if (advancedFilterInputs.location) {
+    newTags.push({
+      id: `location_${Date.now()}`,
+      type: 'location',
+      value: advancedFilterInputs.location,
+      displayValue: advancedFilterInputs.location,
+      label: texts.value.locationLabel || 'Location'
+    });
+  }
+  
+  if (advancedFilterInputs.companySize) {
+    newTags.push({
+      id: `company_size_${Date.now()}`,
+      type: 'companySize',
+      value: advancedFilterInputs.companySize,
+      displayValue: advancedFilterInputs.companySize,
+      label: texts.value.companySizeLabel || 'Company Size'
+    });
+  }
+  
+  if (advancedFilterInputs.companyNames) {
+    newTags.push({
+      id: `company_names_${Date.now()}`,
+      type: 'companyNames',
+      value: advancedFilterInputs.companyNames,
+      displayValue: advancedFilterInputs.companyNames,
+      label: texts.value.companyNamesLabel || 'Company Names'
+    });
+  }
+  
+  if (advancedFilterInputs.generalKeywords) {
+    newTags.push({
+      id: `keywords_${Date.now()}`,
+      type: 'keywords',
+      value: advancedFilterInputs.generalKeywords,
+      displayValue: advancedFilterInputs.generalKeywords,
+      label: texts.value.generalKeywordsLabel || 'Keywords'
+    });
+  }
+  
+  // Add new tags to existing ones
+  filterTags.value = [...filterTags.value, ...newTags];
+  
+  // Clear the advanced inputs
+  Object.keys(advancedFilterInputs).forEach((key) => {
+    advancedFilterInputs[key as keyof typeof advancedFilterInputs] = "";
+  });
+}
+
+function removeFilterTag(tagId: string) {
+  filterTags.value = filterTags.value.filter(tag => tag.id !== tagId);
 }
 
 const defaultTexts = {
@@ -2145,7 +2223,7 @@ const exportSelectedToCSV = () => {
           formatCSVCell(lead.company_name),
           formatCSVCell(lead.company_size),
           formatCSVCell(lead.phone),
-          formatCSVCell(lead.linkedIn_url),
+          formatCSVCell(lead.linkedin_url),
           formatCSVCell(lead.keywords), // Will export original JSONB
           formatCSVCell(lead.email),
           formatCSVCell(lead.notes),
@@ -2313,7 +2391,20 @@ watch(
       await fetchTabCounts(newUser.id);
       await fetchLeadsForCurrentUser(true);
     } else if (!newUser && oldUser) {
-      await archiveUnsavedLeads(oldUser.id);
+      // Archive unsaved leads when user logs out
+      try {
+        const { error: archiveError } = await supabase
+          .from('leads')
+          .update({ tab: 'archived' })
+          .eq('user_id', oldUser.id)
+          .eq('tab', 'new');
+
+        if (archiveError) {
+          console.error("Error archiving leads on user logout:", archiveError);
+        }
+      } catch (error) {
+        console.error("Exception archiving leads on user logout:", error);
+      }
       tableData.value = [];
       rowSelection.value = {};
       totalRowCount.value = 0;
