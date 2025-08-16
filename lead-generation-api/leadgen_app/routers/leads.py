@@ -70,8 +70,8 @@ async def search_leads(
         
         # Prepare source query criteria for database storage
         source_query_criteria = {
-            "mainQuery": request.main_query,
-            "filters": request.filters.dict(),
+            "mainQuery": request.main_query or "",
+            "filters": request.filters.model_dump(),
             "maxResults": request.max_results,
             "includeEnrichment": request.include_enrichment,
             "requestId": request_id,

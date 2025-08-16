@@ -25,19 +25,48 @@ async def validate_search_request(
         Validation result dictionary
     """
     try:
-        # Check main query
-        if not request.main_query or len(request.main_query.strip()) < 10:
+        # Check if either main query or filters are provided
+        has_main_query = request.main_query and request.main_query.strip()
+        has_filters = any(
+            getattr(request.filters, field, None) and str(getattr(request.filters, field, '')).strip()
+            for field in ['job_title', 'industry', 'location', 'company_size', 'company_names', 'general_keywords']
+        )
+        
+        if not has_main_query and not has_filters:
             return {
                 "valid": False,
-                "error": "Main query must be at least 10 characters long"
+                "error": "Either main query or at least one filter must be provided"
             }
         
-        # Check for potentially harmful content
-        if contains_harmful_content(request.main_query):
+        # If main query is provided without filters, check minimum length
+        if has_main_query and not has_filters and len(request.main_query.strip()) < 10:
+            return {
+                "valid": False,
+                "error": "Main query must be at least 10 characters when no filters are provided"
+            }
+        
+        # Check for potentially harmful content in main query
+        if has_main_query and contains_harmful_content(request.main_query):
             return {
                 "valid": False,
                 "error": "Query contains inappropriate content"
             }
+        
+        # Check for harmful content in filter fields
+        filter_values = [
+            request.filters.job_title,
+            request.filters.industry,
+            request.filters.location,
+            request.filters.company_names,
+            request.filters.general_keywords
+        ]
+        
+        for value in filter_values:
+            if value and contains_harmful_content(str(value)):
+                return {
+                    "valid": False,
+                    "error": "Filter contains inappropriate content"
+                }
         
         # Check max results
         if request.max_results > settings.MAX_LEADS_PER_REQUEST:

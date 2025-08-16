@@ -83,12 +83,12 @@ class AIService:
         """
         start_time = datetime.now()
         logger.info(f"--- URL Generation Debug Trace ---")
-        logger.info(f"[1/5] Starting lead search for user {user_id}. Request data:\n{request.dict()}")
+        logger.info(f"[1/5] Starting lead search for user {user_id}. Request data:\n{request.model_dump()}")
         
         try:
             apollo_url = await self._convert_to_apollo_url(request)
             
-            logger.info(f"[5/5] Final URL passed to Apify crawler: {apollo_url}")
+            logger.info(f"[6/6] Final URL passed to Apify crawler: {apollo_url}")
             
             raw_leads = await self._run_apify_crawler(apollo_url, request.max_results)
             logger.info(f"Apify crawler returned {len(raw_leads)} leads")
@@ -109,13 +109,25 @@ class AIService:
         """
         Convert natural language input to Apollo.io search URL using LLM.
         """
+        # Log input mode detection
+        has_regular_input = request.main_query and request.main_query.strip()
+        has_advanced_input = any(
+            getattr(request.filters, field, None) and str(getattr(request.filters, field, '')).strip()
+            for field in ['job_title', 'industry', 'location', 'company_size', 'company_names', 'general_keywords']
+        )
+        
+        input_mode = "regular" if has_regular_input and not has_advanced_input else "advanced"
+        logger.info(f"[2/5] Input mode detected: {input_mode}")
+        logger.info(f"      Regular input: {'Yes' if has_regular_input else 'No'}")
+        logger.info(f"      Advanced input: {'Yes' if has_advanced_input else 'No'}")
+        
         prompt = self._construct_llm_prompt(request)
-        logger.info(f"[2/5] Constructed LLM prompt:\n{prompt}")
+        logger.info(f"[3/5] Constructed LLM prompt for {input_mode} mode:\n{prompt}")
         
         try:
             if self.openai_client:
                 response = await self._call_openai(prompt, max_tokens=1500)
-                logger.info(f"[3/5] Raw response from OpenAI:\n{response}")
+                logger.info(f"[4/5] Raw response from OpenAI:\n{response}")
             else:
                 logger.warning("OpenAI client not available, using fallback URL generation.")
                 return self._generate_apollo_url_fallback(request)
@@ -128,7 +140,7 @@ class AIService:
                     logger.warning(f"LLM generated an invalid URL: {apollo_url}. Using fallback.")
                     return self._generate_apollo_url_fallback(request)
                 
-                logger.info(f"[4/5] Successfully parsed URL from LLM response: {apollo_url}")
+                logger.info(f"[5/5] Successfully parsed URL from LLM response: {apollo_url}")
                 return apollo_url
                 
             except json.JSONDecodeError:
@@ -140,37 +152,72 @@ class AIService:
             return self._generate_apollo_url_fallback(request)
     
     def _construct_llm_prompt(self, request: LeadSearchRequest) -> str:
-        """Constructs the prompt for the LLM."""
+        """Constructs the prompt for the LLM based on input mode."""
+        
+        # Determine if we're in regular input mode or advanced input mode
+        has_regular_input = request.main_query and request.main_query.strip()
+        has_advanced_input = any(
+            getattr(request.filters, field, None) and str(getattr(request.filters, field, '')).strip()
+            for field in ['job_title', 'industry', 'location', 'company_size', 'company_names', 'general_keywords']
+        )
+        
+        if has_regular_input and not has_advanced_input:
+            # Regular input mode - LLM should parse and populate filter fields
+            return self._construct_regular_input_prompt(request)
+        else:
+            # Advanced input mode - directly insert entered values into prompt
+            return self._construct_advanced_input_prompt(request)
+    
+    def _construct_regular_input_prompt(self, request: LeadSearchRequest) -> str:
+        """Constructs prompt for regular input mode where LLM parses natural language."""
         return f"""
-Your task is to take as input a natural language description of a prospect audience, and turn that into an Apollo Search URL. Here's an example of an Apollo Search URL: 
-https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified&personTitles[]=project%20manager&personTitles[]=director&personLocations[]=United%20States&organizationIndustryTagIds[]=5567cdd67369643e64020000&organizationNumEmployeesRanges[]=11%2C20&organizationNumEmployeesRanges[]=21%2C50&organizationIndustryTagIds%5B%5D=5567ced173696450cb580000&qOrganizationKeywordTags%5B%5D=Google&includedOrganizationKeywordFields%5B%5D=name&qAndedOrganizationKeywordTags[]=startup&includedAndedOrganizationKeywordFields[]=name&includedAndedOrganizationKeywordFields[]=tags &includedAndedOrganizationKeywordFields[]=social_media_description 
+Your task is to convert a natural language description of prospects into a precise Apollo.io Search URL.
 
-This URL describes a search that people that are: 
-1. Email is verified. 
-2. Hold the titles: project manager or director. 
-3. Are locate in the United States. 
-4. Industry: Financial Services. It should be replaced by it's corresponding industry ID in the url. 
-5. Company has the number of employees 11-20 or 21-50. 
-6. Have a industry related to retail. 
-7. Have a company keyword "Google". 
-8. Must include companies related to "startup" via keywords in their name, tags, or description.
+**REGULAR INPUT MODE**: Parse the natural language input and extract all filter criteria from it.
 
-You must extract all relevant information (like titles, locations, company names, etc.) from the "Input Description" first, and then supplement it with any "Additional Filters" provided.
+Process:
+1. **Parse the input description** to extract job titles, locations, company names, industry, and keywords
+2. **Generate the Apollo URL** using the extracted information as the main filters
 
-- If a/multiple company name is explicitly mentioned (e.g., "Google"), include: &qOrganizationKeywordTags[]=COMPANY_NAME1 &qOrganizationKeywordTags[]=COMPANY_NAME2 &includedOrganizationKeywordFields[]=name
-- If a company name is mentioned in the main query (e.g., "Software engineer at Anthropic"), you MUST treat it as a company name and use the `qOrganizationKeywordTags` parameter.
-	- If a/multiple company-related concept is mentioned (e.g., "startup", "VC-backed", "open-source", "remote-first"), treat it as a required keyword. These describe company identity, structure, or positioning, not names. Use: &qAndedOrganizationKeywordTags[]=KEYWORD1 &qAndedOrganizationKeywordTags[]=KEYWORD2 &includedAndedOrganizationKeywordFields[]=tags &includedAndedOrganizationKeywordFields[]=social_media_description 
+Example parsing:
+Input: "Marketing manager at OpenAI in California"
+Extracted filters:
+- Job Title: Marketing manager
+- Industry: Not specified  
+- Location: California
+- Company Size: Not specified
+- Company Names: OpenAI
+- Keywords: Not specified
 
-You can change those fields (and only those fields).
+Apollo URL Parameters:
+- `&personLocations[]`: Geographic locations (e.g., "United States", "NYC", "San Francisco")
+- `&personTitles[]`: Job titles (e.g., "project manager", "director")  
+- `&qOrganizationKeywordTags[]`: Specific company names (e.g., "Google", "OpenAI")
+- `&qAndedOrganizationKeywordTags[]`: Company-related concepts/keywords (e.g., "startup", "VC-backed")
+- `&organizationIndustryTagIds[]`: Industries (map name to ID from reference below)
 
-ABSOLUTELY DO NOT infer or add any extra filters that are not explicitly mentioned in the user's request. For example, if the user asks for "Software engineers at OpenAI", do not add a keyword for "open-source". Stick strictly to the provided information.
+**IMPORTANT RULES:**
+- You **MUST** include `&contactEmailStatusV2[]=verified` in every URL
+- Only use information explicitly mentioned in the input
+- Do not infer or add extra filters
 
 Industry ID Reference:
 {json.dumps(list(APOLLO_INDUSTRY_IDS.items()), indent=2)}
 
-Input Description: "{request.main_query}"
+Input Description: "{request.main_query or ''}"
 
-Additional Filters:
+Return the generated URL in JSON format:
+{{"searchUrl":"Search URL goes here"}}
+"""
+
+    def _construct_advanced_input_prompt(self, request: LeadSearchRequest) -> str:
+        """Constructs prompt for advanced input mode where values are directly inserted."""
+        return f"""
+Your task is to convert specified filter criteria into a precise Apollo.io Search URL.
+
+**ADVANCED INPUT MODE**: Use the provided filter values directly to construct the URL.
+
+The following filter criteria have been specified:
 - Job Title: {request.filters.job_title or 'Not specified'}
 - Industry: {request.filters.industry or 'Not specified'}
 - Location: {request.filters.location or 'Not specified'}
@@ -178,7 +225,35 @@ Additional Filters:
 - Company Names: {request.filters.company_names or 'Not specified'}
 - Keywords: {request.filters.general_keywords or 'Not specified'}
 
-Return the generated URL in a JSON object without quotations:
+{f'Additional context from regular input: "{request.main_query}"' if request.main_query and request.main_query.strip() else ''}
+
+Apollo URL Parameters:
+- `&personLocations[]`: Geographic locations (e.g., "United States", "NYC", "San Francisco")
+- `&personTitles[]`: Job titles (e.g., "project manager", "director")
+- `&qOrganizationKeywordTags[]`: Specific company names (e.g., "Google", "OpenAI")  
+- `&qAndedOrganizationKeywordTags[]`: Company-related concepts/keywords (e.g., "startup", "VC-backed")
+- `&organizationIndustryTagIds[]`: Industries (map name to ID from reference below)
+- `&organizationNumEmployeesRanges[]`: Company size ranges
+
+Company Size Mapping:
+- "1-10" → &organizationNumEmployeesRanges[]=1%2C10
+- "11-50" → &organizationNumEmployeesRanges[]=11%2C50  
+- "51-200" → &organizationNumEmployeesRanges[]=51%2C200
+- "201-500" → &organizationNumEmployeesRanges[]=201%2C500
+- "501-1000" → &organizationNumEmployeesRanges[]=501%2C1000
+- "1001-5000" → &organizationNumEmployeesRanges[]=1001%2C5000
+- "5001-10000" → &organizationNumEmployeesRanges[]=5001%2C10000
+- "10001+" → &organizationNumEmployeesRanges[]=10001%2C
+
+Industry ID Reference:
+{json.dumps(list(APOLLO_INDUSTRY_IDS.items()), indent=2)}
+
+**IMPORTANT RULES:**
+- You **MUST** include `&contactEmailStatusV2[]=verified` in every URL
+- Use only the specified filter values - do not infer additional criteria
+- For "Not specified" fields, do not include those parameters in the URL
+
+Return the generated URL in JSON format:
 {{"searchUrl":"Search URL goes here"}}
 """
 
@@ -189,10 +264,65 @@ Return the generated URL in a JSON object without quotations:
         logger.info("Executing fallback URL generation.")
         base_url = "https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified"
         
-        if not request.main_query and not request.filters.dict(exclude_none=True):
-             return "https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified&personTitles[]=project%20manager&personTitles[]=director&personLocations[]=United%20States&organizationIndustryTagIds[]=5567cdd67369643e64020000&organizationNumEmployeesRanges[]=11%2C20&organizationNumEmployeesRanges[]=21%2C50&organizationIndustryTagIds%5B%5D=5567ced173696450cb580000&qOrganizationKeywordTags%5B%5D=Google&includedOrganizationKeywordFields%5B%5D=name&qAndedOrganizationKeywordTags[]=startup&includedAndedOrganizationKeywordFields[]=name&includedAndedOrganizationKeywordFields[]=tags &includedAndedOrganizationKeywordFields[]=social_media_description"
-
-        return base_url
+        # Check if we have any filter data to work with
+        filters = request.filters
+        url_params = []
+        
+        # Add job title if specified
+        if filters.job_title:
+            titles = [title.strip() for title in filters.job_title.split(',') if title.strip()]
+            for title in titles:
+                url_params.append(f"personTitles[]={title.replace(' ', '%20')}")
+        
+        # Add location if specified
+        if filters.location:
+            url_params.append(f"personLocations[]={filters.location.replace(' ', '%20')}")
+        
+        # Add company names if specified
+        if filters.company_names:
+            companies = [company.strip() for company in filters.company_names.split(',') if company.strip()]
+            for company in companies:
+                url_params.append(f"qOrganizationKeywordTags[]={company.replace(' ', '%20')}")
+                url_params.append("includedOrganizationKeywordFields[]=name")
+        
+        # Add keywords if specified
+        if filters.general_keywords:
+            keywords = [keyword.strip() for keyword in filters.general_keywords.split(',') if keyword.strip()]
+            for keyword in keywords:
+                url_params.append(f"qAndedOrganizationKeywordTags[]={keyword.replace(' ', '%20')}")
+                url_params.append("includedAndedOrganizationKeywordFields[]=name")
+                url_params.append("includedAndedOrganizationKeywordFields[]=tags")
+        
+        # Add industry if specified
+        if filters.industry:
+            industry_id = APOLLO_INDUSTRY_IDS.get(filters.industry.lower())
+            if industry_id:
+                url_params.append(f"organizationIndustryTagIds[]={industry_id}")
+        
+        # Add company size if specified
+        if filters.company_size:
+            size_mapping = {
+                "1-10": "1%2C10",
+                "11-50": "11%2C50", 
+                "51-200": "51%2C200",
+                "201-500": "201%2C500",
+                "501-1000": "501%2C1000",
+                "1001-5000": "1001%2C5000",
+                "5001-10000": "5001%2C10000",
+                "10001+": "10001%2C"
+            }
+            size_param = size_mapping.get(filters.company_size)
+            if size_param:
+                url_params.append(f"organizationNumEmployeesRanges[]={size_param}")
+        
+        # If no filters provided, use default example
+        if not url_params:
+            return "https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified&personTitles[]=project%20manager&personTitles[]=director&personLocations[]=United%20States&organizationIndustryTagIds[]=5567cdd67369643e64020000&organizationNumEmployeesRanges[]=11%2C20&organizationNumEmployeesRanges[]=21%2C50"
+        
+        # Combine base URL with parameters
+        full_url = base_url + "&" + "&".join(url_params)
+        logger.info(f"Generated fallback URL: {full_url}")
+        return full_url
     
     async def _run_apify_crawler(self, apollo_url: str, max_results: int) -> List[Dict[str, Any]]:
         """
@@ -244,8 +374,8 @@ Return the generated URL in a JSON object without quotations:
         error_count = 0
         
         source_query_criteria = {
-            "mainQuery": request.main_query,
-            "filters": request.filters.dict()
+            "mainQuery": request.main_query or "",
+            "filters": request.filters.model_dump()
         }
         
         for raw_lead in raw_leads:

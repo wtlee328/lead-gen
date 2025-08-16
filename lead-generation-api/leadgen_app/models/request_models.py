@@ -3,7 +3,7 @@ Pydantic models for API requests
 """
 
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from enum import Enum
 
 def to_camel(string: str) -> str:
@@ -46,11 +46,14 @@ class LeadFilters(BaseModel):
     company_names: Optional[str] = Field(None, description="Specific company names as a comma-separated string")
     general_keywords: Optional[str] = Field(None, description="Relevant keywords as a comma-separated string")
 
-    @validator('job_title', 'location', 'company_names', 'general_keywords')
+    @validator('job_title', 'industry', 'location', 'company_size', 'company_names', 'general_keywords', pre=True)
     def validate_strings(cls, v):
-        """Validate string fields"""
-        if v:
-            return v.strip()
+        """Validate string fields and convert empty strings to None"""
+        if v is None:
+            return None
+        if isinstance(v, str):
+            v = v.strip()
+            return v if v else None
         return v
 
     class Config:
@@ -59,22 +62,59 @@ class LeadFilters(BaseModel):
 
 class LeadSearchRequest(BaseModel):
     """Main request model for lead search"""
-    main_query: str = Field(
-        ..., 
-        min_length=10, 
-        max_length=1000,
+    main_query: Union[str, None] = Field(
+        None, 
         description="Natural language description of ideal prospects"
     )
     filters: LeadFilters = Field(default_factory=LeadFilters, description="Structured search filters")
     max_results: Optional[int] = Field(50, ge=1, le=500, description="Maximum number of results")
     include_enrichment: bool = Field(True, description="Whether to enrich lead data")
     
-    @validator('main_query')
+    @validator('main_query', pre=True, always=True)
     def validate_main_query(cls, v):
-        """Validate main query"""
-        if not v or not v.strip():
-            raise ValueError("Main query cannot be empty")
-        return v.strip()
+        """Validate main query with conditional length requirement"""
+        # Handle null/None values
+        if v is None:
+            return None
+        # Handle string values
+        if isinstance(v, str):
+            v = v.strip()
+            # Validate length if it's not empty
+            if v and len(v) > 1000:
+                raise ValueError("Main query must be 1000 characters or less")
+            # Convert empty strings to None
+            return v if v else None
+        # Convert other types to string if possible, or reject
+        if isinstance(v, (int, float, bool)):
+            return str(v)
+        # Reject other types
+        raise ValueError("Main query must be a string or null")
+        return v
+    
+    @validator('filters')
+    def validate_search_criteria(cls, filters, values):
+        """Custom validation to ensure at least one search criteria is provided"""
+        main_query = values.get('main_query')
+        main_query_text = main_query if main_query else ''
+        
+        # Check if any filter has a value
+        has_filter_values = False
+        if filters:
+            filter_dict = filters.model_dump() if hasattr(filters, 'model_dump') else (filters.dict() if hasattr(filters, 'dict') else filters)
+            has_filter_values = any(
+                val and str(val).strip() 
+                for val in filter_dict.values()
+            )
+        
+        # If no filters provided, main query must be at least 10 characters
+        if not has_filter_values and main_query_text and len(main_query_text) < 10:
+            raise ValueError("Main query must be at least 10 characters when no filters are provided")
+        
+        # At least one search criteria must be provided
+        if not main_query_text and not has_filter_values:
+            raise ValueError("Either main_query or at least one filter must be provided")
+        
+        return filters
     
     class Config:
         alias_generator = to_camel

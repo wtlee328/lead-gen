@@ -2348,13 +2348,14 @@ async function submitLeadSearchCriteria() {
   searchMessage.value = null;
   searchStatus.value = null;
 
-  // If advanced filters are used, prioritize them by clearing the main query.
-  if (isAdvancedCriteriaActive.value) {
-    naturalLanguageQuery.value = "";
-  }
+  // Check if either regular input or any advanced input field is filled
+  const hasRegularInput = naturalLanguageQuery.value.trim().length > 0;
+  const hasAdvancedInput = Object.values(advancedFilterInputs).some(value => 
+    value && value.toString().trim().length > 0
+  );
 
   // Validate that at least one search criteria is provided
-  if (!naturalLanguageQuery.value.trim() && !isAdvancedCriteriaActive.value) {
+  if (!hasRegularInput && !hasAdvancedInput) {
     searchMessage.value = texts.value.noSearchCriteria;
     searchStatus.value = "warning";
     return;
@@ -2409,23 +2410,47 @@ async function submitLeadSearchCriteria() {
       throw new Error("Authentication token not found.");
     }
 
+    const requestPayload = {
+      main_query: naturalLanguageQuery.value.trim() || null,
+      filters: {
+        jobTitle: advancedFilterInputs.jobTitle || null,
+        industry: advancedFilterInputs.industry || null,
+        location: advancedFilterInputs.location || null,
+        companySize: advancedFilterInputs.companySize || null,
+        companyNames: advancedFilterInputs.companyNames || null,
+        generalKeywords: advancedFilterInputs.generalKeywords || null,
+      },
+    };
+    
+    console.log("Sending request payload:", requestPayload);
+
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({
-        main_query: naturalLanguageQuery.value,
-        filters: advancedFilterInputs,
-      }),
+      body: JSON.stringify(requestPayload),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
       // Handle non-2xx responses from the API
-      throw new Error(data.detail || `Request failed with status ${response.status}`);
+      let errorMessage = `Request failed with status ${response.status}`;
+      
+      if (data.detail) {
+        if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          // Handle Pydantic validation errors
+          errorMessage = data.detail.map((err: any) => err.msg || err.message || JSON.stringify(err)).join(', ');
+        } else if (typeof data.detail === 'object') {
+          errorMessage = data.detail.message || JSON.stringify(data.detail);
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
 
     searchMessage.value = texts.value.searchLeadsSuccess;
