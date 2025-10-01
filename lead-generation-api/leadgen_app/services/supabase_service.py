@@ -85,6 +85,7 @@ class SupabaseService:
             )
             
             logger.info(f"Successfully saved {len(lead_records)} leads for user {user_id}")
+            logger.debug(f"Saved lead records: {[{'id': r['id'], 'tab': r['tab'], 'user_id': r['user_id']} for r in lead_records]}")
             
             return {
                 "success": True,

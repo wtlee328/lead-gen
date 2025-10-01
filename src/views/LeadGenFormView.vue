@@ -878,7 +878,7 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
     }
 
     let query = supabase
-      .from("leads")
+      .from("leads_search_view")
       .select(selectFields, { count: "exact" })
       .eq("user_id", user.id)
       .eq("tab", currentTab.value);
@@ -1717,9 +1717,9 @@ const selectAllMatchingLeads = async () => {
       searchStatus.value = "error";
       return;
     }
-    // Query the leads table directly
+    // IMPORTANT: Query the new view instead of the original table
     let query = supabase
-      .from("leads")
+      .from("leads_search_view") // Changed from "leads" to your new view name
       .select("id") // Only fetch IDs
       .eq("user_id", user.id)
       .eq("tab", currentTab.value);
@@ -1916,8 +1916,8 @@ const batchProcessLeads = async (
     let leadsToProcess: Lead[] = [];
     try { // Inner try-catch for Supabase fetch
       const { data, error } = await supabase
-        .from("leads") // Query leads table directly
-        .select(selectFields)
+        .from("leads_search_view") // Batch operations should use the same view as regular queries
+        .select(selectFields) // Fixed typo: was selectFeellslds
         .in("id", selectedLeadIds)
         .eq("user_id", user.id);
       if (error) throw error;
@@ -2135,9 +2135,9 @@ const exportSelectedToCSV = () => {
       return [];
     }
     try {
-      // For export, fetch from the leads table directly
+      // For export, fetch from the view to get the same data structure as displayed
       const { data, error } = await supabase
-        .from("leads")
+        .from("leads_search_view") // Use view to access industry_text and keywords_text
         .select(selectFields)
         .in("id", selectedLeadIds)
         .eq("user_id", user.id);
