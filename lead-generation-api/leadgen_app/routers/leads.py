@@ -154,15 +154,29 @@ async def save_leads_background(
     try:
         logger.info(f"Saving {len(leads_data)} leads for request {request_id}")
         
-        # Check for duplicates
+        # Check for email duplicates
         emails = [lead.email for lead in leads_data if lead.email]
+        existing_emails = []
         if emails:
             existing_emails = await get_supabase_service().check_duplicate_leads(user_id, emails)
             if existing_emails:
                 logger.info(f"Found {len(existing_emails)} duplicate emails, filtering out")
                 leads_data = [lead for lead in leads_data if lead.email not in existing_emails]
         
+        # Check for ID duplicates
+        lead_ids = [lead.id for lead in leads_data if lead.id]
+        existing_ids = []
+        if lead_ids:
+            existing_ids = await get_supabase_service().check_duplicate_ids(lead_ids)
+            if existing_ids:
+                logger.info(f"Found {len(existing_ids)} duplicate IDs, filtering out")
+                leads_data = [lead for lead in leads_data if lead.id not in existing_ids]
+        
         if leads_data:
+            total_duplicates = len(existing_emails) + len(existing_ids)
+            if total_duplicates > 0:
+                logger.info(f"Filtered out {total_duplicates} total duplicates ({len(existing_emails)} email, {len(existing_ids)} ID)")
+            
             # Save to database
             save_result = await get_supabase_service().save_leads_batch(
                 leads_data,
@@ -175,7 +189,8 @@ async def save_leads_background(
             else:
                 logger.error(f"Failed to save leads for request {request_id}: {save_result.get('error')}")
         else:
-            logger.info(f"No new leads to save for request {request_id} (all duplicates)")
+            total_duplicates = len(existing_emails) + len(existing_ids)
+            logger.info(f"No new leads to save for request {request_id} (all {total_duplicates} were duplicates)")
             
     except Exception as e:
         logger.error(f"Error in background lead save for request {request_id}: {str(e)}")

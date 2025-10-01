@@ -121,7 +121,26 @@ class SupabaseService:
             }
             
         except Exception as e:
-            logger.error(f"Synchronous lead insertion error: {str(e)}")
+            error_str = str(e)
+            logger.error(f"Synchronous lead insertion error: {error_str}")
+            
+            # Handle duplicate key errors more gracefully
+            if "duplicate key value violates unique constraint" in error_str:
+                logger.warning("Duplicate key constraint violation - some leads may already exist")
+                # Try to extract which IDs are duplicates and retry without them
+                if "lead_pkey" in error_str:
+                    # Extract the duplicate ID from the error message
+                    import re
+                    match = re.search(r'Key \(id\)=\(([^)]+)\)', error_str)
+                    if match:
+                        duplicate_id = match.group(1)
+                        logger.warning(f"Duplicate ID found: {duplicate_id}")
+                        # Filter out the duplicate and retry
+                        filtered_records = [r for r in lead_records if r.get("id") != duplicate_id]
+                        if filtered_records:
+                            logger.info(f"Retrying insertion with {len(filtered_records)} leads (removed duplicate)")
+                            return self._insert_leads_sync(filtered_records)
+            
             raise
     
     async def get_user_lead_count(self, user_id: str, tab: str = None) -> int:
@@ -233,6 +252,38 @@ class SupabaseService:
             
         except Exception as e:
             logger.error(f"Error checking duplicate leads: {str(e)}")
+            return []
+
+    async def check_duplicate_ids(
+        self, 
+        lead_ids: List[str]
+    ) -> List[str]:
+        """
+        Check for duplicate leads by ID
+        
+        Args:
+            lead_ids: List of lead IDs to check
+            
+        Returns:
+            List of duplicate lead IDs
+        """
+        try:
+            if not lead_ids:
+                return []
+            
+            result = await asyncio.get_event_loop().run_in_executor(
+                self.executor,
+                lambda: self.client.table("leads")
+                .select("id")
+                .in_("id", lead_ids)
+                .execute()
+            )
+            
+            existing_ids = [row["id"] for row in result.data if row.get("id")]
+            return existing_ids
+            
+        except Exception as e:
+            logger.error(f"Error checking duplicate IDs: {str(e)}")
             return []
     
     async def close(self):

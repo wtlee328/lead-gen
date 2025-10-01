@@ -2539,6 +2539,12 @@ async function submitLeadSearchCriteria() {
         } else if (typeof data.detail === 'object') {
           errorMessage = data.detail.message || JSON.stringify(data.detail);
         }
+      } else if (data.message) {
+        // Handle custom error messages from the API
+        errorMessage = data.message;
+      } else if (data.error) {
+        // Handle other error formats
+        errorMessage = data.error;
       }
       
       throw new Error(errorMessage);
@@ -2557,7 +2563,22 @@ async function submitLeadSearchCriteria() {
 
   } catch (error: any) {
     console.error("Search submission error:", error);
-    searchMessage.value = `${texts.value.alertError}${error.message}`;
+    
+    // Display user-friendly error messages
+    let displayMessage = error.message;
+    
+    // Handle specific AI service errors
+    if (error.message.includes("OpenAI client not available")) {
+      displayMessage = "AI service is currently unavailable. Please check your API configuration or try again later.";
+    } else if (error.message.includes("LLM generated an invalid")) {
+      displayMessage = "Unable to process your search criteria. Please try rephrasing your query or use the advanced filters.";
+    } else if (error.message.includes("Failed to parse LLM response")) {
+      displayMessage = "AI service encountered an error processing your request. Please try again with different search terms.";
+    } else if (error.message.includes("Apollo URL generation failed")) {
+      displayMessage = "Search URL generation failed. Please check your search criteria and try again.";
+    }
+    
+    searchMessage.value = `${texts.value.alertError}${displayMessage}`;
     searchStatus.value = "error";
   } finally {
     isSearchingLeads.value = false;

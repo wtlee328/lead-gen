@@ -125,31 +125,28 @@ class AIService:
         logger.info(f"[3/5] Constructed LLM prompt for {input_mode} mode:\n{prompt}")
         
         try:
-            if self.openai_client:
-                response = await self._call_openai(prompt, max_tokens=1500)
-                logger.info(f"[4/5] Raw response from OpenAI:\n{response}")
-            else:
-                logger.warning("OpenAI client not available, using fallback URL generation.")
-                return self._generate_apollo_url_fallback(request)
+            if not self.openai_client:
+                raise ValueError("OpenAI client not available. Please configure OPENAI_API_KEY.")
+            
+            response = await self._call_openai(prompt, max_tokens=1500)
+            logger.info(f"[4/5] Raw response from OpenAI:\n{response}")
             
             try:
                 result = json.loads(response.strip())
                 apollo_url = result.get("searchUrl", "")
                 
                 if not apollo_url or not apollo_url.startswith("https://app.apollo.io"):
-                    logger.warning(f"LLM generated an invalid URL: {apollo_url}. Using fallback.")
-                    return self._generate_apollo_url_fallback(request)
+                    raise ValueError(f"LLM generated an invalid Apollo URL: {apollo_url}")
                 
                 logger.info(f"[5/5] Successfully parsed URL from LLM response: {apollo_url}")
                 return apollo_url
                 
-            except json.JSONDecodeError:
-                logger.warning("Failed to parse LLM response as JSON, using fallback.")
-                return self._generate_apollo_url_fallback(request)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Failed to parse LLM response as JSON: {str(e)}")
                 
         except Exception as e:
-            logger.warning(f"LLM Apollo URL generation failed: {str(e)}, using fallback.")
-            return self._generate_apollo_url_fallback(request)
+            logger.error(f"Apollo URL generation failed: {str(e)}")
+            raise
     
     def _construct_llm_prompt(self, request: LeadSearchRequest) -> str:
         """Constructs the prompt for the LLM based on input mode."""
@@ -189,17 +186,37 @@ Extracted filters:
 - Company Names: OpenAI
 - Keywords: Not specified
 
+**Base URL (always start with this):**
+https://app.apollo.io/#/people?page=1
+
 Apollo URL Parameters:
+- `&contactEmailStatusV2[]=verified`: REQUIRED - must be included in every URL
 - `&personLocations[]`: Geographic locations (e.g., "United States", "NYC", "San Francisco")
 - `&personTitles[]`: Job titles (e.g., "project manager", "director")  
 - `&qOrganizationKeywordTags[]`: Specific company names (e.g., "Google", "OpenAI")
+- `&includedOrganizationKeywordFields[]=name`: Required when using qOrganizationKeywordTags
 - `&qAndedOrganizationKeywordTags[]`: Company-related concepts/keywords (e.g., "startup", "VC-backed")
+- `&includedAndedOrganizationKeywordFields[]=name`: Required when using qAndedOrganizationKeywordTags
+- `&includedAndedOrganizationKeywordFields[]=tags`: Additional field for keyword matching
 - `&organizationIndustryTagIds[]`: Industries (map name to ID from reference below)
+- `&organizationNumEmployeesRanges[]`: Company size ranges
+
+Company Size Mapping:
+- "1-10" → &organizationNumEmployeesRanges[]=1%2C10
+- "11-50" → &organizationNumEmployeesRanges[]=11%2C50  
+- "51-200" → &organizationNumEmployeesRanges[]=51%2C200
+- "201-500" → &organizationNumEmployeesRanges[]=201%2C500
+- "501-1000" → &organizationNumEmployeesRanges[]=501%2C1000
+- "1001-5000" → &organizationNumEmployeesRanges[]=1001%2C5000
+- "5001-10000" → &organizationNumEmployeesRanges[]=5001%2C10000
+- "10001+" → &organizationNumEmployeesRanges[]=10001%2C
 
 **IMPORTANT RULES:**
+- You **MUST** start with the base URL: https://app.apollo.io/#/people?page=1
 - You **MUST** include `&contactEmailStatusV2[]=verified` in every URL
 - Only use information explicitly mentioned in the input
 - Do not infer or add extra filters
+- URL encode spaces as %20 and special characters appropriately
 
 Industry ID Reference:
 {json.dumps(list(APOLLO_INDUSTRY_IDS.items()), indent=2)}
@@ -227,11 +244,18 @@ The following filter criteria have been specified:
 
 {f'Additional context from regular input: "{request.main_query}"' if request.main_query and request.main_query.strip() else ''}
 
+**Base URL (always start with this):**
+https://app.apollo.io/#/people?page=1
+
 Apollo URL Parameters:
+- `&contactEmailStatusV2[]=verified`: REQUIRED - must be included in every URL
 - `&personLocations[]`: Geographic locations (e.g., "United States", "NYC", "San Francisco")
 - `&personTitles[]`: Job titles (e.g., "project manager", "director")
-- `&qOrganizationKeywordTags[]`: Specific company names (e.g., "Google", "OpenAI")  
+- `&qOrganizationKeywordTags[]`: Specific company names (e.g., "Google", "OpenAI")
+- `&includedOrganizationKeywordFields[]=name`: Required when using qOrganizationKeywordTags
 - `&qAndedOrganizationKeywordTags[]`: Company-related concepts/keywords (e.g., "startup", "VC-backed")
+- `&includedAndedOrganizationKeywordFields[]=name`: Required when using qAndedOrganizationKeywordTags
+- `&includedAndedOrganizationKeywordFields[]=tags`: Additional field for keyword matching
 - `&organizationIndustryTagIds[]`: Industries (map name to ID from reference below)
 - `&organizationNumEmployeesRanges[]`: Company size ranges
 
@@ -249,80 +273,17 @@ Industry ID Reference:
 {json.dumps(list(APOLLO_INDUSTRY_IDS.items()), indent=2)}
 
 **IMPORTANT RULES:**
+- You **MUST** start with the base URL: https://app.apollo.io/#/people?page=1
 - You **MUST** include `&contactEmailStatusV2[]=verified` in every URL
 - Use only the specified filter values - do not infer additional criteria
 - For "Not specified" fields, do not include those parameters in the URL
+- URL encode spaces as %20 and special characters appropriately
 
 Return the generated URL in JSON format:
 {{"searchUrl":"Search URL goes here"}}
 """
 
-    def _generate_apollo_url_fallback(self, request: LeadSearchRequest) -> str:
-        """
-        Fallback method to generate Apollo URL when LLM fails.
-        """
-        logger.info("Executing fallback URL generation.")
-        base_url = "https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified"
-        
-        # Check if we have any filter data to work with
-        filters = request.filters
-        url_params = []
-        
-        # Add job title if specified
-        if filters.job_title:
-            titles = [title.strip() for title in filters.job_title.split(',') if title.strip()]
-            for title in titles:
-                url_params.append(f"personTitles[]={title.replace(' ', '%20')}")
-        
-        # Add location if specified
-        if filters.location:
-            url_params.append(f"personLocations[]={filters.location.replace(' ', '%20')}")
-        
-        # Add company names if specified
-        if filters.company_names:
-            companies = [company.strip() for company in filters.company_names.split(',') if company.strip()]
-            for company in companies:
-                url_params.append(f"qOrganizationKeywordTags[]={company.replace(' ', '%20')}")
-                url_params.append("includedOrganizationKeywordFields[]=name")
-        
-        # Add keywords if specified
-        if filters.general_keywords:
-            keywords = [keyword.strip() for keyword in filters.general_keywords.split(',') if keyword.strip()]
-            for keyword in keywords:
-                url_params.append(f"qAndedOrganizationKeywordTags[]={keyword.replace(' ', '%20')}")
-                url_params.append("includedAndedOrganizationKeywordFields[]=name")
-                url_params.append("includedAndedOrganizationKeywordFields[]=tags")
-        
-        # Add industry if specified
-        if filters.industry:
-            industry_id = APOLLO_INDUSTRY_IDS.get(filters.industry.lower())
-            if industry_id:
-                url_params.append(f"organizationIndustryTagIds[]={industry_id}")
-        
-        # Add company size if specified
-        if filters.company_size:
-            size_mapping = {
-                "1-10": "1%2C10",
-                "11-50": "11%2C50", 
-                "51-200": "51%2C200",
-                "201-500": "201%2C500",
-                "501-1000": "501%2C1000",
-                "1001-5000": "1001%2C5000",
-                "5001-10000": "5001%2C10000",
-                "10001+": "10001%2C"
-            }
-            size_param = size_mapping.get(filters.company_size)
-            if size_param:
-                url_params.append(f"organizationNumEmployeesRanges[]={size_param}")
-        
-        # If no filters provided, use default example
-        if not url_params:
-            return "https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified&personTitles[]=project%20manager&personTitles[]=director&personLocations[]=United%20States&organizationIndustryTagIds[]=5567cdd67369643e64020000&organizationNumEmployeesRanges[]=11%2C20&organizationNumEmployeesRanges[]=21%2C50"
-        
-        # Combine base URL with parameters
-        full_url = base_url + "&" + "&".join(url_params)
-        logger.info(f"Generated fallback URL: {full_url}")
-        return full_url
+
     
     async def _run_apify_crawler(self, apollo_url: str, max_results: int) -> List[Dict[str, Any]]:
         """
@@ -455,7 +416,7 @@ Return the generated URL in JSON format:
         """Call OpenAI API"""
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-5-nano",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
                 response_format={"type": "json_object"},
