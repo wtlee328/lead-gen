@@ -111,8 +111,13 @@ class SupabaseService:
             Insertion result
         """
         try:
-            # Insert leads into the database
-            result = self.client.table("leads").insert(lead_records).execute()
+            # Use upsert to handle duplicates gracefully
+            # This will insert new records and ignore duplicates
+            result = self.client.table("leads").upsert(
+                lead_records,
+                on_conflict="id",
+                ignore_duplicates=True
+            ).execute()
             
             return {
                 "success": True,
@@ -124,22 +129,27 @@ class SupabaseService:
             error_str = str(e)
             logger.error(f"Synchronous lead insertion error: {error_str}")
             
-            # Handle duplicate key errors more gracefully
-            if "duplicate key value violates unique constraint" in error_str:
-                logger.warning("Duplicate key constraint violation - some leads may already exist")
-                # Try to extract which IDs are duplicates and retry without them
-                if "lead_pkey" in error_str:
-                    # Extract the duplicate ID from the error message
-                    import re
-                    match = re.search(r'Key \(id\)=\(([^)]+)\)', error_str)
-                    if match:
-                        duplicate_id = match.group(1)
-                        logger.warning(f"Duplicate ID found: {duplicate_id}")
-                        # Filter out the duplicate and retry
-                        filtered_records = [r for r in lead_records if r.get("id") != duplicate_id]
-                        if filtered_records:
-                            logger.info(f"Retrying insertion with {len(filtered_records)} leads (removed duplicate)")
-                            return self._insert_leads_sync(filtered_records)
+            # If upsert fails, try individual insertions to identify problematic records
+            if "duplicate key value violates unique constraint" in error_str or "upsert" in error_str.lower():
+                logger.warning("Upsert failed, trying individual insertions to handle duplicates")
+                successful_inserts = []
+                
+                for record in lead_records:
+                    try:
+                        individual_result = self.client.table("leads").insert([record]).execute()
+                        if individual_result.data:
+                            successful_inserts.extend(individual_result.data)
+                    except Exception as individual_error:
+                        if "duplicate key value violates unique constraint" in str(individual_error):
+                            logger.info(f"Skipping duplicate lead with ID: {record.get('id')}")
+                        else:
+                            logger.error(f"Failed to insert individual lead {record.get('id')}: {individual_error}")
+                
+                return {
+                    "success": True,
+                    "data": successful_inserts,
+                    "count": len(successful_inserts)
+                }
             
             raise
     
@@ -256,12 +266,14 @@ class SupabaseService:
 
     async def check_duplicate_ids(
         self, 
+        user_id: str,
         lead_ids: List[str]
     ) -> List[str]:
         """
-        Check for duplicate leads by ID
+        Check for duplicate leads by ID for a specific user
         
         Args:
+            user_id: User identifier
             lead_ids: List of lead IDs to check
             
         Returns:
@@ -275,6 +287,7 @@ class SupabaseService:
                 self.executor,
                 lambda: self.client.table("leads")
                 .select("id")
+                .eq("user_id", user_id)
                 .in_("id", lead_ids)
                 .execute()
             )

@@ -167,7 +167,7 @@ async def save_leads_background(
         lead_ids = [lead.id for lead in leads_data if lead.id]
         existing_ids = []
         if lead_ids:
-            existing_ids = await get_supabase_service().check_duplicate_ids(lead_ids)
+            existing_ids = await get_supabase_service().check_duplicate_ids(user_id, lead_ids)
             if existing_ids:
                 logger.info(f"Found {len(existing_ids)} duplicate IDs, filtering out")
                 leads_data = [lead for lead in leads_data if lead.id not in existing_ids]
@@ -177,9 +177,21 @@ async def save_leads_background(
             if total_duplicates > 0:
                 logger.info(f"Filtered out {total_duplicates} total duplicates ({len(existing_emails)} email, {len(existing_ids)} ID)")
             
+            # Final safety check: ensure all leads have unique IDs within this batch
+            unique_leads = {}
+            for lead in leads_data:
+                if lead.id not in unique_leads:
+                    unique_leads[lead.id] = lead
+                else:
+                    logger.warning(f"Found duplicate ID within batch: {lead.id}, keeping first occurrence")
+            
+            final_leads_data = list(unique_leads.values())
+            if len(final_leads_data) != len(leads_data):
+                logger.info(f"Removed {len(leads_data) - len(final_leads_data)} intra-batch duplicates")
+            
             # Save to database
             save_result = await get_supabase_service().save_leads_batch(
-                leads_data,
+                final_leads_data,
                 user_id,
                 source_query_criteria
             )
