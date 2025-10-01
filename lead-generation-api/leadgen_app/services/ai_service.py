@@ -418,7 +418,7 @@ Return the generated URL in JSON format:
             response = self.openai_client.chat.completions.create(
                 model="gpt-5-nano",
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=max_tokens,
+                max_completion_tokens=max_tokens,
                 response_format={"type": "json_object"},
             )
             return response.choices[0].message.content.strip()
