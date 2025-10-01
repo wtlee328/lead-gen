@@ -22,7 +22,7 @@ LOG_LEVEL=INFO
 #### Security
 ```
 JWT_SECRET_KEY=your-jwt-secret-key-for-testing
-ALLOWED_ORIGINS=["*"]
+ALLOWED_ORIGINS=["*", "https://www.prospec.io", "https://prospec.io"]
 ALLOWED_HOSTS=["*"]
 ```
 

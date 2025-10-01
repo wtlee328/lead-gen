@@ -85,7 +85,7 @@ class SupabaseService:
             )
             
             logger.info(f"Successfully saved {len(lead_records)} leads for user {user_id}")
-            logger.debug(f"Saved lead records: {[{'id': r['id'], 'tab': r['tab'], 'user_id': r['user_id']} for r in lead_records]}")
+            logger.info(f"Saved lead records details: {[{'id': r['id'], 'tab': r['tab'], 'user_id': r['user_id'], 'name': r.get('name', 'N/A')} for r in lead_records]}")
             
             return {
                 "success": True,
@@ -119,6 +119,10 @@ class SupabaseService:
                 on_conflict="id",
                 ignore_duplicates=True
             ).execute()
+            
+            logger.info(f"Upsert result: inserted {len(result.data) if result.data else 0} records")
+            if result.data:
+                logger.info(f"Upserted records: {[{'id': r['id'], 'tab': r['tab'], 'user_id': r['user_id']} for r in result.data[:3]]}")  # Log first 3 records
             
             return {
                 "success": True,
@@ -271,27 +275,32 @@ class SupabaseService:
         lead_ids: List[str]
     ) -> List[str]:
         """
-        Check for duplicate leads by ID for a specific user
+        Check for duplicate leads by ID for a specific user in active tabs only
         
         Args:
             user_id: User identifier
             lead_ids: List of lead IDs to check
             
         Returns:
-            List of duplicate lead IDs
+            List of duplicate lead IDs (only from 'new' and 'saved' tabs)
         """
         try:
             if not lead_ids:
                 return []
             
+            def query_active():
+                query = self.client.table("leads").select("id, tab, user_id")
+                query = query.eq("user_id", user_id)
+                query = query.in_("tab", ["new", "saved"])  # Only check active tabs, not archived
+                query = query.in_("id", lead_ids)
+                return query.execute()
+            
             result = await asyncio.get_event_loop().run_in_executor(
                 self.executor,
-                lambda: self.client.table("leads")
-                .select("id")
-                .eq("user_id", user_id)
-                .in_("id", lead_ids)
-                .execute()
+                query_active
             )
+            
+            logger.info(f"Active tabs query result: {result.data}")
             
             existing_ids = [row["id"] for row in result.data if row.get("id")]
             return existing_ids
@@ -299,6 +308,86 @@ class SupabaseService:
         except Exception as e:
             logger.error(f"Error checking duplicate IDs: {str(e)}")
             return []
+    
+    async def check_archived_leads(
+        self, 
+        user_id: str,
+        lead_ids: List[str]
+    ) -> List[str]:
+        """
+        Check for leads in archived tab
+        
+        Args:
+            user_id: User identifier
+            lead_ids: List of lead IDs to check
+            
+        Returns:
+            List of lead IDs found in archived tab
+        """
+        try:
+            if not lead_ids:
+                logger.info("No lead IDs provided for archived check")
+                return []
+            
+            logger.info(f"Checking for archived leads: user_id={user_id}, lead_ids={lead_ids}")
+            
+            def query_archived():
+                query = self.client.table("leads").select("id, tab, user_id")
+                query = query.eq("user_id", user_id)
+                query = query.eq("tab", "archived")
+                query = query.in_("id", lead_ids)
+                return query.execute()
+            
+            result = await asyncio.get_event_loop().run_in_executor(
+                self.executor,
+                query_archived
+            )
+            
+            logger.info(f"Archived query result: {result.data}")
+            
+            archived_ids = [row["id"] for row in result.data if row.get("id")]
+            logger.info(f"Found {len(archived_ids)} archived leads: {archived_ids}")
+            return archived_ids
+            
+        except Exception as e:
+            logger.error(f"Error checking archived leads: {str(e)}")
+            return []
+    
+    async def restore_archived_leads(
+        self, 
+        user_id: str,
+        lead_ids: List[str]
+    ) -> bool:
+        """
+        Restore archived leads back to new tab
+        
+        Args:
+            user_id: User identifier
+            lead_ids: List of lead IDs to restore
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if not lead_ids:
+                return True
+            
+            result = await asyncio.get_event_loop().run_in_executor(
+                self.executor,
+                lambda: self.client.table("leads")
+                .update({"tab": "new"})
+                .eq("user_id", user_id)
+                .in_("id", lead_ids)
+                .eq("tab", "archived")
+                .execute()
+            )
+            
+            logger.info(f"Restored {len(lead_ids)} leads from archived to new tab")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error restoring archived leads: {str(e)}")
+            return False
     
     async def close(self):
         """Close the service and cleanup resources"""

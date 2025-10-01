@@ -63,12 +63,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # --- END ENHANCED VALIDATION LOGGING ---
 
 # Middleware
+logger.info(f"Configuring CORS with origins: {settings.ALLOWED_ORIGINS}")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.add_middleware(

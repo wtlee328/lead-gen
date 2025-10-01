@@ -19,7 +19,15 @@ class Settings(BaseSettings):
     
     # Security
     JWT_SECRET_KEY: str = "default-jwt-secret-key-change-in-production"
-    ALLOWED_ORIGINS: List[str] = ["*"]
+    ALLOWED_ORIGINS: List[str] = [
+        "*",
+        "https://www.prospec.io",
+        "https://prospec.io",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173"
+    ]
     ALLOWED_HOSTS: List[str] = ["*"]
     
     # Supabase

@@ -344,8 +344,15 @@ Return the generated URL in JSON format:
                 apify_lead = ApifyLeadData(**raw_lead)
                 processed_lead = convert_apify_to_processed(apify_lead, source_query_criteria)
                 
+                # Generate user-specific lead ID to avoid collisions across users
+                import hashlib
+                base_id = processed_lead.id or str(uuid.uuid4())
+                # Create a hash of user_id + base_id to ensure uniqueness per user
+                combined = f"{user_id}_{base_id}"
+                user_specific_id = hashlib.md5(combined.encode()).hexdigest()
+                
                 lead_data = LeadData(
-                    id=processed_lead.id or str(uuid.uuid4()),
+                    id=user_specific_id,
                     user_id=user_id,
                     first_name=processed_lead.first_name,
                     last_name=processed_lead.last_name,

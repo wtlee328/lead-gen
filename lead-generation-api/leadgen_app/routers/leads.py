@@ -163,14 +163,32 @@ async def save_leads_background(
                 logger.info(f"Found {len(existing_emails)} duplicate emails, filtering out")
                 leads_data = [lead for lead in leads_data if lead.email not in existing_emails]
         
-        # Check for ID duplicates
+        # Check for ID duplicates in active tabs (new, saved)
         lead_ids = [lead.id for lead in leads_data if lead.id]
+        logger.info(f"Checking {len(lead_ids)} lead IDs for duplicates: {lead_ids}")
         existing_ids = []
+        archived_ids = []
+        
         if lead_ids:
             existing_ids = await get_supabase_service().check_duplicate_ids(user_id, lead_ids)
+            logger.info(f"Found {len(existing_ids)} duplicate IDs in active tabs: {existing_ids}")
             if existing_ids:
-                logger.info(f"Found {len(existing_ids)} duplicate IDs, filtering out")
+                logger.info(f"Filtering out {len(existing_ids)} duplicate IDs from active tabs")
                 leads_data = [lead for lead in leads_data if lead.id not in existing_ids]
+            
+            # Check for leads in archived tab and restore them to new
+            remaining_ids = [lead.id for lead in leads_data if lead.id]
+            logger.info(f"Checking {len(remaining_ids)} remaining IDs for archived leads: {remaining_ids}")
+            if remaining_ids:
+                archived_ids = await get_supabase_service().check_archived_leads(user_id, remaining_ids)
+                logger.info(f"Found {len(archived_ids)} leads in archived tab: {archived_ids}")
+                if archived_ids:
+                    logger.info(f"Restoring {len(archived_ids)} leads from archived to new tab")
+                    restore_success = await get_supabase_service().restore_archived_leads(user_id, archived_ids)
+                    logger.info(f"Restore operation success: {restore_success}")
+                    # Filter out the restored leads from new insertion
+                    leads_data = [lead for lead in leads_data if lead.id not in archived_ids]
+                    logger.info(f"After filtering restored leads, {len(leads_data)} leads remain for insertion")
         
         if leads_data:
             total_duplicates = len(existing_emails) + len(existing_ids)
