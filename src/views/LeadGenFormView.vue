@@ -883,6 +883,57 @@ async function fetchLeadsForCurrentUser(forceRefresh = false) {
       .eq("user_id", user.id)
       .eq("tab", currentTab.value);
 
+    // Apply active client filters
+    Object.entries(activeClientFilters.value).forEach(([filterKey, values]) => {
+      if (Array.isArray(values) && values.length > 0) {
+        const typedFilterKey = filterKey as FilterKey;
+        // Use the mapped column name for the Supabase query
+        const actualColumnName = COLUMN_MAPPING[typedFilterKey];
+        
+        if (!actualColumnName) {
+            console.warn(`fetchLeadsForCurrentUser: No column mapping found for filter key: ${typedFilterKey}`);
+            return; // Skip this filter if no mapping found
+        }
+
+        switch (typedFilterKey) {
+          case "lead_status":
+            query = query.in(actualColumnName, values);
+            break;
+          case "company_size":
+            const companySizeOrFilters: string[] = [];
+            values.forEach((rangeStr) => {
+              const { min, max } = parseCompanySizeRange(rangeStr);
+              if (min !== undefined && max !== undefined) {
+                companySizeOrFilters.push(
+                  `and(${actualColumnName}.gte.${min},${actualColumnName}.lte.${max})`
+                );
+              } else if (min !== undefined) {
+                companySizeOrFilters.push(`${actualColumnName}.gte.${min}`);
+              }
+            });
+            if (companySizeOrFilters.length > 0) {
+              query = query.or(companySizeOrFilters.join(","));
+            }
+            break;
+          case "job_title":
+          case "location":
+          case "company_name":
+          case "industry":
+          case "keywords":
+            const orFuzzyConditions = values
+              .map((val) => `${actualColumnName}.ilike.%${String(val).trim()}%`)
+              .join(",");
+            if (orFuzzyConditions) query = query.or(orFuzzyConditions);
+            break;
+          default:
+            console.warn(
+              `fetchLeadsForCurrentUser: Unhandled filter key type in switch: ${typedFilterKey}`
+            );
+            break;
+        }
+      }
+    });
+
     // Apply sorting
     if (sorting.value.length > 0) {
       const sort = sorting.value[0];
